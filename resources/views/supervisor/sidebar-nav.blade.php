@@ -11,4 +11,8 @@
     <flux:sidebar.item icon="users" href="#" wire:navigate>
         المعلمون
     </flux:sidebar.item>
+    <flux:sidebar.item icon="exclamation-triangle" :href="route('supervisor.exceeded-limits')"
+        :current="request()->routeIs('supervisor.exceeded-limits')" wire:navigate>
+        لائحة التجاوزات
+    </flux:sidebar.item>
 </flux:sidebar.group>

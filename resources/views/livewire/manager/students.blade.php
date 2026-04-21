@@ -45,7 +45,9 @@
                 <flux:table.column class="text-right">الطالب</flux:table.column>
                 <flux:table.column class="text-right">الحلقة</flux:table.column>
                 <flux:table.column class="text-right">ولي الأمر</flux:table.column>
-                <flux:table.column class="text-center">الحالة</flux:table.column>
+                <flux:table.column class="text-center">حالة البيانات</flux:table.column>
+                <flux:table.column class="text-center">رابط الدخول</flux:table.column>
+                <flux:table.column class="text-center">حالة الاعتماد</flux:table.column>
                 <flux:table.column class="text-center">تاريخ الإضافة</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
@@ -76,6 +78,20 @@
                             @endif
                         </flux:table.cell>
                         <flux:table.cell class="text-center">
+                            @if($student->is_data_completed)
+                                <flux:badge color="green" size="sm" icon="check-circle">{{ __('مكتملة') }}</flux:badge>
+                            @else
+                                <flux:badge color="amber" size="sm" icon="clock">{{ __('غير مكتملة') }}</flux:badge>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if ($student->access_token)
+                                <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('magic-link', ['token' => $student->access_token]) }}' }" @click.stop>
+                                    <flux:input readonly copyable class="max-w-xs text-xs" :value="route('magic-link', ['token' => $student->access_token])" />
+                                </div>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell class="text-center">
                             @if ($student->is_approved)
                                 <flux:badge size="sm" variant="success">معتمد</flux:badge>
                             @else
@@ -92,12 +108,15 @@
                                         class="bg-emerald-600 hover:bg-emerald-700"
                                         wire:click="approve({{ $student->id }})">موافقة</flux:button>
                                 @endif
-                                <flux:button size="sm" variant="ghost" icon="pencil-square"
-                                    wire:click="edit({{ $student->id }})" />
-                                <flux:button size="sm" variant="ghost" icon="trash"
-                                    class="text-red-500 hover:text-red-600"
-                                    wire:confirm="هل أنت متأكد من حذف هذا الطالب؟"
-                                    wire:click="delete({{ $student->id }})" />
+                                <flux:dropdown>
+                                    <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
+                                    <flux:menu>
+                                        <flux:menu.item wire:click="edit({{ $student->id }})" icon="pencil-square">{{ __('تعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:separator />
+                                        <flux:menu.item wire:click="resetToken({{ $student->id }})" wire:confirm="هل أنت متأكد من تغيير الرابط؟ سيتم إبطال الرابط القديم فوراً." variant="danger" icon="arrow-path">{{ __('إعادة إنشاء الرابط') }}</flux:menu.item>
+                                        <flux:menu.item wire:click="delete({{ $student->id }})" wire:confirm="هل أنت متأكد من حذف هذا الطالب؟" variant="danger" icon="trash">{{ __('حذف الطالب') }}</flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

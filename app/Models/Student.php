@@ -49,11 +49,14 @@ class Student extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'is_approved',
         'approved_by',
         'circle_id',
         'guardian_id',
+        'access_token',
+        'is_data_completed',
     ];
 
     /**
@@ -68,14 +71,45 @@ class Student extends Authenticatable
         'two_factor_secret',
     ];
 
-    public function getAbsencesInLast30DaysCount($date = null): int
+    public function getAbsencesInPeriodCount($date = null): int
     {
         $date = $date ? Carbon::parse($date) : now();
+        $days = (int) Setting::getVal('calculation_period_days', 30);
 
         return $this->attendances()
             ->where('status', 'absent')
-            ->whereBetween('date', [$date->copy()->subDays(30), $date])
+            ->whereBetween('date', [$date->copy()->subDays($days), $date])
             ->count();
+    }
+
+    public function getLatenessInPeriodCount($date = null): int
+    {
+        $date = $date ? Carbon::parse($date) : now();
+        $days = (int) Setting::getVal('calculation_period_days', 30);
+
+        return $this->attendances()
+            ->where('status', 'late')
+            ->whereBetween('date', [$date->copy()->subDays($days), $date])
+            ->count();
+    }
+
+    public function hasExceededAbsenceLimit($date = null): bool
+    {
+        $limit = (int) Setting::getVal('absence_limit', 3);
+
+        return $this->getAbsencesInPeriodCount($date) >= $limit;
+    }
+
+    public function hasExceededLatenessLimit($date = null): bool
+    {
+        $limit = (int) Setting::getVal('lateness_limit', 5);
+
+        return $this->getLatenessInPeriodCount($date) >= $limit;
+    }
+
+    public function getAbsencesInLast30DaysCount($date = null): int
+    {
+        return $this->getAbsencesInPeriodCount($date);
     }
 
     public function getGuardianPhoneAttribute()

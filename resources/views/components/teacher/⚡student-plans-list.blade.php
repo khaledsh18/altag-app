@@ -82,6 +82,7 @@ new class extends Component
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                 <flux:menu>
+                                    <flux:menu.item href="{{ route('teacher.plan-creator', ['edit' => $plan->id]) }}" icon="pencil">{{ __('تعديل') }}</flux:menu.item>
                                     <flux:menu.item href="{{ route('teacher.print-plan', $plan->id) }}" target="_blank" icon="printer">{{ __('عرض وطباعة') }}</flux:menu.item>
                                     <flux:menu.item wire:click="deletePlan({{ $plan->id }})" variant="danger" icon="trash">{{ __('حذف') }}</flux:menu.item>
                                 </flux:menu>

@@ -20,7 +20,7 @@ it('prevents student from accessing manager dashboard and redirects them', funct
     $student = Student::factory()->create();
     $response = actingAs($student, 'student')->get('/manager/dashboard');
     // Because auth:manager restricts the route, and the student active session is auth:student,
-    // the guest redirector will redirect to manager.login 
+    // the guest redirector will redirect to manager.login
     $response->assertRedirect(route('manager.login'));
 });
 

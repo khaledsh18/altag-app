@@ -83,11 +83,20 @@ class SyncQuranData extends Command
             $verses = $data['verses'];
 
             foreach ($verses as $v) {
-                $lineNumber = null;
+                $lineNumberStart = null;
+                $lineNumberEnd = null;
                 if (isset($v['words']) && is_array($v['words'])) {
+                    // Extract line start
+                    foreach ($v['words'] as $word) {
+                        if ($word['char_type_name'] === 'word') {
+                            $lineNumberStart = $word['line_number'];
+                            break;
+                        }
+                    }
+                    // Extract line end
                     foreach (array_reverse($v['words']) as $word) {
                         if ($word['char_type_name'] === 'end' || $word['char_type_name'] === 'word') {
-                            $lineNumber = $word['line_number'];
+                            $lineNumberEnd = $word['line_number'];
                             break;
                         }
                     }
@@ -107,7 +116,8 @@ class SyncQuranData extends Command
                         'manzil_number' => $v['manzil_number'],
                         'sajdah_type' => $v['sajdah_number'] ? ($v['sajdah_number'] > 0 ? 'required' : null) : null,
                         'text_uthmani' => $v['text_uthmani'],
-                        'line_number' => $lineNumber,
+                        'line_number_start' => $lineNumberStart,
+                        'line_number_end' => $lineNumberEnd,
                     ]
                 );
             }

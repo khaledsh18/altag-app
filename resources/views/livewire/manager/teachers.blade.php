@@ -27,8 +27,22 @@
                 <flux:select.option value="pending">في انتظار الموافقة</flux:select.option>
                 <flux:select.option value="approved">تمت الموافقة</flux:select.option>
             </flux:select>
+            </flux:select>
         </div>
     </div>
+
+    <!-- Quick Create Card -->
+    <flux:card>
+        <form wire:submit="createQuickTeacher" class="flex flex-col md:flex-row items-end gap-4">
+            <div class="w-full md:w-2/5">
+                <flux:input wire:model="quickName" label="{{ __('اسم المعلم') }}" placeholder="{{ __('مثال: محمد أحمد') }}" required />
+            </div>
+            <div class="w-full md:w-2/5">
+                <flux:input wire:model="quickPhone" label="{{ __('رقم الهاتف') }}" placeholder="{{ __('اختياري') }}" />
+            </div>
+            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء سريع') }}</flux:button>
+        </form>
+    </flux:card>
 
     <div
         class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
@@ -36,7 +50,9 @@
             <flux:table.columns>
                 <flux:table.column class="text-right">المعلم</flux:table.column>
                 <flux:table.column class="text-right">الحلقات</flux:table.column>
-                <flux:table.column class="text-center">الحالة</flux:table.column>
+                <flux:table.column class="text-center">حالة البيانات</flux:table.column>
+                <flux:table.column class="text-center">رابط الدخول</flux:table.column>
+                <flux:table.column class="text-center">حالة الاعتماد</flux:table.column>
                 <flux:table.column class="text-center">تاريخ الإضافة</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
@@ -65,6 +81,20 @@
                             </div>
                         </flux:table.cell>
                         <flux:table.cell class="text-center">
+                            @if($teacher->is_data_completed)
+                                <flux:badge color="green" size="sm" icon="check-circle">{{ __('مكتملة') }}</flux:badge>
+                            @else
+                                <flux:badge color="amber" size="sm" icon="clock">{{ __('غير مكتملة') }}</flux:badge>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if ($teacher->access_token)
+                                <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('teacher.magic-link', ['token' => $teacher->access_token]) }}' }" @click.stop>
+                                    <flux:input readonly copyable class="max-w-xs text-xs" :value="route('teacher.magic-link', ['token' => $teacher->access_token])" />
+                                </div>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell class="text-center">
                             @if ($teacher->is_approved)
                                 <flux:badge size="sm" variant="success">معتمد</flux:badge>
                             @else
@@ -81,12 +111,15 @@
                                         class="bg-emerald-600 hover:bg-emerald-700"
                                         wire:click="approve({{ $teacher->id }})">موافقة</flux:button>
                                 @endif
-                                <flux:button size="sm" variant="ghost" icon="pencil-square"
-                                    wire:click="edit({{ $teacher->id }})" />
-                                <flux:button size="sm" variant="ghost" icon="trash"
-                                    class="text-red-500 hover:text-red-600"
-                                    wire:confirm="هل أنت متأكد من حذف هذا المعلم؟"
-                                    wire:click="delete({{ $teacher->id }})" />
+                                <flux:dropdown>
+                                    <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
+                                    <flux:menu>
+                                        <flux:menu.item wire:click="edit({{ $teacher->id }})" icon="pencil-square">{{ __('تعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:separator />
+                                        <flux:menu.item wire:click="resetToken({{ $teacher->id }})" wire:confirm="هل أنت متأكد من تغيير الرابط؟ سيتم إبطال الرابط القديم فوراً." variant="danger" icon="arrow-path">{{ __('إعادة إنشاء الرابط') }}</flux:menu.item>
+                                        <flux:menu.item wire:click="delete({{ $teacher->id }})" wire:confirm="هل أنت متأكد من حذف هذا المعلم؟" variant="danger" icon="trash">{{ __('حذف المعلم') }}</flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
                             </div>
                         </flux:table.cell>
                     </flux:table.row>

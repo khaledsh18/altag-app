@@ -32,11 +32,6 @@ class Teacher extends Authenticatable
         return $this->hasMany(StudentPlan::class);
     }
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -44,6 +39,8 @@ class Teacher extends Authenticatable
         'password',
         'is_approved',
         'approved_by',
+        'access_token',
+        'is_data_completed',
     ];
 
     /**

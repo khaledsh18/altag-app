@@ -27,13 +27,14 @@ class ToggleAiProvider extends Command
     public function handle()
     {
         $path = config_path('ai.php');
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             $this->error('AI config file not found!');
+
             return 1;
         }
 
         $content = File::get($path);
-        
+
         // Determine current default by checking the 'default' key
         preg_match("/['\"]default['\"]\s*=>\s*['\"]([^'\"]+)['\"]/", $content, $matches);
         $currentProvider = $matches[1] ?? 'unknown';
@@ -53,7 +54,7 @@ class ToggleAiProvider extends Command
             'default_for_audio',
             'default_for_transcription',
             'default_for_embeddings',
-            'default_for_reranking'
+            'default_for_reranking',
         ];
 
         foreach ($keys as $key) {
@@ -63,7 +64,7 @@ class ToggleAiProvider extends Command
         File::put($path, $content);
 
         $this->info("Successfully switched all default AI providers to [{$newProvider}].");
-        
+
         // Clear config cache to ensure the changes take effect
         $this->call('config:clear');
 

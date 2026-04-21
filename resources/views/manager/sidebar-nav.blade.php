@@ -35,6 +35,10 @@
                 :current="request()->routeIs('manager.yearly-attendance')" wire:navigate>
                 متابعة الحلقات السنوي
             </flux:sidebar.item>
+            <flux:sidebar.item icon="exclamation-triangle" :href="route('manager.exceeded-limits')"
+                :current="request()->routeIs('manager.exceeded-limits')" wire:navigate>
+                لائحة التجاوزات
+            </flux:sidebar.item>
         </flux:sidebar.group>
     <flux:sidebar.group expandable expanded="false" heading="التحليل" class="grid">
         <flux:sidebar.item icon="sparkles" :href="route('manager.ai-analysis')"
@@ -47,5 +51,12 @@
         <flux:sidebar.item icon="book-open" :href="route('manager.quran-editor')"
             :current="request()->routeIs('manager.quran-editor')" wire:navigate>
             محرر الأسطر
+        </flux:sidebar.item>
+    </flux:sidebar.group>
+
+    <flux:sidebar.group expandable expanded="false" heading="إدارة النظام" class="grid">
+        <flux:sidebar.item icon="cog" :href="route('manager.settings')"
+            :current="request()->routeIs('manager.settings')" wire:navigate>
+            إعدادات الانضباط
         </flux:sidebar.item>
     </flux:sidebar.group>

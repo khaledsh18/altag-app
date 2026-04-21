@@ -2,21 +2,28 @@
 
 namespace App\Livewire\Manager;
 
-use Livewire\Component;
 use App\Models\Attendance;
-use Illuminate\Support\Facades\DB;
+use App\Models\Circle;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
 
 class AttendanceReports extends Component
 {
     public $tab = 'by_date'; // 'by_date' for Overall, 'by_tree' for Stage/Circle
+
     public $viewType = 'days'; // 'days' or 'months'
+
     public $fromDate;
+
     public $toDate;
 
     // PDF Print properties
     public $printFrom;
+
     public $printTo;
+
     public $showPrintModal = false;
 
     public function mount()
@@ -27,7 +34,9 @@ class AttendanceReports extends Component
 
     public function formatHijriDate($gregorianDate)
     {
-        if (!$gregorianDate) return '';
+        if (! $gregorianDate) {
+            return '';
+        }
         $formatter = new \IntlDateFormatter(
             'ar_SA@calendar=islamic-umalqura',
             \IntlDateFormatter::FULL,
@@ -36,12 +45,15 @@ class AttendanceReports extends Component
             \IntlDateFormatter::TRADITIONAL,
             'EEEE d MMMM yyyy'
         );
+
         return $formatter->format(is_string($gregorianDate) ? strtotime($gregorianDate) : $gregorianDate);
     }
 
     public function formatHijriMonth($dateStr)
     {
-        if (!$dateStr) return '';
+        if (! $dateStr) {
+            return '';
+        }
         // If dateStr is YYYY-MM, append -01
         if (strlen($dateStr) === 7) {
             $dateStr .= '-01';
@@ -54,6 +66,7 @@ class AttendanceReports extends Component
             \IntlDateFormatter::TRADITIONAL,
             'MMMM yyyy'
         );
+
         return $formatter->format(strtotime($dateStr));
     }
 
@@ -78,7 +91,7 @@ class AttendanceReports extends Component
             $dates[] = $d->format('Y-m-d');
         }
 
-        $circles = \App\Models\Circle::with('stage')->get();
+        $circles = Circle::with('stage')->get();
 
         $attendances = Attendance::whereBetween('date', [$this->printFrom, $this->printTo])
             ->select('circle_id', 'date', DB::raw('COUNT(*) as total'), DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"))
@@ -87,16 +100,16 @@ class AttendanceReports extends Component
 
         $attendanceData = [];
         foreach ($attendances as $att) {
-            $dateStr = $att->date instanceof \Carbon\Carbon ? $att->date->format('Y-m-d') : substr((string) $att->date, 0, 10);
+            $dateStr = $att->date instanceof Carbon ? $att->date->format('Y-m-d') : substr((string) $att->date, 0, 10);
             $attendanceData[$att->circle_id][$dateStr] = [
                 'present' => $att->present_count,
-                'total' => $att->total
+                'total' => $att->total,
             ];
         }
 
         $groupedCircles = $circles->groupBy('stage.name');
 
-        $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('pdf.attendance-report', [
+        $pdf = LaravelMpdf::loadView('pdf.attendance-report', [
             'dates' => $dates,
             'groupedCircles' => $groupedCircles,
             'attendanceData' => $attendanceData,
@@ -130,7 +143,7 @@ class AttendanceReports extends Component
 
         // --- 1. Overall Reports (By Date or By Month) ---
         $overallQuery = clone $query;
-        
+
         if ($this->viewType === 'months') {
             // Group by month using SQLite strftime
             $overallQuery->select(
@@ -172,7 +185,7 @@ class AttendanceReports extends Component
                 DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
                 DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
             )->groupBy('period', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
-            ->orderBy('stages.id')->orderBy('period', 'desc')->orderBy('circles.id');
+                ->orderBy('stages.id')->orderBy('period', 'desc')->orderBy('circles.id');
         } else {
             $treeQuery->select(
                 'date as period',
@@ -186,7 +199,7 @@ class AttendanceReports extends Component
                 DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
                 DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
             )->groupBy('date', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
-            ->orderBy('stages.id')->orderBy('date', 'desc')->orderBy('circles.id');
+                ->orderBy('stages.id')->orderBy('date', 'desc')->orderBy('circles.id');
         }
 
         $rawRecords = $treeQuery->get();
@@ -195,14 +208,14 @@ class AttendanceReports extends Component
         $tree = [];
         foreach ($rawRecords as $row) {
             $period = $row->period;
-            
+
             // Setup Stage
-            if (!isset($tree[$row->stage_id])) {
+            if (! isset($tree[$row->stage_id])) {
                 $tree[$row->stage_id] = [
                     'id' => $row->stage_id,
                     'name' => $row->stage_name,
                     'stats' => ['total' => 0, 'present_count' => 0, 'absent_count' => 0, 'late_count' => 0, 'excused_count' => 0],
-                    'periods' => []
+                    'periods' => [],
                 ];
             }
 
@@ -214,11 +227,11 @@ class AttendanceReports extends Component
             $tree[$row->stage_id]['stats']['excused_count'] += $row->excused_count;
 
             // Setup Period within Stage
-            if (!isset($tree[$row->stage_id]['periods'][$period])) {
+            if (! isset($tree[$row->stage_id]['periods'][$period])) {
                 $tree[$row->stage_id]['periods'][$period] = [
                     'period' => $period,
                     'stats' => ['total' => 0, 'present_count' => 0, 'absent_count' => 0, 'late_count' => 0, 'excused_count' => 0],
-                    'circles' => []
+                    'circles' => [],
                 ];
             }
 

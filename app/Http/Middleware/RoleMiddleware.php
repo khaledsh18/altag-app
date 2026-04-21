@@ -25,13 +25,13 @@ class RoleMiddleware
             $hasRole = false;
             foreach ($roles as $role) {
                 $guard = $role === 'parent' ? 'guardian' : $role;
-                if ($user instanceof ("App\\Models\\" . ucfirst($guard))) {
+                if ($user instanceof ('App\\Models\\'.ucfirst($guard))) {
                     $hasRole = true;
                     break;
                 }
             }
 
-            if (!$hasRole) {
+            if (! $hasRole) {
                 return redirect()->route('dashboard');
             }
         }

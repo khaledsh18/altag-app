@@ -42,7 +42,7 @@
     .dark {
         --color-accent: var(--color-red-secondary);
         --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-maroon);
+        --color-accent-foreground: var(--color-white);
     }
 }
 

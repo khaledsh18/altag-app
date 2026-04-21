@@ -9,18 +9,22 @@ use App\Models\StudentPlanDay;
 use App\Services\QuranPlanService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 
 new class extends Component {
+    #[Url]
+    public $edit = null;
+
     public $studentId;
     public $startDate;
     public $daysCount = 30;
     public $activeDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday'];
     public $description;
-    public $planType = 'hifz_review'; // 'hifz', 'hifz_review', 'review'
+    public $planType = 'hifz_review';
 
     public $planDays = [];
     public $allSurahs = [];
-    public $fillDirection = 'reverse'; // تصاعدي / تنازلي
+    public $fillDirection = 'reverse';
     public $fillTarget = 'hifz';
     public $bulkStartSurah;
     public $bulkStartVerse;
@@ -29,11 +33,40 @@ new class extends Component {
 
     public function mount()
     {
-        $this->startDate = now()->format('Y-m-d');
         $this->allSurahs = Surah::orderBy('id')->get();
         $this->bulkStartSurah = 114;
         $this->bulkStartVerse = 1;
-        $this->studentId = Student::where('id', Auth::guard('teacher')->user()->id)->first()->id ?? null;
+
+        if ($this->edit) {
+            $plan = StudentPlan::with('days.fromAyah', 'days.toAyah', 'days.reviewFromAyah', 'days.reviewToAyah')->findOrFail($this->edit);
+            $this->studentId = $plan->student_id;
+            $this->startDate = $plan->start_date->format('Y-m-d');
+            $this->daysCount = $plan->days_count;
+            $this->activeDays = $plan->active_days ?? [];
+            $this->description = $plan->description;
+            $this->planType = $plan->plan_type;
+            
+            $this->planDays = $plan->days->map(function($d) {
+                return [
+                    'id' => $d->id,
+                    'date' => $d->date->toDateString(),
+                    'hijri' => $this->getHijriLabel($d->date),
+                    'day_name_ar' => $d->day_name,
+                    'from_surah_id' => $d->fromAyah?->surah_id,
+                    'from_verse' => $d->fromAyah?->verse_number,
+                    'to_surah_id' => $d->toAyah?->surah_id,
+                    'to_verse' => $d->toAyah?->verse_number,
+                    'review_from_surah_id' => $d->reviewFromAyah?->surah_id,
+                    'review_from_verse' => $d->reviewFromAyah?->verse_number,
+                    'review_to_surah_id' => $d->reviewToAyah?->surah_id,
+                    'review_to_verse' => $d->reviewToAyah?->verse_number,
+                    'selected' => false,
+                ];
+            })->toArray();
+        } else {
+            $this->startDate = now()->format('Y-m-d');
+            $this->studentId = Student::where('circle_id', Auth::guard('teacher')->user()->circles()->first()?->id)->first()->id ?? null;
+        }
     }
 
     public function updatedBulkStartSurah()
@@ -271,16 +304,31 @@ new class extends Component {
             'planDays' => 'required|array|min:1',
         ]);
 
-        $plan = StudentPlan::create([
-            'student_id' => $this->studentId,
-            'teacher_id' => Auth::guard('teacher')->id(),
-            'start_date' => $this->startDate,
-            'days_count' => $this->daysCount,
-            'active_days' => $this->activeDays,
-            'description' => $this->description,
-            'plan_type' => $this->planType,
-            'status' => 'active',
-        ]);
+        if ($this->edit) {
+            $plan = StudentPlan::findOrFail($this->edit);
+            $plan->update([
+                'student_id' => $this->studentId,
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
+                'active_days' => $this->activeDays,
+                'description' => $this->description,
+                'plan_type' => $this->planType,
+            ]);
+
+            $existingIds = collect($this->planDays)->pluck('id')->filter()->toArray();
+            $plan->days()->whereNotIn('id', $existingIds)->delete();
+        } else {
+            $plan = StudentPlan::create([
+                'student_id' => $this->studentId,
+                'teacher_id' => Auth::guard('teacher')->id(),
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
+                'active_days' => $this->activeDays,
+                'description' => $this->description,
+                'plan_type' => $this->planType,
+                'status' => 'active',
+            ]);
+        }
 
         foreach ($this->planDays as $dayData) {
             $from = null;
@@ -298,20 +346,26 @@ new class extends Component {
                 $revTo = Ayah::where('surah_id', $dayData['review_to_surah_id'])->where('verse_number', $dayData['review_to_verse'])->first();
             }
 
-            $plan->days()->create([
+            $dayAttributes = [
                 'date' => $dayData['date'],
                 'day_name' => $dayData['day_name_ar'],
                 'from_ayah_id' => $from?->id,
                 'to_ayah_id' => $to?->id,
                 'review_from_ayah_id' => $revFrom?->id,
                 'review_to_ayah_id' => $revTo?->id,
-            ]);
+            ];
+
+            if (isset($dayData['id'])) {
+                $plan->days()->where('id', $dayData['id'])->update($dayAttributes);
+            } else {
+                $plan->days()->create($dayAttributes);
+            }
         }
 
-        return redirect()->route('teacher.dashboard')->with('success', 'تم حفظ الخطة بنجاح');
+        return redirect()->route('teacher.student-plans')->with('success', 'تم حفظ الخطة بنجاح');
     }
 
-    protected function getHijriLabel(Carbon $date)
+    protected function getHijriLabel(\DateTimeInterface $date)
     {
         $formatter = new \IntlDateFormatter(
             'ar_SA@calendar=islamic-umalqura',
@@ -321,7 +375,7 @@ new class extends Component {
             \IntlDateFormatter::TRADITIONAL,
             'd MMMM yyyy'
         );
-        return $formatter->format($date->timestamp);
+        return $formatter->format($date->getTimestamp());
     }
 
     protected function translateDay($day)

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasProfile;
+use Database\Factories\ManagerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,7 +11,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class Manager extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\ManagerFactory> */
+    /** @use HasFactory<ManagerFactory> */
     use HasFactory, HasProfile, Notifiable, TwoFactorAuthenticatable;
 
     /**

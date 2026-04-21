@@ -3,6 +3,7 @@
 namespace App\Livewire\Auth\Teacher;
 
 use App\Models\Teacher;
+use App\Rules\SaudiPhone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +16,8 @@ class Register extends Component
 
     public string $email = '';
 
+    public string $phone = '';
+
     public string $password = '';
 
     public string $password_confirmation = '';
@@ -24,12 +27,14 @@ class Register extends Component
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:teachers'],
+            'phone' => ['required', new SaudiPhone, 'unique:teachers,phone'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
         $user = Teacher::create([
             'name' => $this->name,
             'email' => $this->email,
+            'phone' => SaudiPhone::format($this->phone),
             'password' => Hash::make($this->password),
             'is_approved' => false,
         ]);

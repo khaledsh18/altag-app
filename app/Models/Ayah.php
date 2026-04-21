@@ -19,7 +19,8 @@ class Ayah extends Model
         'manzil_number',
         'sajdah_type',
         'text_uthmani',
-        'line_number',
+        'line_number_start',
+        'line_number_end',
     ];
 
     public function surah()

@@ -5,6 +5,8 @@ namespace App\Livewire\Manager;
 use App\Models\Circle;
 use App\Models\Teacher;
 use Flux\Flux;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Teachers extends Component
@@ -22,6 +24,10 @@ class Teachers extends Component
     public array $selectedCircles = [];
 
     public $editingTeacherId = null;
+
+    public string $quickName = '';
+
+    public string $quickPhone = '';
 
     public string $search = '';
 
@@ -92,6 +98,42 @@ class Teachers extends Component
         ]);
         $this->loadData();
         Flux::toast(__('تمت الموافقة على المعلم بنجاح'), variant: 'success');
+    }
+
+    public function createQuickTeacher()
+    {
+        $this->validate([
+            'quickName' => 'required|string|min:2|max:255',
+            'quickPhone' => 'nullable|string|max:20',
+        ]);
+
+        Teacher::create([
+            'name' => $this->quickName,
+            'phone' => $this->quickPhone,
+            'email' => 'teacher_'.Str::random(10).'@uncompleted.altag.app',
+            'password' => Hash::make(Str::random(10)),
+            'is_approved' => true,
+            'approved_by' => auth()->id(),
+            'access_token' => Str::random(32),
+            'is_data_completed' => false,
+        ]);
+
+        $this->reset(['quickName', 'quickPhone']);
+        $this->loadData();
+
+        Flux::toast(__('تم إنشاء حساب المعلم بنجاح'), variant: 'success');
+    }
+
+    public function resetToken($id)
+    {
+        $teacher = Teacher::find($id);
+        if ($teacher) {
+            $teacher->update([
+                'access_token' => Str::random(32),
+            ]);
+            $this->loadData();
+            Flux::toast(__('تم إعادة إنشاء الرابط السحري بنجاح'), variant: 'success');
+        }
     }
 
     public function edit($id)

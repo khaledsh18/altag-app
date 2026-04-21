@@ -12,6 +12,16 @@
         <flux:input name="email" :label="__('البريد الإلكتروني')" wire:model="email" type="email" required
             autocomplete="email" placeholder="email@example.com" />
 
+        <flux:field>
+            <flux:label>{{ __('رقم الهاتف') }}</flux:label>
+            <div class="flex items-center gap-2 mt-1" dir="ltr">
+                <div class="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-lg px-3 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 font-mono shadow-sm h-10 shrink-0">966</div>
+                <flux:input name="phone" wire:model="phone" type="tel" required
+                    class="w-full mt-0!" dir="ltr" placeholder="5XXXXXXXX" />
+            </div>
+            <flux:error name="phone" />
+        </flux:field>
+
         <!-- Password -->
         <flux:input name="password" :label="__('كلمة المرور')" wire:model="password" type="password" required
             autocomplete="new-password" :placeholder="__('كلمة المرور')" viewable />

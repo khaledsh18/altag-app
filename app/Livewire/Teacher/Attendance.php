@@ -3,6 +3,7 @@
 namespace App\Livewire\Teacher;
 
 use App\Models\Attendance as AttendanceModel;
+use App\Models\Setting;
 use App\Models\Student;
 use Flux\Flux;
 use Livewire\Component;
@@ -228,27 +229,47 @@ class Attendance extends Component
         return collect($this->records)->filter(fn ($s) => ! empty($s))->count();
     }
 
-    public function getWhatsAppMessage(Student $student): string
+    public function getWhatsAppMessage(Student $student, string $status = 'absent'): string
     {
         $hijriDate = $this->getHijriDate();
-        $absencesCount = $student->getAbsencesInLast30DaysCount($this->date);
 
+        $count = $status === 'late'
+            ? $student->getLatenessInPeriodCount($this->date)
+            : $student->getAbsencesInPeriodCount($this->date);
+
+        $limitName = $status === 'late' ? 'lateness_limit' : 'absence_limit';
+        $limit = (int) Setting::getVal($limitName, $status === 'late' ? 5 : 3);
+        $statusText = $status === 'late' ? 'متأخر' : 'غائب';
+
+        if ($statusText == 'متأخر') {
+            $statusText = 'حضر الحلقة متأخراً';
+        }
         $ordinals = [
-            1 => 'أول',
-            2 => 'ثاني',
-            3 => 'ثالث',
-            4 => 'رابع',
-            5 => 'خامس',
-            6 => 'سادس',
-            7 => 'سابع',
-            8 => 'ثامن',
-            9 => 'تاسع',
-            10 => 'عاشر',
+            1 => 'الأولى',
+            2 => 'الثانية',
+            3 => 'الثالثة',
+            4 => 'الرابعة',
+            5 => 'الخامسة',
+            6 => 'السادسة',
+            7 => 'السابعة',
+            8 => 'الثامنة',
+            9 => 'التاسعة',
+            10 => 'العاشرة',
         ];
 
-        $ordinal = $ordinals[$absencesCount] ?? $absencesCount;
+        $ordinal = $ordinals[$count] ?? $count;
 
-        return "السلام عليكم ورحمة الله وبركاته\n نود ان نشعركم بأن الطالب {$student->name} غائب اليوم {$hijriDate}\n و انه هذه {$ordinal} حالة غياب تم تسجيلها عليه \n`وفي حال تم تسجيل ثلاث حالات غياب على الطالب بلا عذر فسيتم ايقافه`";
+        $msg = "السلام عليكم ورحمة الله وبركاته\nنود إشعاركم بأن الطالب {$student->name} {$statusText} وذلك في اليوم {$hijriDate} وهذه للمرة {$ordinal}";
+
+        if ($count >= $limit) {
+            $msg .= " ويكون بذلك `تجاوز حد {$limit} ايام وسيتم إحالته للإدارة`.";
+        } else {
+            $statusText = $status === 'late' ? 'تأخر' : 'غياب';
+
+            $msg .= " \n`وفي حال تم تسجيل {$limit} حالات {$statusText} على الطالب بلا عذر فسيتم إحالته للإدارة`";
+        }
+
+        return $msg;
     }
 
     private function getHijriDate(): string

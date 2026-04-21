@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\Guardian;
+use App\Models\Manager;
+use App\Models\Student;
+use App\Models\Supervisor;
+use App\Models\Teacher;
 use App\Models\User;
 
 return [
@@ -84,27 +89,27 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', \App\Models\Manager::class),
+            'model' => env('AUTH_MODEL', Manager::class),
         ],
         'managers' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Manager::class,
+            'model' => Manager::class,
         ],
         'supervisors' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Supervisor::class,
+            'model' => Supervisor::class,
         ],
         'teachers' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Teacher::class,
+            'model' => Teacher::class,
         ],
         'students' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Student::class,
+            'model' => Student::class,
         ],
         'guardians' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Guardian::class,
+            'model' => Guardian::class,
         ],
     ],
 

@@ -2,6 +2,8 @@
 
 namespace App\Concerns;
 
+use App\Models\Manager;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 trait ProfileValidationRules
@@ -36,7 +38,7 @@ trait ProfileValidationRules
      */
     protected function emailRules(?int $userId = null, ?string $modelClass = null): array
     {
-        $modelClass = $modelClass ?? (\Illuminate\Support\Facades\Auth::check() ? get_class(\Illuminate\Support\Facades\Auth::user()) : \App\Models\Manager::class);
+        $modelClass = $modelClass ?? (Auth::check() ? get_class(Auth::user()) : Manager::class);
 
         return [
             'required',

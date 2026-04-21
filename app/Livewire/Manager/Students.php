@@ -6,6 +6,7 @@ use App\Models\Circle;
 use App\Models\Guardian;
 use App\Models\Student;
 use Flux\Flux;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Students extends Component
@@ -155,6 +156,18 @@ class Students extends Component
         $student->delete();
         $this->loadData();
         Flux::toast(__('تم حذف الطالب بنجاح'), variant: 'success');
+    }
+
+    public function resetToken($id)
+    {
+        $student = Student::find($id);
+        if ($student) {
+            $student->update([
+                'access_token' => Str::random(32),
+            ]);
+            $this->loadData();
+            Flux::toast(__('تم إعادة إنشاء الرابط السحري بنجاح'), variant: 'success');
+        }
     }
 
     public function cancel()

@@ -4,6 +4,7 @@ namespace App\Livewire\Manager;
 
 use App\Models\Attendance as AttendanceModel;
 use App\Models\Circle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Modelable;
 use Livewire\Component;
@@ -35,7 +36,7 @@ class HijriDatepicker extends Component
 
     public function getHijriFormattedDateProperty()
     {
-        if (!$this->date) {
+        if (! $this->date) {
             return '';
         }
         $formatter = new \IntlDateFormatter(
@@ -46,6 +47,7 @@ class HijriDatepicker extends Component
             \IntlDateFormatter::TRADITIONAL,
             'd MMMM yyyy'
         );
+
         return $formatter->format(strtotime($this->date));
     }
 
@@ -69,7 +71,7 @@ class HijriDatepicker extends Component
     {
         $this->date = $gregorianDate;
         $this->open = false;
-        
+
         // Optionally update view to selected month
         $cal = \IntlCalendar::createInstance('Asia/Riyadh', 'ar_SA@calendar=islamic-umalqura');
         $cal->setTime(strtotime($this->date) * 1000);
@@ -81,20 +83,20 @@ class HijriDatepicker extends Component
     {
         $cal = \IntlCalendar::createInstance('Asia/Riyadh', 'ar_SA@calendar=islamic-umalqura');
         $cal->setTime($this->currentViewTimestamp * 1000);
-        
+
         $monthLength = $cal->getActualMaximum(\IntlCalendar::FIELD_DAY_OF_MONTH);
         $startDayOfWeek = $cal->get(\IntlCalendar::FIELD_DAY_OF_WEEK); // 1 = Sunday
-        
+
         $monthNameFormatter = new \IntlDateFormatter('ar_SA@calendar=islamic-umalqura', \IntlDateFormatter::FULL, \IntlDateFormatter::NONE, 'Asia/Riyadh', \IntlDateFormatter::TRADITIONAL, 'MMMM yyyy');
         $monthName = $monthNameFormatter->format($this->currentViewTimestamp);
 
         // Fetch overall circle count
         $totalCirclesCount = Circle::count();
-        
+
         // Calculate bounds
         $cal->set(\IntlCalendar::FIELD_DAY_OF_MONTH, 1);
         $startTimestamp = $cal->getTime() / 1000;
-        
+
         $cal->set(\IntlCalendar::FIELD_DAY_OF_MONTH, $monthLength);
         $endTimestamp = $cal->getTime() / 1000;
 
@@ -107,11 +109,11 @@ class HijriDatepicker extends Component
             ->groupBy('date')
             ->get()
             ->mapWithKeys(function ($item) {
-                return [\Carbon\Carbon::parse($item->date)->format('Y-m-d') => $item->circles_completed];
+                return [Carbon::parse($item->date)->format('Y-m-d') => $item->circles_completed];
             });
-        
+
         $days = [];
-        $emptySlots = $startDayOfWeek - 1; 
+        $emptySlots = $startDayOfWeek - 1;
 
         for ($i = 0; $i < $emptySlots; $i++) {
             $days[] = null;
@@ -121,14 +123,14 @@ class HijriDatepicker extends Component
             $cal->set(\IntlCalendar::FIELD_DAY_OF_MONTH, $i);
             $dayTimestamp = $cal->getTime() / 1000;
             $gregDate = date('Y-m-d', $dayTimestamp);
-            
+
             $completedCirclesCount = $attendancesCounts->get($gregDate, 0);
-            
+
             $colorClass = 'bg-white hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700'; // Default
-            
+
             if ($completedCirclesCount > 0 && $totalCirclesCount > 0) {
                 $ratio = $completedCirclesCount / $totalCirclesCount;
-                
+
                 if ($ratio >= 1.0) {
                     $colorClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 transition-colors border-green-200';
                 } elseif ($ratio >= 0.5) {
@@ -137,7 +139,7 @@ class HijriDatepicker extends Component
                     $colorClass = 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 transition-colors border-amber-100';
                 }
             }
-            
+
             $completionRate = $totalCirclesCount > 0 ? min(100, round(($completedCirclesCount / $totalCirclesCount) * 100)) : 0;
 
             $days[] = [

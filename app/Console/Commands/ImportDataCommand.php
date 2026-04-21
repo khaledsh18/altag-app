@@ -2,16 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\File;
-use App\Models\Stage;
+use App\Models\Attendance;
 use App\Models\Circle;
-use App\Models\Teacher;
-use App\Models\Student;
 use App\Models\Guardian;
 use App\Models\Manager;
+use App\Models\Stage;
+use App\Models\Student;
+use App\Models\Teacher;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 
 class ImportDataCommand extends Command
 {
@@ -36,19 +37,21 @@ class ImportDataCommand extends Command
     {
         $path = $this->argument('path');
 
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             $this->error("File {$path} not found.");
+
             return;
         }
 
         $jsonData = json_decode(File::get($path), true);
 
-        if (!$jsonData) {
-            $this->error("Invalid JSON data.");
+        if (! $jsonData) {
+            $this->error('Invalid JSON data.');
+
             return;
         }
 
-        $this->info("Importing data...");
+        $this->info('Importing data...');
 
         DB::beginTransaction();
         try {
@@ -63,14 +66,14 @@ class ImportDataCommand extends Command
             $students = [];
             $guardians = [];
             $attendance = [];
-            
+
             // Loop through JSON to categorize
             foreach ($jsonData as $item) {
                 if (isset($item['all_password'])) {
                     $configDetails = $item;
-                } elseif (isset($item['المرحلة']) && !isset($item['الحلقة']) && !isset($item['المعلم'])) {
+                } elseif (isset($item['المرحلة']) && ! isset($item['الحلقة']) && ! isset($item['المعلم'])) {
                     $stages[] = $item;
-                } elseif (isset($item['الحلقة']) && isset($item['المرحلة']) && !isset($item['المعلم'])) {
+                } elseif (isset($item['الحلقة']) && isset($item['المرحلة']) && ! isset($item['المعلم'])) {
                     $circles[] = $item;
                 } elseif (isset($item['المعلم'])) {
                     $teachers[] = $item;
@@ -83,7 +86,7 @@ class ImportDataCommand extends Command
                 }
             }
 
-            $this->info("Wiping existing data...");
+            $this->info('Wiping existing data...');
             DB::statement('PRAGMA foreign_keys = OFF');
             DB::table('attendances')->truncate();
             DB::table('students')->truncate();
@@ -104,7 +107,7 @@ class ImportDataCommand extends Command
                         'is_approved' => true,
                     ]
                 );
-                $this->info("Manager imported.");
+                $this->info('Manager imported.');
                 $defaultPassword = Hash::make($configDetails['all_password']);
             } else {
                 $defaultPassword = Hash::make('password');
@@ -117,24 +120,24 @@ class ImportDataCommand extends Command
                     ['name' => $stageData['المرحلة']]
                 );
             }
-            $this->info("Stages imported.");
+            $this->info('Stages imported.');
 
             // 3. Circles
             foreach ($circles as $circleData) {
                 Circle::updateOrCreate(
                     ['id' => $circleData['id']],
                     [
-                        'name' => $circleData['الحلقة'], 
-                        'stage_id' => $circleData['المرحلة']
+                        'name' => $circleData['الحلقة'],
+                        'stage_id' => $circleData['المرحلة'],
                     ]
                 );
             }
-            $this->info("Circles imported.");
+            $this->info('Circles imported.');
 
             // 4. Teachers
             foreach ($teachers as $teacherData) {
                 // Email wasn't provided, generate one
-                $email = "teacher" . $teacherData['id'] . "@example.com";
+                $email = 'teacher'.$teacherData['id'].'@example.com';
                 $teacher = Teacher::updateOrCreate(
                     ['id' => $teacherData['id']],
                     [
@@ -144,17 +147,17 @@ class ImportDataCommand extends Command
                         'is_approved' => true,
                     ]
                 );
-                
+
                 // Attach to circle
                 if (isset($teacherData['الحلقة'])) {
                     $teacher->circles()->syncWithoutDetaching([$teacherData['الحلقة']]);
                 }
             }
-            $this->info("Teachers imported.");
+            $this->info('Teachers imported.');
 
             // 5. Students
             foreach ($students as $studentData) {
-                $email = "student" . $studentData['id'] . "@example.com";
+                $email = 'student'.$studentData['id'].'@example.com';
                 Student::updateOrCreate(
                     ['id' => $studentData['id']],
                     [
@@ -166,12 +169,12 @@ class ImportDataCommand extends Command
                     ]
                 );
             }
-            $this->info("Students imported.");
+            $this->info('Students imported.');
 
             // 6. Guardians
             foreach ($guardians as $guardIdx => $guardianData) {
-                $email = "guardian" . ($guardIdx + 1) . "@example.com";
-                
+                $email = 'guardian'.($guardIdx + 1).'@example.com';
+
                 // Try format phone
                 $phone = $guardianData['رقم الجوال'];
                 // Some logic allows standardizing phone if needed, we insert as is
@@ -194,56 +197,56 @@ class ImportDataCommand extends Command
                     }
                 }
             }
-            $this->info("Guardians imported.");
+            $this->info('Guardians imported.');
 
             // 7. Attendance
-            if (!empty($attendance)) {
+            if (! empty($attendance)) {
                 foreach ($attendance as $att) {
-                    \App\Models\Attendance::create([
+                    Attendance::create([
                         'student_id' => $att['student_id'],
                         'teacher_id' => $att['teacher_id'] ?? null,
-                        'circle_id'  => $att['circle_id'],
-                        'date'       => $att['date'],
-                        'status'     => $att['status'],
-                        'notes'      => $att['notes'] ?? null,
+                        'circle_id' => $att['circle_id'],
+                        'date' => $att['date'],
+                        'status' => $att['status'],
+                        'notes' => $att['notes'] ?? null,
                     ]);
                 }
-                $this->info("Attendance records imported.");
+                $this->info('Attendance records imported.');
             } else {
                 // Optional: Generate some dummy attendance if empty to show reports
-                $this->info("No attendance data in JSON. Generating dummy records for the last 15 days...");
+                $this->info('No attendance data in JSON. Generating dummy records for the last 15 days...');
                 $allStudents = Student::all();
                 $statuses = ['present', 'present', 'present', 'absent', 'late', 'excused'];
-                
+
                 // Cache teachers by circle to avoid repeated queries
                 $circleTeachers = [];
-                
+
                 for ($i = 0; $i < 15; $i++) {
                     $date = now()->subDays($i)->format('Y-m-d');
                     foreach ($allStudents as $student) {
-                        if (!isset($circleTeachers[$student->circle_id])) {
+                        if (! isset($circleTeachers[$student->circle_id])) {
                             $circleTeachers[$student->circle_id] = DB::table('circle_teacher')
                                 ->where('circle_id', $student->circle_id)
                                 ->first()?->teacher_id;
                         }
 
-                        \App\Models\Attendance::create([
+                        Attendance::create([
                             'student_id' => $student->id,
                             'teacher_id' => $circleTeachers[$student->circle_id] ?? 1, // Fallback to 1 if no teacher
-                            'circle_id'  => $student->circle_id,
-                            'date'       => $date,
-                            'status'     => $statuses[array_rand($statuses)],
+                            'circle_id' => $student->circle_id,
+                            'date' => $date,
+                            'status' => $statuses[array_rand($statuses)],
                         ]);
                     }
                 }
             }
 
             DB::commit();
-            $this->info("Data imported successfully!");
+            $this->info('Data imported successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error("Failed to import data: " . $e->getMessage());
+            $this->error('Failed to import data: '.$e->getMessage());
         }
     }
 }

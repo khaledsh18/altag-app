@@ -231,13 +231,25 @@
                         </div>
 
                         <div class="flex gap-2 mr-9 sm:mr-0">
-                             @if ($student->guardian_phone && ($records[$student->id] ?? '') === 'absent')
-                                 <a class="whatsapp-link"
-                                     href="https://wa.me/{{ $student->guardian_phone }}/?text={{ urlencode($this->getWhatsAppMessage($student)) }}"
-                                     target="_blank" title="تواصل عبر واتساب">
-                                     <flux:icon icon="chat-bubble-left-right"
-                                         class="size-5 text-green-500 hover:text-green-600 transition-colors" />
-                                 </a>
+                             @if (in_array($records[$student->id] ?? '', ['absent', 'late']))
+                                 @php $msg = $this->getWhatsAppMessage($student, $records[$student->id]); @endphp
+                                 @if ($student->guardian_phone)
+                                     <a class="whatsapp-link"
+                                         href="https://wa.me/{{ $student->guardian_phone }}/?text={{ urlencode($msg) }}"
+                                         target="_blank" title="تواصل عبر واتساب">
+                                         <flux:icon icon="chat-bubble-left-right"
+                                             class="size-5 text-green-500 hover:text-green-600 transition-colors" />
+                                     </a>
+                                 @else
+                                     <button x-data="{ copied: false }" 
+                                             data-msg="{{ $msg }}"
+                                             x-on:click="navigator.clipboard.writeText($el.dataset.msg).then(() => { copied = true; setTimeout(() => copied = false, 2000); })"
+                                             title="لا يوجد رقم - نسخ الرسالة" 
+                                             class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors flex items-center justify-center">
+                                         <flux:icon x-show="!copied" icon="clipboard-document" class="size-5" />
+                                         <flux:icon x-cloak x-show="copied" icon="check" class="size-5 text-green-500" />
+                                     </button>
+                                 @endif
                              @endif
                             @php $currentStatus = $records[$student->id] ?? ''; @endphp
 

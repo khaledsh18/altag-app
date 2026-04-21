@@ -112,7 +112,7 @@ class Circles extends Component
         $circle = Circle::findOrFail($id);
         $this->editingCircleId = $circle->id;
         $this->name = $circle->name;
-        $this->description = $circle->description;
+        $this->description = $circle->description ?? '';
         $this->stage_id = $circle->stage_id;
         $this->selectedTeachers = $circle->teachers->pluck('id')->toArray();
         Flux::modal('circle-modal')->show();

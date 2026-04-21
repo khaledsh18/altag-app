@@ -8,8 +8,8 @@ use App\Models\Teacher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -57,6 +57,7 @@ class PendingApprovals extends Component
     public function pendingUsers()
     {
         $model = $this->getModelClass();
+
         return $model::query()
             ->where('is_approved', false)
             ->latest()
