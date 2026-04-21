@@ -1,7 +1,6 @@
 <?php
 
 use Livewire\Component;
-
 use App\Models\Student;
 use App\Models\StudentPlan;
 use App\Models\StudentPlanDay;
@@ -13,6 +12,7 @@ new class extends Component {
     public $planId = null;
     public $dayId = null;
 
+    /** Persisted in DB — also @entangled to Alpine for instant visual feedback */
     public $hifzAchievement = null;
     public $reviewAchievement = null;
 
@@ -20,15 +20,15 @@ new class extends Component {
     {
         $teacher = Auth::guard('teacher')->user();
         $circleIds = $teacher->circles()->pluck('id');
-        
+
         $students = Student::whereIn('circle_id', $circleIds)->get();
-        
+
         $plans = [];
         if ($this->studentId) {
             $plans = StudentPlan::where('student_id', $this->studentId)
-                        ->where('teacher_id', $teacher->id)
-                        ->latest()
-                        ->get();
+                ->where('teacher_id', $teacher->id)
+                ->latest()
+                ->get();
         }
 
         $currentDay = null;
@@ -37,13 +37,11 @@ new class extends Component {
 
         if ($this->dayId) {
             $currentDay = StudentPlanDay::with(['fromAyah.surah', 'toAyah.surah', 'reviewFromAyah.surah', 'reviewToAyah.surah', 'plan'])->find($this->dayId);
-            
+
             if ($currentDay) {
-                // "Next Day" theoretically means moving forward in time
                 $hasNext = StudentPlanDay::where('student_plan_id', $this->planId)
                     ->where('date', '>', $currentDay->date)
                     ->exists();
-                // "Previous Day" means moving backward in time
                 $hasPrev = StudentPlanDay::where('student_plan_id', $this->planId)
                     ->where('date', '<', $currentDay->date)
                     ->exists();
@@ -65,14 +63,14 @@ new class extends Component {
         $this->dayId = null;
         $this->hifzAchievement = null;
         $this->reviewAchievement = null;
-        
+
         if ($this->studentId) {
             $teacher = Auth::guard('teacher')->user();
             $firstPlan = StudentPlan::where('student_id', $this->studentId)
-                        ->where('teacher_id', $teacher->id)
-                        ->latest()
-                        ->first();
-                        
+                ->where('teacher_id', $teacher->id)
+                ->latest()
+                ->first();
+
             if ($firstPlan) {
                 $this->planId = $firstPlan->id;
                 $this->updatedPlanId();
@@ -83,12 +81,12 @@ new class extends Component {
     public function updatedPlanId()
     {
         $this->dayId = null;
-        
+
         if ($this->planId) {
             $oldestIncomplete = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNull('hifz_achievement')
-                      ->orWhereNull('review_achievement');
+                        ->orWhereNull('review_achievement');
                 })
                 ->orderBy('date', 'asc')
                 ->first();
@@ -144,19 +142,26 @@ new class extends Component {
         }
     }
 
-    public function setHifz($val = null)
+    /**
+     * Alpine calls this in the background — no UI blocking.
+     * $hifzAchievement is already synced via @entangle before this fires.
+     */
+    public function saveHifz($val = null)
     {
         $this->hifzAchievement = $val;
-        $this->saveAchievements();
+        $this->persist();
     }
 
-    public function setReview($val = null)
+    /**
+     * Alpine calls this in the background — no UI blocking.
+     */
+    public function saveReview($val = null)
     {
         $this->reviewAchievement = $val;
-        $this->saveAchievements();
+        $this->persist();
     }
 
-    public function saveAchievements()
+    private function persist()
     {
         if ($this->dayId) {
             StudentPlanDay::where('id', $this->dayId)->update([
@@ -169,7 +174,30 @@ new class extends Component {
 };
 ?>
 
-<div class="space-y-6">
+{{--
+  Alpine state:
+    hifz    — entangled with $hifzAchievement   (instant button highlight, background save)
+    review  — entangled with $reviewAchievement  (same)
+
+  Livewire fires only on:  updatedStudentId | updatedPlanId | previousDay | nextDay
+  (data-loading operations that genuinely need the server)
+--}}
+<div class="space-y-6"
+     x-data="{
+         hifz:   @entangle('hifzAchievement'),
+         review: @entangle('reviewAchievement'),
+
+         setHifz(val) {
+             this.hifz = val;                    /* instant visual */
+             $wire.saveHifz(val);               /* background DB save */
+         },
+
+         setReview(val) {
+             this.review = val;                  /* instant visual */
+             $wire.saveReview(val);             /* background DB save */
+         },
+     }">
+
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <flux:heading size="xl" level="1">{{ __('التسميع والمتابعة') }}</flux:heading>
@@ -177,6 +205,7 @@ new class extends Component {
         </div>
     </div>
 
+    {{-- Selects — must be Livewire (load related data from server) --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <flux:select wire:model.live="studentId" label="{{ __('الطالب') }}" placeholder="{{ __('اختر الطالب') }}">
             @foreach($students as $student)
@@ -205,12 +234,13 @@ new class extends Component {
 
     @if($currentDay)
         <flux:card class="mt-6 border-zinc-200 dark:border-zinc-700">
-            <!-- Header Controls (Prev/Next) -->
+
+            {{-- Day navigation — Livewire (loads new day data) --}}
             <div class="flex items-center justify-between mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-4">
                 <flux:button wire:click="previousDay" :disabled="!$hasPrev" icon="chevron-right" variant="subtle" size="sm">
                     {{ __('اليوم السابق') }}
                 </flux:button>
-                
+
                 <div class="text-center">
                     <div class="font-bold text-lg">{{ $currentDay->day_name }}</div>
                     <div class="text-zinc-500 text-sm dir-ltr">{{ $currentDay->date->format('Y/m/d') }}</div>
@@ -221,10 +251,9 @@ new class extends Component {
                 </flux:button>
             </div>
 
-            <!-- Content & Evaluation -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Hifz Section -->
+
+                {{-- Hifz Section --}}
                 @if($currentDay->plan->plan_type === 'hifz' || $currentDay->plan->plan_type === 'hifz_review')
                     <div class="bg-indigo-50/50 dark:bg-indigo-500/5 rounded-xl border border-indigo-100 dark:border-indigo-500/20 p-5 space-y-5">
                         <div>
@@ -238,18 +267,38 @@ new class extends Component {
 
                         <div>
                             <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
-                            
+
+                            {{-- Alpine controls coloring instantly, saveHifz() saves in background --}}
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <button type="button" wire:click="setHifz(3)" class="p-3 rounded-xl border-2 transition-all {{ $hifzAchievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">ممتاز</button>
-                                <button type="button" wire:click="setHifz(2)" class="p-3 rounded-xl border-2 transition-all {{ $hifzAchievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">جيد</button>
-                                <button type="button" wire:click="setHifz(1)" class="p-3 rounded-xl border-2 transition-all {{ $hifzAchievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">مقبول</button>
-                                <button type="button" wire:click="setHifz(null)" class="p-3 rounded-xl border-2 transition-all {{ $hifzAchievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">لم يسمع</button>
+                                <button type="button" @click="setHifz(3)"
+                                        :class="hifz === 3
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">ممتاز</button>
+
+                                <button type="button" @click="setHifz(2)"
+                                        :class="hifz === 2
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">جيد</button>
+
+                                <button type="button" @click="setHifz(1)"
+                                        :class="hifz === 1
+                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">مقبول</button>
+
+                                <button type="button" @click="setHifz(null)"
+                                        :class="hifz === null
+                                            ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">لم يسمع</button>
                             </div>
                         </div>
                     </div>
                 @endif
 
-                <!-- Review Section -->
+                {{-- Review Section --}}
                 @if($currentDay->plan->plan_type === 'review' || $currentDay->plan->plan_type === 'hifz_review')
                     <div class="bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20 p-5 space-y-5">
                         <div>
@@ -263,23 +312,45 @@ new class extends Component {
 
                         <div>
                             <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
-                            
+
+                            {{-- Alpine controls coloring instantly, saveReview() saves in background --}}
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                <button type="button" wire:click="setReview(3)" class="p-3 rounded-xl border-2 transition-all {{ $reviewAchievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">ممتاز</button>
-                                <button type="button" wire:click="setReview(2)" class="p-3 rounded-xl border-2 transition-all {{ $reviewAchievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">جيد</button>
-                                <button type="button" wire:click="setReview(1)" class="p-3 rounded-xl border-2 transition-all {{ $reviewAchievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">مقبول</button>
-                                <button type="button" wire:click="setReview(null)" class="p-3 rounded-xl border-2 transition-all {{ $reviewAchievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }} font-bold text-center">لم يسمع</button>
+                                <button type="button" @click="setReview(3)"
+                                        :class="review === 3
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">ممتاز</button>
+
+                                <button type="button" @click="setReview(2)"
+                                        :class="review === 2
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">جيد</button>
+
+                                <button type="button" @click="setReview(1)"
+                                        :class="review === 1
+                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">مقبول</button>
+
+                                <button type="button" @click="setReview(null)"
+                                        :class="review === null
+                                            ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
+                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                        class="p-3 rounded-xl border-2 transition-all font-bold text-center">لم يسمع</button>
                             </div>
                         </div>
                     </div>
                 @endif
-                
+
             </div>
         </flux:card>
+
     @elseif($planId)
         <div class="mt-8 text-center text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl py-12 border border-zinc-100 dark:border-zinc-800">
             <flux:icon.document-text class="mx-auto w-12 h-12 mb-4 text-zinc-400" />
             <p>{{ __('لا توجد مهام تسميع متوفرة لهذه الخطة.') }}</p>
         </div>
     @endif
+
 </div>
