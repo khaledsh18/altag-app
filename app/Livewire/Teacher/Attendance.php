@@ -10,9 +10,6 @@ use Livewire\Component;
 
 class Attendance extends Component
 {
-    /** @var 'wizard'|'list' */
-    public string $mode = 'wizard';
-
     public $circles = [];
 
     public ?int $selectedCircle = null;
@@ -24,9 +21,8 @@ class Attendance extends Component
     /** @var array<int, string> student_id => status */
     public array $records = [];
 
-    public int $currentIndex = 0;
-
-    public bool $isComplete = false;
+    /** Ordered student IDs — used by Alpine for navigation */
+    public array $studentOrder = [];
 
     public function mount(): void
     {
@@ -59,6 +55,8 @@ class Attendance extends Component
         if (! $this->selectedCircle) {
             $this->students = collect();
             $this->records = [];
+            $this->studentOrder = [];
+            $this->dispatch('studentsLoaded');
 
             return;
         }
@@ -68,7 +66,6 @@ class Attendance extends Component
             ->orderBy('name')
             ->get();
 
-        // Load existing attendance records for this date
         $existing = AttendanceModel::where('circle_id', $this->selectedCircle)
             ->whereDate('date', $this->date)
             ->pluck('status', 'student_id')
@@ -79,18 +76,15 @@ class Attendance extends Component
             $this->records[$student->id] = $existing[$student->id] ?? '';
         }
 
-        // Find the first unmarked student for wizard mode
-        $this->currentIndex = 0;
-        foreach ($this->students as $index => $student) {
-            if (empty($this->records[$student->id])) {
-                $this->currentIndex = $index;
-                break;
-            }
-        }
+        $this->studentOrder = $this->students->pluck('id')->toArray();
 
-        $this->checkCompletion();
+        // Tell Alpine to reset navigation state
+        $this->dispatch('studentsLoaded');
     }
 
+    /**
+     * Wizard mode: save status. Alpine handles navigation immediately without waiting.
+     */
     public function markStatus(int $studentId, string $status): void
     {
         if (! in_array($status, ['present', 'absent', 'late', 'excused'])) {
@@ -99,11 +93,11 @@ class Attendance extends Component
 
         $this->records[$studentId] = $status;
         $this->saveRecord($studentId, $status);
-
-        // Move to next unmarked student
-        $this->moveToNextUnmarked();
     }
 
+    /**
+     * List mode: save status and re-render so WhatsApp links reflect new state.
+     */
     public function updateStatus(int $studentId, string $status): void
     {
         if (! in_array($status, ['present', 'absent', 'late', 'excused'])) {
@@ -112,27 +106,6 @@ class Attendance extends Component
 
         $this->records[$studentId] = $status;
         $this->saveRecord($studentId, $status);
-    }
-
-    public function goToPrevious(): void
-    {
-        if ($this->currentIndex > 0) {
-            $this->currentIndex--;
-        }
-    }
-
-    public function goToNext(): void
-    {
-        if ($this->currentIndex < count($this->students) - 1) {
-            $this->currentIndex++;
-        }
-    }
-
-    public function switchMode(string $mode): void
-    {
-        if (in_array($mode, ['wizard', 'list'])) {
-            $this->mode = $mode;
-        }
     }
 
     public function markAllPresent(): void
@@ -165,68 +138,11 @@ class Attendance extends Component
     private function saveRecord(int $studentId, string $status): void
     {
         $teacher = auth()->guard('teacher')->user();
-        if (AttendanceModel::whereDate('date', $this->date)->where('student_id', $studentId)->exists()) {
-            AttendanceModel::whereDate('date', $this->date)->where('student_id', $studentId)->update([
-                'teacher_id' => $teacher->id,
-                'circle_id' => $this->selectedCircle,
-                'status' => $status,
-            ]);
-            Flux::toast('تم تحديث حالة الطالب بنجاح', variant: 'success');
 
-            return;
-        }
         AttendanceModel::updateOrCreate(
-            [
-                'student_id' => $studentId,
-                'date' => $this->date,
-            ],
-            [
-                'teacher_id' => $teacher->id,
-                'circle_id' => $this->selectedCircle,
-                'status' => $status,
-            ]
+            ['student_id' => $studentId, 'date' => $this->date],
+            ['teacher_id' => $teacher->id, 'circle_id' => $this->selectedCircle, 'status' => $status]
         );
-
-        $this->checkCompletion();
-    }
-
-    private function moveToNextUnmarked(): void
-    {
-        $total = count($this->students);
-
-        for ($i = $this->currentIndex + 1; $i < $total; $i++) {
-            $student = $this->students[$i];
-            if (empty($this->records[$student->id])) {
-                $this->currentIndex = $i;
-
-                return;
-            }
-        }
-
-        // If all marked from current position, check from beginning
-        for ($i = 0; $i <= $this->currentIndex; $i++) {
-            $student = $this->students[$i];
-            if (empty($this->records[$student->id])) {
-                $this->currentIndex = $i;
-
-                return;
-            }
-        }
-
-        // All students marked
-        $this->isComplete = true;
-        Flux::toast('تم تحضير جميع الطلاب بنجاح! 🎉', variant: 'success');
-    }
-
-    private function checkCompletion(): void
-    {
-        $this->isComplete = count($this->students) > 0
-            && collect($this->records)->filter(fn ($s) => ! empty($s))->count() === count($this->students);
-    }
-
-    public function getMarkedCountProperty(): int
-    {
-        return collect($this->records)->filter(fn ($s) => ! empty($s))->count();
     }
 
     public function getWhatsAppMessage(Student $student, string $status = 'absent'): string
