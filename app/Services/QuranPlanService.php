@@ -157,11 +157,8 @@ class QuranPlanService
             $lowestSurah = Ayah::where('page_number', $pageNumber);
             $lowestSurahId = $lowestSurah->min('surah_id');
 
-            dump($startAyah->text_uthmani);
-            dump($lowestSurah->first()->line_number_start);
 
             if ($lowestSurah->first()->line_number_start == 1 && $startAyah->surah_id != $lowestSurahId) {
-                dump('here');
                 $lowestSurahId++;
             }
 
@@ -192,7 +189,7 @@ class QuranPlanService
         $i = 1;
 
         while ($curr) {
-            $var_for_dump .= $curr->text_uthmani.' {'.$i++.'} ';
+            $var_for_dump .= $curr->text_uthmani . ' {' . $i++ . '} ';
             $linesOnCurrentPage += $this->getAyahSize($curr);
 
             if ($curr->id == $currentPageEnd->id) {
