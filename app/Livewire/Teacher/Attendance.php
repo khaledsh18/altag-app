@@ -139,10 +139,25 @@ class Attendance extends Component
     {
         $teacher = auth()->guard('teacher')->user();
 
-        AttendanceModel::updateOrCreate(
-            ['student_id' => $studentId, 'date' => $this->date],
-            ['teacher_id' => $teacher->id, 'circle_id' => $this->selectedCircle, 'status' => $status]
-        );
+        $existing = AttendanceModel::where('student_id', $studentId)
+            ->whereDate('date', $this->date)
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'teacher_id' => $teacher->id,
+                'circle_id' => $this->selectedCircle,
+                'status' => $status,
+            ]);
+        } else {
+            AttendanceModel::create([
+                'student_id' => $studentId,
+                'date' => $this->date,
+                'teacher_id' => $teacher->id,
+                'circle_id' => $this->selectedCircle,
+                'status' => $status,
+            ]);
+        }
     }
 
     public function getWhatsAppMessage(Student $student, string $status = 'absent'): string
