@@ -25,7 +25,7 @@ new class extends Component {
     public $planDays = [];
     public $allSurahs = [];
     public $fillDirection = 'reverse';
-    public $fillTarget = 'hifz';
+    public $fillTarget = 'hifz_review';
     public $bulkStartSurah;
     public $bulkStartVerse;
     public $selectAll = false;
@@ -36,6 +36,7 @@ new class extends Component {
         $this->allSurahs = Surah::orderBy('id')->get();
         $this->bulkStartSurah = 114;
         $this->bulkStartVerse = 1;
+
 
         if ($this->edit) {
             $plan = StudentPlan::with('days.fromAyah', 'days.toAyah', 'days.reviewFromAyah', 'days.reviewToAyah')->findOrFail($this->edit);
@@ -550,14 +551,14 @@ new class extends Component {
                             {{-- fillDirection — Alpine only, zero server request --}}
                             <div class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                                 <button @click="fillDirection = 'forward'" :class="fillDirection === 'forward'
-                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
-                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                                    ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
+                                                    : 'text-zinc-500 dark:text-zinc-400'"
                                     class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
                                     {{ __('تصاعدي') }}
                                 </button>
                                 <button @click="fillDirection = 'reverse'" :class="fillDirection === 'reverse'
-                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
-                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                                    ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
+                                                    : 'text-zinc-500 dark:text-zinc-400'"
                                     class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
                                     {{ __('تنازلي') }}
                                 </button>
@@ -567,14 +568,14 @@ new class extends Component {
                             <div x-show="planType === 'hifz_review'"
                                 class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                                 <button @click="fillTarget = 'hifz'" :class="fillTarget === 'hifz'
-                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
-                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                                    ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-zinc-500 dark:text-zinc-400'"
                                     class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
                                     {{ __('تحديد للحفظ') }}
                                 </button>
                                 <button @click="fillTarget = 'review'" :class="fillTarget === 'review'
-                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400'
-                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                                    ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400'
+                                                    : 'text-zinc-500 dark:text-zinc-400'"
                                     class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
                                     {{ __('تحديد للمراجعة') }}
                                 </button>
@@ -658,9 +659,9 @@ new class extends Component {
                                         {{-- Date cell — selection managed by Alpine, zero server requests --}}
                                         <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
                                             :class="{
-                                                                'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
-                                                                'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
-                                                            }" @click="toggleDay({{ $index }})">
+                                                                        'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
+                                                                        'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
+                                                                    }" @click="toggleDay({{ $index }})">
                                             <div class="flex flex-col">
                                                 <span class="text-xs font-bold"
                                                     :class="selected[{{ $index }}] ? 'text-indigo-700 dark:text-indigo-300' : ''">
