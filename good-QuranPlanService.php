@@ -7,39 +7,6 @@ use App\Models\Surah;
 
 class QuranPlanService
 {
-    /*
-     * ─── Hot-path memoization ──────────────────────────────────────────────
-     * getAyahSize() and getTemporalNextAyah() live inside while-loops and
-     * are called hundreds of times per fillSelected(). Caching their DB
-     * lookups here eliminates the N+1 problem on weak connections.
-     * All other methods keep original DB queries — algorithm unchanged.
-     */
-
-    /** key: "{surah_id}_{verse_number}" */
-    private array $ayahByRef = [];
-
-    /** key: surah_id */
-    private array $lastBySurah = [];
-
-    private function findByRef(int $surahId, int $verseNumber): ?Ayah
-    {
-        $k = "{$surahId}_{$verseNumber}";
-        if (! array_key_exists($k, $this->ayahByRef)) {
-            $this->ayahByRef[$k] = Ayah::where('surah_id', $surahId)->where('verse_number', $verseNumber)->first();
-        }
-
-        return $this->ayahByRef[$k];
-    }
-
-    private function lastOfSurah(int $surahId): ?Ayah
-    {
-        if (! array_key_exists($surahId, $this->lastBySurah)) {
-            $this->lastBySurah[$surahId] = Ayah::where('surah_id', $surahId)->orderBy('verse_number', 'desc')->first();
-        }
-
-        return $this->lastBySurah[$surahId];
-    }
-
     /**
      * Get the end ayah for a given start ayah, unit type, and direction.
      */
@@ -139,14 +106,18 @@ class QuranPlanService
             if ($ayah->surah_id == 1) {
                 return $absoluteCurrent;
             }
-            $prevAyah = $this->lastOfSurah($ayah->surah_id - 1);
+            $prevAyah = Ayah::where('surah_id', $ayah->surah_id - 1)
+                ->orderBy('verse_number', 'desc')
+                ->first();
             if ($prevAyah) {
                 $absolutePrev = (($prevAyah->page_number - 1) * 15) + $prevAyah->line_number_end;
 
                 return max(1, $absoluteCurrent - $absolutePrev);
             }
         } else {
-            $prevAyah = $this->findByRef($ayah->surah_id, $ayah->verse_number - 1);
+            $prevAyah = Ayah::where('surah_id', $ayah->surah_id)
+                ->where('verse_number', $ayah->verse_number - 1)
+                ->first();
             if ($prevAyah) {
                 $absolutePrev = (($prevAyah->page_number - 1) * 15) + $prevAyah->line_number_end;
 
@@ -159,7 +130,9 @@ class QuranPlanService
 
     protected function getTemporalNextAyah(Ayah $current, string $direction): ?Ayah
     {
-        $next = $this->findByRef($current->surah_id, $current->verse_number + 1);
+        $next = Ayah::where('surah_id', $current->surah_id)
+            ->where('verse_number', $current->verse_number + 1)
+            ->first();
         if ($next) {
             return $next;
         }
@@ -169,7 +142,7 @@ class QuranPlanService
             return null;
         }
 
-        return $this->findByRef($nextSurahId, 1);
+        return Ayah::where('surah_id', $nextSurahId)->where('verse_number', 1)->first();
     }
 
     protected function getTemporalPageEnd(int $pageNumber, string $direction, $startAyah): ?Ayah
@@ -184,7 +157,11 @@ class QuranPlanService
             $lowestSurah = Ayah::where('page_number', $pageNumber);
             $lowestSurahId = $lowestSurah->min('surah_id');
 
+            dump($startAyah->text_uthmani);
+            dump($lowestSurah->first()->line_number_start);
+
             if ($lowestSurah->first()->line_number_start == 1 && $startAyah->surah_id != $lowestSurahId) {
+                dump('here');
                 $lowestSurahId++;
             }
 
@@ -211,14 +188,22 @@ class QuranPlanService
         $linesOnCurrentPage = 0;
         $curr = $startAyah;
 
+        $var_for_dump = '';
+        $i = 1;
+
         while ($curr) {
+            $var_for_dump .= $curr->text_uthmani.' {'.$i++.'} ';
             $linesOnCurrentPage += $this->getAyahSize($curr);
 
             if ($curr->id == $currentPageEnd->id) {
+                $var_for_dump .= '<<<<<<<<';
+                $i = 0;
                 break;
             }
             $curr = $this->getTemporalNextAyah($curr, $direction);
         }
+
+        // dump($var_for_dump);
 
         // RULE 1: If 10 or more lines, it counts as a FULL Page! We finish exactly at the page end.
         if ($isPageMultiple && $linesOnCurrentPage >= 10 && $pagesTarget == 1) {

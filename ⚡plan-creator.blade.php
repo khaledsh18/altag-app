@@ -45,22 +45,22 @@ new class extends Component {
             $this->activeDays = $plan->active_days ?? [];
             $this->description = $plan->description;
             $this->planType = $plan->plan_type;
-
-            $this->planDays = $plan->days->map(function ($d) {
+            
+            $this->planDays = $plan->days->map(function($d) {
                 return [
-                    'id'                  => $d->id,
-                    'date'                => $d->date->toDateString(),
-                    'hijri'               => $this->getHijriLabel($d->date),
-                    'day_name_ar'         => $d->day_name,
-                    'from_surah_id'       => $d->fromAyah?->surah_id,
-                    'from_verse'          => $d->fromAyah?->verse_number,
-                    'to_surah_id'         => $d->toAyah?->surah_id,
-                    'to_verse'            => $d->toAyah?->verse_number,
-                    'review_from_surah_id'=> $d->reviewFromAyah?->surah_id,
-                    'review_from_verse'   => $d->reviewFromAyah?->verse_number,
-                    'review_to_surah_id'  => $d->reviewToAyah?->surah_id,
-                    'review_to_verse'     => $d->reviewToAyah?->verse_number,
-                    'selected'            => false,
+                    'id' => $d->id,
+                    'date' => $d->date->toDateString(),
+                    'hijri' => $this->getHijriLabel($d->date),
+                    'day_name_ar' => $d->day_name,
+                    'from_surah_id' => $d->fromAyah?->surah_id,
+                    'from_verse' => $d->fromAyah?->verse_number,
+                    'to_surah_id' => $d->toAyah?->surah_id,
+                    'to_verse' => $d->toAyah?->verse_number,
+                    'review_from_surah_id' => $d->reviewFromAyah?->surah_id,
+                    'review_from_verse' => $d->reviewFromAyah?->verse_number,
+                    'review_to_surah_id' => $d->reviewToAyah?->surah_id,
+                    'review_to_verse' => $d->reviewToAyah?->verse_number,
+                    'selected' => false,
                 ];
             })->toArray();
         } else {
@@ -99,33 +99,33 @@ new class extends Component {
 
     public function toggleDaySelection($index)
     {
-        if (! isset($this->planDays[$index])) {
+        if (!isset($this->planDays[$index])) {
             return;
         }
 
         if ($this->selectionStart === null) {
             $this->selectionStart = $index;
-            $this->planDays[$index]['selected'] = ! $this->planDays[$index]['selected'];
+            $this->planDays[$index]['selected'] = !$this->planDays[$index]['selected'];
         } else {
             $start = min($this->selectionStart, $index);
-            $end   = max($this->selectionStart, $index);
-
+            $end = max($this->selectionStart, $index);
+            
             // Check if we should select or deselect based on the first click
             $targetValue = $this->planDays[$this->selectionStart]['selected'];
-
+            
             for ($i = $start; $i <= $end; $i++) {
                 $this->planDays[$i]['selected'] = $targetValue;
             }
-
+            
             $this->selectionStart = null;
         }
     }
 
     public function with()
     {
-        $teacher   = Auth::guard('teacher')->user();
+        $teacher = Auth::guard('teacher')->user();
         $circleIds = $teacher->circles->pluck('id');
-        $students  = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
+        $students = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
 
         return [
             'students' => $students,
@@ -135,21 +135,21 @@ new class extends Component {
     public function generateDays()
     {
         $this->validate([
-            'studentId'  => 'required',
-            'startDate'  => 'required|date',
-            'daysCount'  => 'required|integer|min:1|max:100',
+            'studentId' => 'required',
+            'startDate' => 'required|date',
+            'daysCount' => 'required|integer|min:1|max:100',
             'activeDays' => 'required|array|min:1',
         ]);
 
-        $this->planDays  = [];
-        $currentDate     = Carbon::parse($this->startDate);
-        $count           = 0;
+        $this->planDays = [];
+        $currentDate = Carbon::parse($this->startDate);
+        $count = 0;
 
         $ayah = Ayah::where('surah_id', $this->bulkStartSurah)
             ->where('verse_number', $this->bulkStartVerse)
             ->first() ?: Ayah::first();
 
-        $surahId  = $ayah->surah_id ?? 114;
+        $surahId = $ayah->surah_id ?? 114;
         $verseNum = $ayah->verse_number ?? 1;
 
         while ($count < $this->daysCount) {
@@ -157,18 +157,18 @@ new class extends Component {
             if (in_array($dayOfWeek, $this->activeDays)) {
 
                 $this->planDays[] = [
-                    'date'                 => $currentDate->toDateString(),
-                    'hijri'                => $this->getHijriLabel($currentDate),
-                    'day_name_ar'          => $this->translateDay($dayOfWeek),
-                    'from_surah_id'        => $surahId,
-                    'from_verse'           => $verseNum,
-                    'to_surah_id'          => $surahId,
-                    'to_verse'             => $verseNum,
+                    'date' => $currentDate->toDateString(),
+                    'hijri' => $this->getHijriLabel($currentDate),
+                    'day_name_ar' => $this->translateDay($dayOfWeek),
+                    'from_surah_id' => $surahId,
+                    'from_verse' => $verseNum,
+                    'to_surah_id' => $surahId,
+                    'to_verse' => $verseNum,
                     'review_from_surah_id' => $surahId,
-                    'review_from_verse'    => $verseNum,
-                    'review_to_surah_id'   => $surahId,
-                    'review_to_verse'      => $verseNum,
-                    'selected'             => false,
+                    'review_from_verse' => $verseNum,
+                    'review_to_surah_id' => $surahId,
+                    'review_to_verse' => $verseNum,
+                    'selected' => false,
                 ];
                 $count++;
             }
@@ -178,16 +178,16 @@ new class extends Component {
 
     public function fillSelected($type, $target = null)
     {
-        $target  = $target ?? $this->fillTarget;
+        $target = $target ?? $this->fillTarget;
         $service = app(QuranPlanService::class);
-        $lastDayStart      = null;
-        $lastDayEnd        = null;
-        $fixedReviewStart  = null;
+        $lastDayStart = null;
+        $lastDayEnd = null;
+        $fixedReviewStart = null;
 
         $fromSurahKey = $target === 'review' ? 'review_from_surah_id' : 'from_surah_id';
-        $fromVerseKey = $target === 'review' ? 'review_from_verse'    : 'from_verse';
-        $toSurahKey   = $target === 'review' ? 'review_to_surah_id'   : 'to_surah_id';
-        $toVerseKey   = $target === 'review' ? 'review_to_verse'      : 'to_verse';
+        $fromVerseKey = $target === 'review' ? 'review_from_verse' : 'from_verse';
+        $toSurahKey = $target === 'review' ? 'review_to_surah_id' : 'to_surah_id';
+        $toVerseKey = $target === 'review' ? 'review_to_verse' : 'to_verse';
 
         if ($target === 'review' && $this->planType === 'hifz_review') {
             foreach ($this->planDays as $day) {
@@ -203,7 +203,7 @@ new class extends Component {
         $resetNextReview = false;
 
         foreach ($this->planDays as &$day) {
-            if (! $day['selected']) {
+            if (!$day['selected']) {
                 $lastDayStart = Ayah::where('surah_id', $day[$fromSurahKey])
                     ->where('verse_number', $day[$fromVerseKey])
                     ->first();
@@ -218,33 +218,31 @@ new class extends Component {
                     ->where('verse_number', $day['from_verse'])
                     ->first();
 
-                if (! $hifzStartAyah || ! $fixedReviewStart) {
+                if (!$hifzStartAyah || !$fixedReviewStart)
                     continue;
-                }
 
                 $maxPossibleEnd = $service->getAyahBefore($hifzStartAyah, $this->fillDirection);
 
                 // 1. Determine the Start of this day's review
                 if ($type === 'all_previous') {
-                    $actualStart      = $fixedReviewStart;
-                    $targetReviewEnd  = $maxPossibleEnd;
+                    $actualStart = $fixedReviewStart;
+                    $targetReviewEnd = $maxPossibleEnd;
                 } else {
                     if ($resetNextReview) {
-                        $actualStart      = $fixedReviewStart;
-                        $resetNextReview  = false;
-                    } elseif ($lastDayEnd) {
+                        $actualStart = $fixedReviewStart;
+                        $resetNextReview = false;
+                    } else if ($lastDayEnd) {
                         $actualStart = $service->getNextStartAyah($lastDayStart, $lastDayEnd, $type, $this->fillDirection);
                     } else {
                         $actualStart = $fixedReviewStart;
                     }
 
-                    if (! $actualStart) {
+                    if (!$actualStart)
                         $actualStart = $fixedReviewStart;
-                    }
 
                     // 4. Ensure Start is not already beyond Hifz
                     if ($service->isExceeding($actualStart, $maxPossibleEnd, $this->fillDirection)) {
-                        $actualStart     = $maxPossibleEnd;
+                        $actualStart = $maxPossibleEnd;
                         $resetNextReview = true;
                     }
 
@@ -259,12 +257,12 @@ new class extends Component {
                 }
 
                 $day['review_from_surah_id'] = $actualStart->surah_id;
-                $day['review_from_verse']    = $actualStart->verse_number;
-                $day['review_to_surah_id']   = $targetReviewEnd->surah_id;
-                $day['review_to_verse']      = $targetReviewEnd->verse_number;
+                $day['review_from_verse'] = $actualStart->verse_number;
+                $day['review_to_surah_id'] = $targetReviewEnd->surah_id;
+                $day['review_to_verse'] = $targetReviewEnd->verse_number;
 
                 $lastDayStart = $actualStart;
-                $lastDayEnd   = $targetReviewEnd;
+                $lastDayEnd = $targetReviewEnd;
                 continue;
             }
 
@@ -294,7 +292,7 @@ new class extends Component {
                 $day[$toVerseKey] = $end->verse_number;
 
                 $lastDayStart = $currentStart;
-                $lastDayEnd   = $end;
+                $lastDayEnd = $end;
             }
         }
     }
@@ -303,58 +301,58 @@ new class extends Component {
     {
         $this->validate([
             'studentId' => 'required',
-            'planDays'  => 'required|array|min:1',
+            'planDays' => 'required|array|min:1',
         ]);
 
         if ($this->edit) {
             $plan = StudentPlan::findOrFail($this->edit);
             $plan->update([
-                'student_id'  => $this->studentId,
-                'start_date'  => $this->startDate,
-                'days_count'  => $this->daysCount,
+                'student_id' => $this->studentId,
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
-                'plan_type'   => $this->planType,
+                'plan_type' => $this->planType,
             ]);
 
             $existingIds = collect($this->planDays)->pluck('id')->filter()->toArray();
             $plan->days()->whereNotIn('id', $existingIds)->delete();
         } else {
             $plan = StudentPlan::create([
-                'student_id'  => $this->studentId,
-                'teacher_id'  => Auth::guard('teacher')->id(),
-                'start_date'  => $this->startDate,
-                'days_count'  => $this->daysCount,
+                'student_id' => $this->studentId,
+                'teacher_id' => Auth::guard('teacher')->id(),
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
-                'plan_type'   => $this->planType,
-                'status'      => 'active',
+                'plan_type' => $this->planType,
+                'status' => 'active',
             ]);
         }
 
         foreach ($this->planDays as $dayData) {
-            $from   = null;
-            $to     = null;
+            $from = null;
+            $to = null;
             $revFrom = null;
-            $revTo   = null;
+            $revTo = null;
 
             if (in_array($this->planType, ['hifz', 'hifz_review'])) {
                 $from = Ayah::where('surah_id', $dayData['from_surah_id'])->where('verse_number', $dayData['from_verse'])->first();
-                $to   = Ayah::where('surah_id', $dayData['to_surah_id'])->where('verse_number', $dayData['to_verse'])->first();
+                $to = Ayah::where('surah_id', $dayData['to_surah_id'])->where('verse_number', $dayData['to_verse'])->first();
             }
 
             if (in_array($this->planType, ['review', 'hifz_review'])) {
                 $revFrom = Ayah::where('surah_id', $dayData['review_from_surah_id'])->where('verse_number', $dayData['review_from_verse'])->first();
-                $revTo   = Ayah::where('surah_id', $dayData['review_to_surah_id'])->where('verse_number', $dayData['review_to_verse'])->first();
+                $revTo = Ayah::where('surah_id', $dayData['review_to_surah_id'])->where('verse_number', $dayData['review_to_verse'])->first();
             }
 
             $dayAttributes = [
-                'date'               => $dayData['date'],
-                'day_name'           => $dayData['day_name_ar'],
-                'from_ayah_id'       => $from?->id,
-                'to_ayah_id'         => $to?->id,
-                'review_from_ayah_id'=> $revFrom?->id,
-                'review_to_ayah_id'  => $revTo?->id,
+                'date' => $dayData['date'],
+                'day_name' => $dayData['day_name_ar'],
+                'from_ayah_id' => $from?->id,
+                'to_ayah_id' => $to?->id,
+                'review_from_ayah_id' => $revFrom?->id,
+                'review_to_ayah_id' => $revTo?->id,
             ];
 
             if (isset($dayData['id'])) {
@@ -377,22 +375,20 @@ new class extends Component {
             \IntlDateFormatter::TRADITIONAL,
             'd MMMM yyyy'
         );
-
         return $formatter->format($date->getTimestamp());
     }
 
     protected function translateDay($day)
     {
         $days = [
-            'Sunday'    => 'الأحد',
-            'Monday'    => 'الاثنين',
-            'Tuesday'   => 'الثلاثاء',
+            'Sunday' => 'الأحد',
+            'Monday' => 'الاثنين',
+            'Tuesday' => 'الثلاثاء',
             'Wednesday' => 'الأربعاء',
-            'Thursday'  => 'الخميس',
-            'Friday'    => 'الجمعة',
-            'Saturday'  => 'السبت',
+            'Thursday' => 'الخميس',
+            'Friday' => 'الجمعة',
+            'Saturday' => 'السبت',
         ];
-
         return $days[$day] ?? $day;
     }
 };
@@ -525,12 +521,6 @@ new class extends Component {
                                 </flux:button>
                             @endif
                         </div>
-                    </div>
-
-                    {{-- ── Progress bar — visible while fillSelected is running ── --}}
-                    <div wire:loading wire:target="fillSelected" class="relative h-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                        <div class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
-                             style="animation: shimmer 1.2s ease-in-out infinite;"></div>
                     </div>
 
                     <div class="overflow-auto flex-1">
