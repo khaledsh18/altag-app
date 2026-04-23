@@ -411,8 +411,12 @@ new class extends Component {
 
          /* Trigger fillSelected — passes Alpine state as params so no extra round-trips */
          doFill(type) {
-             $wire.fillSelected(type, this.fillTarget, this.fillDirection);
+             this.filling = true;
+             $wire.fillSelected(type, this.fillTarget, this.fillDirection)
+                 .then(() => { this.filling = false; });
          },
+
+         filling: false,        /* true while fillSelected is in-flight */
      }">
 
     <div class="flex items-center justify-between">
@@ -565,6 +569,13 @@ new class extends Component {
                             </div>
                         </template>
                     </div>
+                </div>
+
+                {{-- ── Progress bar ── visible while fillSelected is running ── --}}
+                <div x-show="filling" x-cloak class="relative h-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+                         style="animation: shimmer 1.2s ease-in-out infinite;"
+                         x-ref="shimmerBar"></div>
                 </div>
 
                 {{-- Table --}}
