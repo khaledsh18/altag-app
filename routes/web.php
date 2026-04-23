@@ -132,7 +132,13 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
         return view('teacher.print-plan', compact('plan'));
     })->name('print-plan');
 });
-Route::middleware(['auth:student', 'approved'])->get('/student/dashboard', fn () => view('student.dashboard'))->name('student.dashboard');
+Route::middleware(['auth:student', 'approved'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/dashboard', fn () => view('student.dashboard'))->name('dashboard');
+    Route::view('/plan', 'student.my-plan')->name('plan');
+    Route::view('/plan/create', 'student.plan-creator')->name('plan-creator');
+    Route::view('/plan/show/{id}', 'student.show-plan')->name('show-plan');
+    Route::view('/attendance', 'student.attendance')->name('attendance');
+});
 Route::view('/student/complete-profile', 'student.complete-profile')->middleware(['auth:student'])->name('student.complete-profile');
 Route::view('/teacher/complete-profile', 'teacher.complete-profile')->middleware(['auth:teacher'])->name('teacher.complete-profile');
 Route::middleware(['auth:guardian', 'approved'])->get('/parent/dashboard', fn () => view('guardian.dashboard'))->name('guardian.dashboard');

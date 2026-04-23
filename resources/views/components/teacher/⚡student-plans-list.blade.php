@@ -8,6 +8,13 @@ new class extends Component
 {
     public $search = '';
 
+    public function approvePlan($id)
+    {
+        $plan = StudentPlan::where('teacher_id', Auth::guard('teacher')->id())->findOrFail($id);
+        $plan->update(['is_approved' => true]);
+        session()->flash('success', 'تم اعتماد الخطة بنجاح');
+    }
+
     public function deletePlan($id)
     {
         $plan = StudentPlan::where('teacher_id', Auth::guard('teacher')->id())->findOrFail($id);
@@ -24,6 +31,8 @@ new class extends Component
                     $q->where('name', 'like', '%' . $this->search . '%');
                 });
             })
+            // Move unapproved to top, then active ones
+            ->orderBy('is_approved', 'asc')
             ->latest()
             ->paginate(10);
 
@@ -62,7 +71,7 @@ new class extends Component
 
             <flux:table.rows>
                 @foreach($plans as $plan)
-                    <flux:table.row>
+                    <flux:table.row class="{{ !$plan->is_approved ? 'bg-amber-50/50 dark:bg-amber-900/10' : '' }}">
                         <flux:table.cell class="font-medium">{{ $plan->student->name }}</flux:table.cell>
                         <flux:table.cell>
                             @if($plan->plan_type === 'review')
@@ -76,15 +85,22 @@ new class extends Component
                         <flux:table.cell>{{ $plan->start_date->format('Y-m-d') }}</flux:table.cell>
                         <flux:table.cell>{{ $plan->days_count }}</flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm">{{ $plan->status }}</flux:badge>
+                            @if(!$plan->is_approved)
+                                <flux:badge color="amber" size="sm" icon="clock">{{ __('قيد الاعتماد') }}</flux:badge>
+                            @else
+                                <flux:badge size="sm">{{ $plan->status }}</flux:badge>
+                            @endif
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                 <flux:menu>
+                                    @if(!$plan->is_approved)
+                                        <flux:menu.item wire:click="approvePlan({{ $plan->id }})" icon="check-circle" class="text-emerald-600 dark:text-emerald-400">{{ __('اعتماد الخطة') }}</flux:menu.item>
+                                    @endif
                                     <flux:menu.item href="{{ route('teacher.plan-creator', ['edit' => $plan->id]) }}" icon="pencil">{{ __('تعديل') }}</flux:menu.item>
                                     <flux:menu.item href="{{ route('teacher.print-plan', $plan->id) }}" target="_blank" icon="printer">{{ __('عرض وطباعة') }}</flux:menu.item>
-                                    <flux:menu.item wire:click="deletePlan({{ $plan->id }})" variant="danger" icon="trash">{{ __('حذف') }}</flux:menu.item>
+                                    <flux:menu.item wire:click="deletePlan({{ $plan->id }})" variant="danger" icon="trash" wire:confirm="{{ __('هل أنت متأكد من حذف هذه الخطة بالكامل؟') }}">{{ __('حذف') }}</flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>

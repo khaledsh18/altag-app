@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 
 new class extends Component {
+    public $userLevel; // 'teacher' or 'student'
     #[Url]
     public $edit = null;
 
@@ -33,6 +34,7 @@ new class extends Component {
 
     public function mount()
     {
+        $this->userLevel = Auth::guard('student')->check() ? 'student' : 'teacher';
         $this->allSurahs = Surah::orderBy('id')->get();
         $this->bulkStartSurah = 114;
         $this->bulkStartVerse = 1;
@@ -66,7 +68,12 @@ new class extends Component {
             })->toArray();
         } else {
             $this->startDate = now()->format('Y-m-d');
-            $this->studentId = Student::where('circle_id', Auth::guard('teacher')->user()->circles()->first()?->id)->first()->id ?? null;
+            if ($this->userLevel === 'teacher') {
+                $teacher = Auth::guard('teacher')->user();
+                $this->studentId = Student::where('circle_id', $teacher->circles()->first()?->id ?? 0)->first()->id ?? null;
+            } else {
+                $this->studentId = Auth::guard('student')->id();
+            }
         }
     }
 
@@ -124,9 +131,12 @@ new class extends Component {
 
     public function with()
     {
-        $teacher = Auth::guard('teacher')->user();
-        $circleIds = $teacher->circles->pluck('id');
-        $students = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
+        $students = [];
+        if ($this->userLevel === 'teacher') {
+            $teacher = Auth::guard('teacher')->user();
+            $circleIds = $teacher->circles->pluck('id');
+            $students = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
+        }
 
         return [
             'students' => $students,
@@ -315,7 +325,6 @@ new class extends Component {
         if ($this->edit) {
             $plan = StudentPlan::findOrFail($this->edit);
             $plan->update([
-                'student_id' => $this->studentId,
                 'start_date' => $this->startDate,
                 'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
@@ -326,15 +335,20 @@ new class extends Component {
             $existingIds = collect($this->planDays)->pluck('id')->filter()->toArray();
             $plan->days()->whereNotIn('id', $existingIds)->delete();
         } else {
+            $student = Student::findOrFail($this->studentId);
+            $teacherId = $this->userLevel === 'teacher' ? Auth::guard('teacher')->id() : $student->circle?->teachers()->first()?->id;
+
             $plan = StudentPlan::create([
                 'student_id' => $this->studentId,
-                'teacher_id' => Auth::guard('teacher')->id(),
+                'teacher_id' => $teacherId, // Can be null if the student has no circle
                 'start_date' => $this->startDate,
                 'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
                 'plan_type' => $this->planType,
                 'status' => 'active',
+                'is_approved' => $this->userLevel === 'teacher',
+                'created_by_role' => $this->userLevel,
             ]);
         }
 
@@ -368,6 +382,10 @@ new class extends Component {
             } else {
                 $plan->days()->create($dayAttributes);
             }
+        }
+
+        if ($this->userLevel === 'student') {
+            return redirect()->route('student.plan')->with('success', 'تم الحفظ وسيتم عرضها على المعلم للاعتماد');
         }
 
         return redirect()->route('teacher.student-plans')->with('success', 'تم حفظ الخطة بنجاح');
@@ -453,7 +471,7 @@ new class extends Component {
         doFill(type) {
             this.filling = true;
             const indices = this.selected.reduce((acc, v, i) => { if (v) acc.push(i); return acc; }, []);
-            $wire.fillSelected(type, null, indices).then(() => { this.filling = false; });
+            $wire.fillSelected(type, this.fillTarget, indices).then(() => { this.filling = false; });
         },
     }">
 
@@ -487,11 +505,13 @@ new class extends Component {
                 </button>
             </div>
 
+            @if($userLevel === 'teacher')
             <flux:select label="{{ __('الطالب') }}" wire:model="studentId">
                 @foreach($students as $student)
                     <flux:select.option value="{{ $student->id }}">{{ $student->name }}</flux:select.option>
                 @endforeach
             </flux:select>
+            @endif
 
             <div class="space-y-1">
                 <flux:label>{{ __('البداية') }}</flux:label>

@@ -7,5 +7,5 @@
         @include('teacher.sidebar-nav')
     </x-slot:sidebar>
 
-    <livewire:teacher.plan-creator />
+    <livewire:shared.plan-creator />
 </x-layouts.role-shell>

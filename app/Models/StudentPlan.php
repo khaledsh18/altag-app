@@ -15,6 +15,8 @@ class StudentPlan extends Model
         'description',
         'status',
         'plan_type',
+        'is_approved',
+        'created_by_role',
     ];
 
     protected $casts = [

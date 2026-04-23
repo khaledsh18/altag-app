@@ -1,6 +1,6 @@
 <x-layouts.role-shell>
     <x-slot:title>
-        {{ __('الرئيسية') }}
+        {{ __('مساري القرآني') }}
     </x-slot:title>
 
     <x-slot:sidebar>
@@ -8,6 +8,6 @@
     </x-slot:sidebar>
 
     <div class="p-6 md:p-8">
-        <livewire:student.dashboard />
+        <livewire:student.my-plan />
     </div>
 </x-layouts.role-shell>
