@@ -13,12 +13,12 @@ return [
     |
     */
 
-    'default' => 'deepseek',
-    'default_for_images' => 'deepseek',
-    'default_for_audio' => 'deepseek',
-    'default_for_transcription' => 'deepseek',
-    'default_for_embeddings' => 'deepseek',
-    'default_for_reranking' => 'deepseek',
+    'default' => 'gemini',
+    'default_for_images' => 'gemini',
+    'default_for_audio' => 'gemini',
+    'default_for_transcription' => 'gemini',
+    'default_for_embeddings' => 'gemini',
+    'default_for_reranking' => 'gemini',
 
     /*
     |--------------------------------------------------------------------------
