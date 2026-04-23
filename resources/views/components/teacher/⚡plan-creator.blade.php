@@ -17,7 +17,7 @@ new class extends Component {
 
     public $studentId;
     public $startDate;
-    public $daysCount = 30;
+    public $daysCount = 16;
     public $activeDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday'];
     public $description;
     public $planType = 'hifz_review';
@@ -48,19 +48,19 @@ new class extends Component {
 
             $this->planDays = $plan->days->map(function ($d) {
                 return [
-                    'id'                  => $d->id,
-                    'date'                => $d->date->toDateString(),
-                    'hijri'               => $this->getHijriLabel($d->date),
-                    'day_name_ar'         => $d->day_name,
-                    'from_surah_id'       => $d->fromAyah?->surah_id,
-                    'from_verse'          => $d->fromAyah?->verse_number,
-                    'to_surah_id'         => $d->toAyah?->surah_id,
-                    'to_verse'            => $d->toAyah?->verse_number,
-                    'review_from_surah_id'=> $d->reviewFromAyah?->surah_id,
-                    'review_from_verse'   => $d->reviewFromAyah?->verse_number,
-                    'review_to_surah_id'  => $d->reviewToAyah?->surah_id,
-                    'review_to_verse'     => $d->reviewToAyah?->verse_number,
-                    'selected'            => false,
+                    'id' => $d->id,
+                    'date' => $d->date->toDateString(),
+                    'hijri' => $this->getHijriLabel($d->date),
+                    'day_name_ar' => $d->day_name,
+                    'from_surah_id' => $d->fromAyah?->surah_id,
+                    'from_verse' => $d->fromAyah?->verse_number,
+                    'to_surah_id' => $d->toAyah?->surah_id,
+                    'to_verse' => $d->toAyah?->verse_number,
+                    'review_from_surah_id' => $d->reviewFromAyah?->surah_id,
+                    'review_from_verse' => $d->reviewFromAyah?->verse_number,
+                    'review_to_surah_id' => $d->reviewToAyah?->surah_id,
+                    'review_to_verse' => $d->reviewToAyah?->verse_number,
+                    'selected' => false,
                 ];
             })->toArray();
         } else {
@@ -99,16 +99,16 @@ new class extends Component {
 
     public function toggleDaySelection($index)
     {
-        if (! isset($this->planDays[$index])) {
+        if (!isset($this->planDays[$index])) {
             return;
         }
 
         if ($this->selectionStart === null) {
             $this->selectionStart = $index;
-            $this->planDays[$index]['selected'] = ! $this->planDays[$index]['selected'];
+            $this->planDays[$index]['selected'] = !$this->planDays[$index]['selected'];
         } else {
             $start = min($this->selectionStart, $index);
-            $end   = max($this->selectionStart, $index);
+            $end = max($this->selectionStart, $index);
 
             // Check if we should select or deselect based on the first click
             $targetValue = $this->planDays[$this->selectionStart]['selected'];
@@ -123,9 +123,9 @@ new class extends Component {
 
     public function with()
     {
-        $teacher   = Auth::guard('teacher')->user();
+        $teacher = Auth::guard('teacher')->user();
         $circleIds = $teacher->circles->pluck('id');
-        $students  = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
+        $students = Student::whereIn('circle_id', $circleIds)->orderBy('name')->get();
 
         return [
             'students' => $students,
@@ -135,21 +135,21 @@ new class extends Component {
     public function generateDays()
     {
         $this->validate([
-            'studentId'  => 'required',
-            'startDate'  => 'required|date',
-            'daysCount'  => 'required|integer|min:1|max:100',
+            'studentId' => 'required',
+            'startDate' => 'required|date',
+            'daysCount' => 'required|integer|min:1|max:100',
             'activeDays' => 'required|array|min:1',
         ]);
 
-        $this->planDays  = [];
-        $currentDate     = Carbon::parse($this->startDate);
-        $count           = 0;
+        $this->planDays = [];
+        $currentDate = Carbon::parse($this->startDate);
+        $count = 0;
 
         $ayah = Ayah::where('surah_id', $this->bulkStartSurah)
             ->where('verse_number', $this->bulkStartVerse)
             ->first() ?: Ayah::first();
 
-        $surahId  = $ayah->surah_id ?? 114;
+        $surahId = $ayah->surah_id ?? 114;
         $verseNum = $ayah->verse_number ?? 1;
 
         while ($count < $this->daysCount) {
@@ -157,18 +157,18 @@ new class extends Component {
             if (in_array($dayOfWeek, $this->activeDays)) {
 
                 $this->planDays[] = [
-                    'date'                 => $currentDate->toDateString(),
-                    'hijri'                => $this->getHijriLabel($currentDate),
-                    'day_name_ar'          => $this->translateDay($dayOfWeek),
-                    'from_surah_id'        => $surahId,
-                    'from_verse'           => $verseNum,
-                    'to_surah_id'          => $surahId,
-                    'to_verse'             => $verseNum,
+                    'date' => $currentDate->toDateString(),
+                    'hijri' => $this->getHijriLabel($currentDate),
+                    'day_name_ar' => $this->translateDay($dayOfWeek),
+                    'from_surah_id' => $surahId,
+                    'from_verse' => $verseNum,
+                    'to_surah_id' => $surahId,
+                    'to_verse' => $verseNum,
                     'review_from_surah_id' => $surahId,
-                    'review_from_verse'    => $verseNum,
-                    'review_to_surah_id'   => $surahId,
-                    'review_to_verse'      => $verseNum,
-                    'selected'             => false,
+                    'review_from_verse' => $verseNum,
+                    'review_to_surah_id' => $surahId,
+                    'review_to_verse' => $verseNum,
+                    'selected' => false,
                 ];
                 $count++;
             }
@@ -176,18 +176,23 @@ new class extends Component {
         }
     }
 
-    public function fillSelected($type, $target = null)
+    public function fillSelected($type, $target = null, array $selectedIndices = [])
     {
-        $target  = $target ?? $this->fillTarget;
+        foreach ($this->planDays as $index => &$day) {
+            $day['selected'] = in_array($index, $selectedIndices);
+        }
+        unset($day);
+
+        $target = $target ?? $this->fillTarget;
         $service = app(QuranPlanService::class);
-        $lastDayStart      = null;
-        $lastDayEnd        = null;
-        $fixedReviewStart  = null;
+        $lastDayStart = null;
+        $lastDayEnd = null;
+        $fixedReviewStart = null;
 
         $fromSurahKey = $target === 'review' ? 'review_from_surah_id' : 'from_surah_id';
-        $fromVerseKey = $target === 'review' ? 'review_from_verse'    : 'from_verse';
-        $toSurahKey   = $target === 'review' ? 'review_to_surah_id'   : 'to_surah_id';
-        $toVerseKey   = $target === 'review' ? 'review_to_verse'      : 'to_verse';
+        $fromVerseKey = $target === 'review' ? 'review_from_verse' : 'from_verse';
+        $toSurahKey = $target === 'review' ? 'review_to_surah_id' : 'to_surah_id';
+        $toVerseKey = $target === 'review' ? 'review_to_verse' : 'to_verse';
 
         if ($target === 'review' && $this->planType === 'hifz_review') {
             foreach ($this->planDays as $day) {
@@ -203,7 +208,7 @@ new class extends Component {
         $resetNextReview = false;
 
         foreach ($this->planDays as &$day) {
-            if (! $day['selected']) {
+            if (!$day['selected']) {
                 $lastDayStart = Ayah::where('surah_id', $day[$fromSurahKey])
                     ->where('verse_number', $day[$fromVerseKey])
                     ->first();
@@ -218,7 +223,7 @@ new class extends Component {
                     ->where('verse_number', $day['from_verse'])
                     ->first();
 
-                if (! $hifzStartAyah || ! $fixedReviewStart) {
+                if (!$hifzStartAyah || !$fixedReviewStart) {
                     continue;
                 }
 
@@ -226,25 +231,25 @@ new class extends Component {
 
                 // 1. Determine the Start of this day's review
                 if ($type === 'all_previous') {
-                    $actualStart      = $fixedReviewStart;
-                    $targetReviewEnd  = $maxPossibleEnd;
+                    $actualStart = $fixedReviewStart;
+                    $targetReviewEnd = $maxPossibleEnd;
                 } else {
                     if ($resetNextReview) {
-                        $actualStart      = $fixedReviewStart;
-                        $resetNextReview  = false;
+                        $actualStart = $fixedReviewStart;
+                        $resetNextReview = false;
                     } elseif ($lastDayEnd) {
                         $actualStart = $service->getNextStartAyah($lastDayStart, $lastDayEnd, $type, $this->fillDirection);
                     } else {
                         $actualStart = $fixedReviewStart;
                     }
 
-                    if (! $actualStart) {
+                    if (!$actualStart) {
                         $actualStart = $fixedReviewStart;
                     }
 
                     // 4. Ensure Start is not already beyond Hifz
                     if ($service->isExceeding($actualStart, $maxPossibleEnd, $this->fillDirection)) {
-                        $actualStart     = $maxPossibleEnd;
+                        $actualStart = $maxPossibleEnd;
                         $resetNextReview = true;
                     }
 
@@ -259,12 +264,12 @@ new class extends Component {
                 }
 
                 $day['review_from_surah_id'] = $actualStart->surah_id;
-                $day['review_from_verse']    = $actualStart->verse_number;
-                $day['review_to_surah_id']   = $targetReviewEnd->surah_id;
-                $day['review_to_verse']      = $targetReviewEnd->verse_number;
+                $day['review_from_verse'] = $actualStart->verse_number;
+                $day['review_to_surah_id'] = $targetReviewEnd->surah_id;
+                $day['review_to_verse'] = $targetReviewEnd->verse_number;
 
                 $lastDayStart = $actualStart;
-                $lastDayEnd   = $targetReviewEnd;
+                $lastDayEnd = $targetReviewEnd;
                 continue;
             }
 
@@ -294,7 +299,7 @@ new class extends Component {
                 $day[$toVerseKey] = $end->verse_number;
 
                 $lastDayStart = $currentStart;
-                $lastDayEnd   = $end;
+                $lastDayEnd = $end;
             }
         }
     }
@@ -303,58 +308,58 @@ new class extends Component {
     {
         $this->validate([
             'studentId' => 'required',
-            'planDays'  => 'required|array|min:1',
+            'planDays' => 'required|array|min:1',
         ]);
 
         if ($this->edit) {
             $plan = StudentPlan::findOrFail($this->edit);
             $plan->update([
-                'student_id'  => $this->studentId,
-                'start_date'  => $this->startDate,
-                'days_count'  => $this->daysCount,
+                'student_id' => $this->studentId,
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
-                'plan_type'   => $this->planType,
+                'plan_type' => $this->planType,
             ]);
 
             $existingIds = collect($this->planDays)->pluck('id')->filter()->toArray();
             $plan->days()->whereNotIn('id', $existingIds)->delete();
         } else {
             $plan = StudentPlan::create([
-                'student_id'  => $this->studentId,
-                'teacher_id'  => Auth::guard('teacher')->id(),
-                'start_date'  => $this->startDate,
-                'days_count'  => $this->daysCount,
+                'student_id' => $this->studentId,
+                'teacher_id' => Auth::guard('teacher')->id(),
+                'start_date' => $this->startDate,
+                'days_count' => $this->daysCount,
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
-                'plan_type'   => $this->planType,
-                'status'      => 'active',
+                'plan_type' => $this->planType,
+                'status' => 'active',
             ]);
         }
 
         foreach ($this->planDays as $dayData) {
-            $from   = null;
-            $to     = null;
+            $from = null;
+            $to = null;
             $revFrom = null;
-            $revTo   = null;
+            $revTo = null;
 
             if (in_array($this->planType, ['hifz', 'hifz_review'])) {
                 $from = Ayah::where('surah_id', $dayData['from_surah_id'])->where('verse_number', $dayData['from_verse'])->first();
-                $to   = Ayah::where('surah_id', $dayData['to_surah_id'])->where('verse_number', $dayData['to_verse'])->first();
+                $to = Ayah::where('surah_id', $dayData['to_surah_id'])->where('verse_number', $dayData['to_verse'])->first();
             }
 
             if (in_array($this->planType, ['review', 'hifz_review'])) {
                 $revFrom = Ayah::where('surah_id', $dayData['review_from_surah_id'])->where('verse_number', $dayData['review_from_verse'])->first();
-                $revTo   = Ayah::where('surah_id', $dayData['review_to_surah_id'])->where('verse_number', $dayData['review_to_verse'])->first();
+                $revTo = Ayah::where('surah_id', $dayData['review_to_surah_id'])->where('verse_number', $dayData['review_to_verse'])->first();
             }
 
             $dayAttributes = [
-                'date'               => $dayData['date'],
-                'day_name'           => $dayData['day_name_ar'],
-                'from_ayah_id'       => $from?->id,
-                'to_ayah_id'         => $to?->id,
-                'review_from_ayah_id'=> $revFrom?->id,
-                'review_to_ayah_id'  => $revTo?->id,
+                'date' => $dayData['date'],
+                'day_name' => $dayData['day_name_ar'],
+                'from_ayah_id' => $from?->id,
+                'to_ayah_id' => $to?->id,
+                'review_from_ayah_id' => $revFrom?->id,
+                'review_to_ayah_id' => $revTo?->id,
             ];
 
             if (isset($dayData['id'])) {
@@ -384,13 +389,13 @@ new class extends Component {
     protected function translateDay($day)
     {
         $days = [
-            'Sunday'    => 'الأحد',
-            'Monday'    => 'الاثنين',
-            'Tuesday'   => 'الثلاثاء',
+            'Sunday' => 'الأحد',
+            'Monday' => 'الاثنين',
+            'Tuesday' => 'الثلاثاء',
             'Wednesday' => 'الأربعاء',
-            'Thursday'  => 'الخميس',
-            'Friday'    => 'الجمعة',
-            'Saturday'  => 'السبت',
+            'Thursday' => 'الخميس',
+            'Friday' => 'الجمعة',
+            'Saturday' => 'السبت',
         ];
 
         return $days[$day] ?? $day;
@@ -398,7 +403,59 @@ new class extends Component {
 };
 ?>
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{
+        /* ── Livewire state mirrored locally via entangle (deferred) ──────
+           Changes are sent to the server only with the next Livewire request
+           (fillSelected / generateDays / save), so no extra round-trips. */
+        days:          $wire.entangle('planDays').defer,
+        planType:      $wire.entangle('planType').defer,
+        fillDirection: $wire.entangle('fillDirection').defer,
+        fillTarget:    $wire.entangle('fillTarget').defer,
+
+        /* ── Pure client-side UI state ──────────────────────────────────── */
+        selected:       [],
+        selectAll:      false,
+        selectionStart: null,
+        filling:        false,
+        
+        init() {
+            this.selected = Array((this.days && this.days.length) ? this.days.length : 0).fill(false);
+        },
+
+        /* Toggle all rows */
+        toggleAll() {
+            this.selectAll = ! this.selectAll;
+            this.selected = this.selected.map(() => this.selectAll);
+        },
+
+        /* Toggle a single row or a range (shift-click style) */
+        toggleDay(index) {
+            if (this.selected.length === 0 && this.days && this.days.length > 0) {
+                this.init();
+            }
+
+            if (this.selectionStart === null) {
+                this.selectionStart = index;
+                this.selected[index] = !this.selected[index];
+            } else {
+                const start   = Math.min(this.selectionStart, index);
+                const end     = Math.max(this.selectionStart, index);
+                const desired = this.selected[this.selectionStart];
+                for (let i = start; i <= end; i++) {
+                    this.selected[i] = desired;
+                }
+                this.selectionStart = null;
+            }
+        },
+
+        /* Call fillSelected — deferred entangle syncs state just before the request */
+        doFill(type) {
+            this.filling = true;
+            const indices = this.selected.reduce((acc, v, i) => { if (v) acc.push(i); return acc; }, []);
+            $wire.fillSelected(type, null, indices).then(() => { this.filling = false; });
+        },
+    }">
+
     <div class="flex items-center justify-between">
         <div>
             <flux:heading size="xl" level="1">{{ __('إعداد الخطة الدراسية') }}</flux:heading>
@@ -409,17 +466,22 @@ new class extends Component {
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- الإعدادات -->
         <flux:card class="lg:col-span-1 space-y-4">
+
+            {{-- Plan type buttons — Alpine-only, zero server requests --}}
             <div class="p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex flex-col gap-1">
-                <button wire:click="$set('planType', 'hifz')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                <button @click="planType = 'hifz'" :class="planType === 'hifz'
+                        ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                        : 'text-zinc-500'" class="w-full py-1.5 text-xs font-medium rounded-md transition-colors">
                     {{ __('حفظ فقط') }}
                 </button>
-                <button wire:click="$set('planType', 'hifz_review')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'hifz_review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                <button @click="planType = 'hifz_review'" :class="planType === 'hifz_review'
+                        ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                        : 'text-zinc-500'" class="w-full py-1.5 text-xs font-medium rounded-md transition-colors">
                     {{ __('حفظ ومراجعة') }}
                 </button>
-                <button wire:click="$set('planType', 'review')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                <button @click="planType = 'review'" :class="planType === 'review'
+                        ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                        : 'text-zinc-500'" class="w-full py-1.5 text-xs font-medium rounded-md transition-colors">
                     {{ __('مراجعة فقط') }}
                 </button>
             </div>
@@ -478,59 +540,82 @@ new class extends Component {
         <div class="lg:col-span-3 space-y-4 h-vh">
             @if(count($planDays) > 0)
                 <flux:card class="p-0 overflow-hidden flex flex-col h-[calc(100vh)]">
+
+                    {{-- Toolbar --}}
                     <div
                         class="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/90 shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                             <flux:heading size="sm">{{ __('التحديد التلقائي') }}</flux:heading>
-                            <flux:radio.group wire:model="fillDirection" variant="segmented" size="sm">
-                                <flux:radio value="forward" label="{{ __('تصاعدي') }}" />
-                                <flux:radio value="reverse" label="{{ __('تنازلي') }}" />
-                            </flux:radio.group>
 
-                            @if($planType === 'hifz_review')
-                                <flux:radio.group wire:model.live="fillTarget" variant="segmented" size="sm">
-                                    <flux:radio value="hifz" label="{{ __('تحديد للحفظ') }}" />
-                                    <flux:radio value="review" label="{{ __('تحديد للمراجعة') }}" />
-                                </flux:radio.group>
-                            @endif
+                            {{-- fillDirection — Alpine only, zero server request --}}
+                            <div class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+                                <button @click="fillDirection = 'forward'" :class="fillDirection === 'forward'
+                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
+                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('تصاعدي') }}
+                                </button>
+                                <button @click="fillDirection = 'reverse'" :class="fillDirection === 'reverse'
+                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-800 dark:text-white'
+                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('تنازلي') }}
+                                </button>
+                            </div>
+
+                            {{-- fillTarget — Alpine only, zero server request --}}
+                            <div x-show="planType === 'hifz_review'"
+                                class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+                                <button @click="fillTarget = 'hifz'" :class="fillTarget === 'hifz'
+                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('تحديد للحفظ') }}
+                                </button>
+                                <button @click="fillTarget = 'review'" :class="fillTarget === 'review'
+                                                ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400'
+                                                : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-colors">
+                                    {{ __('تحديد للمراجعة') }}
+                                </button>
+                            </div>
                         </div>
 
+                        {{-- Fill buttons — x-show, zero server request to switch --}}
                         <div
                             class="flex flex-wrap gap-1 items-center bg-white dark:bg-zinc-900 px-2 py-1.5 rounded border border-zinc-200 dark:border-zinc-700">
-                            @if($fillTarget === 'review')
-                                @if($planType === 'hifz_review')
-                                    <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('all_previous')">
+                            <div x-show="fillTarget === 'review'" class="flex flex-wrap gap-1">
+                                <template x-if="planType === 'hifz_review'">
+                                    <flux:button size="xs" class="bg-indigo-600" @click="doFill('all_previous')">
                                         {{ __('جميع ما سبق') }}
                                     </flux:button>
-                                @endif
-                                <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('juz')">{{ __('جزء') }}
+                                </template>
+                                <flux:button size="xs" class="bg-indigo-600" @click="doFill('juz')">{{ __('جزء') }}
                                 </flux:button>
-                                <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('half_juz')">
-                                    {{ __('نصف جزء') }}
+                                <flux:button size="xs" class="bg-indigo-600" @click="doFill('half_juz')">{{ __('نصف جزء') }}
                                 </flux:button>
-                                <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('5_pages')">
-                                    {{ __('5 صفحات') }}
+                                <flux:button size="xs" class="bg-indigo-600" @click="doFill('5_pages')">{{ __('5 صفحات') }}
                                 </flux:button>
-                                <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('3_surahs')">
-                                    {{ __('3 سور') }}
+                                <flux:button size="xs" class="bg-indigo-600" @click="doFill('3_surahs')">{{ __('3 سور') }}
                                 </flux:button>
-                            @else
-                                <flux:button size="xs" class="bg-indigo-600" wire:click="fillSelected('surah')">{{ __('سورة') }}
+                            </div>
+                            <div x-show="fillTarget !== 'review'" class="flex flex-wrap gap-1">
+                                <flux:button size="xs" class="bg-indigo-600" @click="doFill('surah')">{{ __('سورة') }}
                                 </flux:button>
-                                <flux:button size="xs" variant="ghost" wire:click="fillSelected('page')">{{ __('صفحات') }}
+                                <flux:button size="xs" variant="ghost" @click="doFill('page')">{{ __('صفحة') }}
                                 </flux:button>
-                                <flux:button size="xs" variant="ghost" wire:click="fillSelected('half')">{{ __('1/2 صفحة') }}
+                                <flux:button size="xs" variant="ghost" @click="doFill('half')">{{ __('1/2 صفحة') }}
                                 </flux:button>
-                                <flux:button size="xs" variant="ghost" wire:click="fillSelected('third')">{{ __('1/3 صفحة') }}
+                                <flux:button size="xs" variant="ghost" @click="doFill('third')">{{ __('1/3 صفحة') }}
                                 </flux:button>
-                            @endif
+                            </div>
                         </div>
                     </div>
 
-                    {{-- ── Progress bar — visible while fillSelected is running ── --}}
-                    <div wire:loading wire:target="fillSelected" class="relative h-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    {{-- Progress bar — visible while doFill is in-flight --}}
+                    <div x-show="filling" x-cloak class="relative h-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
                         <div class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
-                             style="animation: shimmer 1.2s ease-in-out infinite;"></div>
+                            style="animation: shimmer 1.2s ease-in-out infinite;"></div>
                     </div>
 
                     <div class="overflow-auto flex-1">
@@ -539,130 +624,140 @@ new class extends Component {
                                 class="sticky top-0 z-10 bg-zinc-100 dark:bg-zinc-800 shadow-sm border-b border-zinc-200 dark:border-zinc-700">
                                 <tr>
                                     <th class="p-3 w-32 font-medium text-zinc-500 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
-                                        wire:click="$toggle('selectAll')">
+                                        @click="toggleAll()">
                                         <div class="flex items-center gap-2">
-                                            <flux:checkbox wire:model.live="selectAll" class="hidden" />
                                             <span>{{ __('التاريخ') }}</span>
                                         </div>
                                     </th>
-                                    @if($planType === 'hifz' || ($planType === 'hifz_review' && $fillTarget === 'hifz'))
-                                        <th class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
-                                            <span
-                                                class="text-indigo-600 dark:text-indigo-400 font-bold ml-2">{{ __('الحفظ') }}</span>
-                                            <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
-                                                <span>من</span><span>إلى</span>
-                                            </div>
-                                        </th>
-                                    @endif
-                                    @if($planType === 'review' || ($planType === 'hifz_review' && $fillTarget === 'review'))
-                                        <th class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
-                                            <span
-                                                class="text-emerald-600 dark:text-emerald-400 font-bold ml-2">{{ __('المراجعة') }}</span>
-                                            <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
-                                                <span>من</span><span>إلى</span>
-                                            </div>
-                                        </th>
-                                    @endif
+
+                                    {{-- Hifz column header --}}
+                                    <th x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')"
+                                        class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
+                                        <span
+                                            class="text-indigo-600 dark:text-indigo-400 font-bold ml-2">{{ __('الحفظ') }}</span>
+                                        <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
+                                            <span>من</span><span>إلى</span>
+                                        </div>
+                                    </th>
+
+                                    {{-- Review column header --}}
+                                    <th x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')"
+                                        class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
+                                        <span
+                                            class="text-emerald-600 dark:text-emerald-400 font-bold ml-2">{{ __('المراجعة') }}</span>
+                                        <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
+                                            <span>من</span><span>إلى</span>
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                 @foreach($planDays as $index => $day)
                                     <tr wire:key="row-{{ $index }}">
-                                        <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40 {{ $day['selected'] ? 'bg-indigo-100 dark:bg-indigo-900/60' : '' }} {{ $selectionStart === $index ? 'ring-2 ring-inset ring-indigo-500' : '' }}"
-                                            wire:click="toggleDaySelection({{ $index }})">
+
+                                        {{-- Date cell — selection managed by Alpine, zero server requests --}}
+                                        <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
+                                            :class="{
+                                                                'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
+                                                                'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
+                                                            }" @click="toggleDay({{ $index }})">
                                             <div class="flex flex-col">
-                                                <span
-                                                    class="text-xs font-bold {{ $day['selected'] ? 'text-indigo-700 dark:text-indigo-300' : '' }}">{{ $day['day_name_ar'] }}</span>
-                                                <span
-                                                    class="text-[10px] {{ $day['selected'] ? 'text-indigo-500 dark:text-indigo-400' : 'text-zinc-400' }}">{{ $day['hijri'] }}</span>
+                                                <span class="text-xs font-bold"
+                                                    :class="selected[{{ $index }}] ? 'text-indigo-700 dark:text-indigo-300' : ''">
+                                                    {{ $day['day_name_ar'] }}
+                                                </span>
+                                                <span class="text-[10px]"
+                                                    :class="selected[{{ $index }}] ? 'text-indigo-500 dark:text-indigo-400' : 'text-zinc-400'">
+                                                    {{ $day['hijri'] }}
+                                                </span>
                                             </div>
                                         </td>
 
-                                        @if($planType === 'hifz' || ($planType === 'hifz_review' && $fillTarget === 'hifz'))
-                                            <td class="h-15 border-r border-zinc-200 dark:border-zinc-700">
-                                                <div class="h-full grid grid-cols-2 gap-2">
-                                                    <div class="h-full flex items-center gap-1">
-                                                        <select wire:model.live="planDays.{{ $index }}.from_surah_id"
-                                                            class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
-                                                            @foreach($allSurahs as $surah)
-                                                                <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <select wire:model="planDays.{{ $index }}.from_verse"
-                                                            class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
-                                                            @php
-                                                                $fSurah = $allSurahs->find($day['from_surah_id']);
-                                                                $fCount = $fSurah?->verses_count ?? 1;
-                                                            @endphp
-                                                            @for($i = 1; $i <= $fCount; $i++)
-                                                                <option value="{{ $i }}">{{ $i }}</option>
-                                                            @endfor
-                                                        </select>
-                                                    </div>
-                                                    <div class="flex items-center gap-1">
-                                                        <select wire:model.live="planDays.{{ $index }}.to_surah_id"
-                                                            class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
-                                                            @foreach($allSurahs as $surah)
-                                                                <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <select wire:model="planDays.{{ $index }}.to_verse"
-                                                            class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
-                                                            @php
-                                                                $tSurah = $allSurahs->find($day['to_surah_id']);
-                                                                $tCount = $tSurah?->verses_count ?? 1;
-                                                            @endphp
-                                                            @for($i = 1; $i <= $tCount; $i++)
-                                                                <option value="{{ $i }}">{{ $i }}</option>
-                                                            @endfor
-                                                        </select>
-                                                    </div>
+                                        {{-- Hifz cell --}}
+                                        <td x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')"
+                                            class="h-15 border-r border-zinc-200 dark:border-zinc-700">
+                                            <div class="h-full grid grid-cols-2 gap-2">
+                                                <div class="h-full flex items-center gap-1">
+                                                    <select wire:model.live="planDays.{{ $index }}.from_surah_id"
+                                                        class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
+                                                        @foreach($allSurahs as $surah)
+                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <select wire:model="planDays.{{ $index }}.from_verse"
+                                                        class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
+                                                        @php
+                                                            $fSurah = $allSurahs->find($day['from_surah_id']);
+                                                            $fCount = $fSurah?->verses_count ?? 1;
+                                                        @endphp
+                                                        @for($i = 1; $i <= $fCount; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
                                                 </div>
-                                            </td>
-                                        @endif
+                                                <div class="flex items-center gap-1">
+                                                    <select wire:model.live="planDays.{{ $index }}.to_surah_id"
+                                                        class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700">
+                                                        @foreach($allSurahs as $surah)
+                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <select wire:model="planDays.{{ $index }}.to_verse"
+                                                        class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
+                                                        @php
+                                                            $tSurah = $allSurahs->find($day['to_surah_id']);
+                                                            $tCount = $tSurah?->verses_count ?? 1;
+                                                        @endphp
+                                                        @for($i = 1; $i <= $tCount; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </td>
 
-                                        @if($planType === 'review' || ($planType === 'hifz_review' && $fillTarget === 'review'))
-                                            <td class="h-15 border-r border-zinc-200 dark:border-zinc-700">
-                                                <div class="h-full grid grid-cols-2 gap-2">
-                                                    <div class="h-full flex items-center gap-1">
-                                                        <select wire:model.live="planDays.{{ $index }}.review_from_surah_id"
-                                                            class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-full max-w-[100px]">
-                                                            @foreach($allSurahs as $surah)
-                                                                <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <select wire:model="planDays.{{ $index }}.review_from_verse"
-                                                            class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
-                                                            @php
-                                                                $rfSurah = $allSurahs->find($day['review_from_surah_id']);
-                                                                $rfCount = $rfSurah?->verses_count ?? 1;
-                                                            @endphp
-                                                            @for($i = 1; $i <= $rfCount; $i++)
-                                                                <option value="{{ $i }}">{{ $i }}</option>
-                                                            @endfor
-                                                        </select>
-                                                    </div>
-                                                    <div class="h-full flex items-center gap-1">
-                                                        <select wire:model.live="planDays.{{ $index }}.review_to_surah_id"
-                                                            class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-full max-w-[100px]">
-                                                            @foreach($allSurahs as $surah)
-                                                                <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <select wire:model="planDays.{{ $index }}.review_to_verse"
-                                                            class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
-                                                            @php
-                                                                $rtSurah = $allSurahs->find($day['review_to_surah_id']);
-                                                                $rtCount = $rtSurah?->verses_count ?? 1;
-                                                            @endphp
-                                                            @for($i = 1; $i <= $rtCount; $i++)
-                                                                <option value="{{ $i }}">{{ $i }}</option>
-                                                            @endfor
-                                                        </select>
-                                                    </div>
+                                        {{-- Review cell --}}
+                                        <td x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')"
+                                            class="h-15 border-r border-zinc-200 dark:border-zinc-700">
+                                            <div class="h-full grid grid-cols-2 gap-2">
+                                                <div class="h-full flex items-center gap-1">
+                                                    <select wire:model.live="planDays.{{ $index }}.review_from_surah_id"
+                                                        class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-full max-w-[100px]">
+                                                        @foreach($allSurahs as $surah)
+                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <select wire:model="planDays.{{ $index }}.review_from_verse"
+                                                        class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
+                                                        @php
+                                                            $rfSurah = $allSurahs->find($day['review_from_surah_id']);
+                                                            $rfCount = $rfSurah?->verses_count ?? 1;
+                                                        @endphp
+                                                        @for($i = 1; $i <= $rfCount; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
                                                 </div>
-                                            </td>
-                                        @endif
+                                                <div class="h-full flex items-center gap-1">
+                                                    <select wire:model.live="planDays.{{ $index }}.review_to_surah_id"
+                                                        class="h-full flex-3 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-full max-w-[100px]">
+                                                        @foreach($allSurahs as $surah)
+                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <select wire:model="planDays.{{ $index }}.review_to_verse"
+                                                        class="h-full flex-1 text-[11px] p-1.5 border border-zinc-200 rounded dark:bg-zinc-800 dark:border-zinc-700 w-16">
+                                                        @php
+                                                            $rtSurah = $allSurahs->find($day['review_to_surah_id']);
+                                                            $rtCount = $rtSurah?->verses_count ?? 1;
+                                                        @endphp
+                                                        @for($i = 1; $i <= $rtCount; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
