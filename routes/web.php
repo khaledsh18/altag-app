@@ -116,6 +116,13 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     Route::view('/student-plans', 'teacher.student-plans')->name('student-plans');
     Route::view('/tasmeeh', 'teacher.tasmeeh')->name('tasmeeh');
     Route::view('/exceeded-limits', 'teacher.exceeded-limits')->name('exceeded-limits');
+    Route::view('/leaderboards', 'teacher.leaderboards')->name('leaderboards');
+    
+    // Grading page route will be mapped to a view wrapper soon, for now just use view
+    Route::get('/leaderboards/{id}/grade', function($id) {
+        return view('teacher.leaderboards-grade', ['leaderboardId' => $id]);
+    })->name('leaderboards.grade');
+
     Route::get('/student-plans/{id}/print', function ($id) {
         $plan = StudentPlan::with([
             'student.circle',

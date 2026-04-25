@@ -14,6 +14,11 @@
             {{ __('التسميع والمتابعة') }}</flux:sidebar.item>
     </flux:sidebar.group>
 
+    <flux:sidebar.group heading="{{ __('التحفيز والمنافسة') }}" class="mt-4">
+        <flux:sidebar.item wire:navigate href="{{ route('teacher.leaderboards') }}" icon="trophy" :current="request()->routeIs('teacher.leaderboards*')">
+            {{ __('مسابقات الحلقة') }}</flux:sidebar.item>
+    </flux:sidebar.group>
+
     <flux:sidebar.group heading="{{ __('التحضير') }}" class="mt-4">
         <flux:sidebar.item icon="calendar" :href="route('teacher.attendance')"
             :current="request()->routeIs('teacher.attendance')" wire:navigate>
