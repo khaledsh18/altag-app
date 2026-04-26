@@ -26,6 +26,28 @@
                     <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                         <tr>
                             <th class="p-4 font-semibold text-zinc-800 dark:text-zinc-200 w-1/4">{{ __('اسم الطالب') }}</th>
+                            
+                            <!-- Automated Points Headers -->
+                            <th class="p-4 font-semibold text-zinc-500 dark:text-zinc-400 text-center text-xs bg-zinc-100/50 dark:bg-zinc-800/30">
+                                <div class="flex flex-col items-center gap-1">
+                                    <flux:icon icon="book-open" variant="micro" class="size-4" />
+                                    <span>{{ __('نقاط الحفظ') }}</span>
+                                </div>
+                            </th>
+                            <th class="p-4 font-semibold text-zinc-500 dark:text-zinc-400 text-center text-xs bg-zinc-100/50 dark:bg-zinc-800/30">
+                                <div class="flex flex-col items-center gap-1">
+                                    <flux:icon icon="arrow-path" variant="micro" class="size-4" />
+                                    <span>{{ __('نقاط المراجعة') }}</span>
+                                </div>
+                            </th>
+                            <th class="p-4 font-semibold text-zinc-500 dark:text-zinc-400 text-center text-xs bg-zinc-100/50 dark:bg-zinc-800/30 border-l border-zinc-200 dark:border-zinc-700">
+                                <div class="flex flex-col items-center gap-1">
+                                    <flux:icon icon="clock" variant="micro" class="size-4" />
+                                    <span>{{ __('نقاط الحضور') }}</span>
+                                </div>
+                            </th>
+
+                            <!-- Manual Criteria Headers -->
                             @foreach($leaderboard->criteria as $criterion)
                                 <th class="p-4 font-semibold text-zinc-800 dark:text-zinc-200 text-center">
                                     <div class="flex flex-col items-center">
@@ -40,17 +62,62 @@
                         @foreach($students as $student)
                             @php
                                 $studentScoreIds = $scoresMap->get($student->id, []);
+                                $dailyTotal = $dailyScores[$student->id]['total'] ?? 0;
+                                $dailyAutomated = $dailyScores[$student->id]['automated'] ?? 0;
+                                $dailyManual = $dailyScores[$student->id]['manual'] ?? 0;
                             @endphp
                             <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                                <td class="p-4 font-medium text-zinc-900 dark:text-zinc-100">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
-                                            {{ mb_substr($student->name, 0, 1) }}
+                                <td class="p-4 font-medium text-zinc-900 dark:text-zinc-100 w-1/4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                                                {{ mb_substr($student->name, 0, 1) }}
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span>{{ $student->name }}</span>
+                                                @if($dailyAutomated > 0)
+                                                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-normal">
+                                                        <flux:icon icon="cpu-chip" variant="micro" class="size-3 inline" /> {{ __('تلقائي اليوم:') }} {{ $dailyAutomated }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <span>{{ $student->name }}</span>
+                                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 text-xs px-2 py-1 rounded-md font-bold flex items-center gap-1" title="{{ __('مجموع نقاط اليوم (التلقائية + اليدوية)') }}">
+                                            {{ $dailyTotal }} <flux:icon icon="star" variant="solid" class="size-3" />
+                                        </div>
                                     </div>
                                 </td>
                                 
+                                <!-- Automated Points Cells -->
+                                <td class="p-4 text-center bg-zinc-50 dark:bg-zinc-800/30">
+                                    @if(($dailyScores[$student->id]['hifz'] ?? 0) > 0)
+                                        <span class="inline-flex items-center justify-center px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                                            +{{ $dailyScores[$student->id]['hifz'] }}
+                                        </span>
+                                    @else
+                                        <span class="text-zinc-300 dark:text-zinc-600">-</span>
+                                    @endif
+                                </td>
+                                <td class="p-4 text-center bg-zinc-50 dark:bg-zinc-800/30">
+                                    @if(($dailyScores[$student->id]['review'] ?? 0) > 0)
+                                        <span class="inline-flex items-center justify-center px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                                            +{{ $dailyScores[$student->id]['review'] }}
+                                        </span>
+                                    @else
+                                        <span class="text-zinc-300 dark:text-zinc-600">-</span>
+                                    @endif
+                                </td>
+                                <td class="p-4 text-center bg-zinc-50 dark:bg-zinc-800/30 border-l border-zinc-200 dark:border-zinc-700">
+                                    @if(($dailyScores[$student->id]['attendance'] ?? 0) > 0)
+                                        <span class="inline-flex items-center justify-center px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                                            +{{ $dailyScores[$student->id]['attendance'] }}
+                                        </span>
+                                    @else
+                                        <span class="text-zinc-300 dark:text-zinc-600">-</span>
+                                    @endif
+                                </td>
+
+                                <!-- Manual Criteria Cells -->
                                 @foreach($leaderboard->criteria as $criterion)
                                     @php
                                         $hasScore = in_array($criterion->id, $studentScoreIds);

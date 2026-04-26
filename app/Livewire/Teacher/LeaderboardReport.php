@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Livewire\Teacher;
+
+use App\Models\Leaderboard;
+use App\Services\LeaderboardService;
+use Livewire\Component;
+
+class LeaderboardReport extends Component
+{
+    public $leaderboardId;
+
+    public function mount($leaderboardId)
+    {
+        $this->leaderboardId = $leaderboardId;
+    }
+
+    public function render()
+    {
+        $leaderboard = Leaderboard::with('criteria')->findOrFail($this->leaderboardId);
+        $service = new LeaderboardService();
+        $standings = $service->getDetailedStandings($leaderboard);
+
+        return view('livewire.teacher.leaderboard-report', [
+            'leaderboard' => $leaderboard,
+            'standings' => $standings,
+        ]);
+    }
+}

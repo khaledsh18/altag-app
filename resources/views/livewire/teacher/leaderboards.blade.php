@@ -52,12 +52,15 @@
                         <div class="flex gap-2">
                             <flux:button wire:click="toggleActive({{ $board->id }})" variant="{{ $board->is_active ? 'ghost' : 'ghost' }}" class="flex-1 border border-zinc-200 dark:border-zinc-700">
                                 @if($board->is_active)
-                                    {{ __('إيقاف المنافسة') }}
+                                    {{ __('إيقاف') }}
                                     <flux:icon icon="pause-circle" class="size-4 ml-1" />
                                 @else
-                                    {{ __('تنشيط المنافسة') }}
+                                    {{ __('تنشيط') }}
                                     <flux:icon icon="play-circle" class="size-4 ml-1 text-emerald-500" />
                                 @endif
+                            </flux:button>
+                            <flux:button href="{{ route('teacher.leaderboards.report', $board->id) }}" variant="ghost" class="border border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20" title="{{ __('التقرير الشامل') }}">
+                                <flux:icon icon="chart-bar" class="size-4" />
                             </flux:button>
                             <flux:button href="{{ route('teacher.leaderboards.grade', $board->id) }}" variant="ghost" class="border border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400 dark:hover:bg-indigo-900/20" title="{{ __('رصد النقاط اليدوية') }}">
                                 <flux:icon icon="clipboard-document-check" class="size-4" />

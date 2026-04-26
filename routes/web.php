@@ -123,6 +123,10 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
         return view('teacher.leaderboards-grade', ['leaderboardId' => $id]);
     })->name('leaderboards.grade');
 
+    Route::get('/leaderboards/{id}/report', function($id) {
+        return view('teacher.leaderboards-report', ['leaderboardId' => $id]);
+    })->name('leaderboards.report');
+
     Route::get('/student-plans/{id}/print', function ($id) {
         $plan = StudentPlan::with([
             'student.circle',

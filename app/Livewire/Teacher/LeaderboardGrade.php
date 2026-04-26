@@ -45,17 +45,21 @@ class LeaderboardGrade extends Component
         $students = Student::where('circle_id', $leaderboard->circle_id)->orderBy('name')->get();
         
         $scores = LeaderboardScore::where('leaderboard_id', $this->leaderboardId)
-            ->whereDate('date', Carbon::parse($this->date))
+            ->whereDate('date', \Carbon\Carbon::parse($this->date))
             ->get()
             ->groupBy('student_id')
             ->map(function ($studentScores) {
                 return $studentScores->pluck('leaderboard_criterion_id')->toArray();
             });
 
+        $service = new \App\Services\LeaderboardService();
+        $dailyScores = $service->getDailyScores($leaderboard, \Carbon\Carbon::parse($this->date)->format('Y-m-d'));
+
         return view('livewire.teacher.leaderboard-grade', [
             'leaderboard' => $leaderboard,
             'students' => $students,
             'scoresMap' => $scores,
+            'dailyScores' => $dailyScores,
         ]);
     }
 }
