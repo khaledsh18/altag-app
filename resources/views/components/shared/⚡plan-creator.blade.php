@@ -16,6 +16,7 @@ new class extends Component {
     #[Url]
     public $edit = null;
 
+    #[Url]
     public $studentId;
     public $startDate;
     public $daysCount = 16;
@@ -80,7 +81,9 @@ new class extends Component {
             $this->startDate = now()->format('Y-m-d');
             if ($this->userLevel === 'teacher') {
                 $teacher = Auth::guard('teacher')->user();
-                $this->studentId = Student::where('circle_id', $teacher->circles()->first()?->id ?? 0)->first()->id ?? null;
+                if (!$this->studentId) {
+                    $this->studentId = Student::where('circle_id', $teacher->circles()->first()?->id ?? 0)->first()->id ?? null;
+                }
                 $this->step = 1;
             } else {
                 $this->studentId = Auth::guard('student')->id();
