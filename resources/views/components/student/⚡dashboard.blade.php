@@ -86,6 +86,88 @@ new class extends Component {
             $leaderboardStandings = $service->getStandings($leaderboard);
         }
 
+        // Last Attended Day Logic
+        $lastAttendance = \App\Models\Attendance::where('student_id', $student->id)
+            ->whereIn('status', ['present', 'late'])
+            ->orderBy('date', 'desc')
+            ->first();
+
+        $lastGradedPlanDay = StudentPlanDay::whereHas('plan', fn($q) => $q->where('student_id', $student->id))
+            ->where(function($q) {
+                $q->whereNotNull('hifz_achievement')->orWhereNotNull('review_achievement');
+            })
+            ->orderBy('date', 'desc')
+            ->first();
+
+        $lastDateObj = null;
+        if ($lastAttendance && $lastGradedPlanDay) {
+            $lastDateObj = $lastAttendance->date > $lastGradedPlanDay->date ? $lastAttendance->date : $lastGradedPlanDay->date;
+        } elseif ($lastAttendance) {
+            $lastDateObj = $lastAttendance->date;
+        } elseif ($lastGradedPlanDay) {
+            $lastDateObj = $lastGradedPlanDay->date;
+        }
+
+        $lastDayStats = null;
+        if ($lastDateObj) {
+            $dateStr = $lastDateObj->format('Y-m-d');
+            
+            $dayAttendance = \App\Models\Attendance::where('student_id', $student->id)->whereDate('date', $dateStr)->first();
+            $attStatus = $dayAttendance ? $dayAttendance->status : null;
+            
+            $dayPlans = StudentPlanDay::whereHas('plan', fn($q) => $q->where('student_id', $student->id))
+                ->whereDate('date', $dateStr)
+                ->get();
+                
+            $hifzMax = $dayPlans->max('hifz_achievement') ?: 0;
+            $reviewMax = $dayPlans->max('review_achievement') ?: 0;
+            
+            $manualCriteriaCount = \Illuminate\Support\Facades\DB::table('leaderboard_scores')
+                ->where('student_id', $student->id)
+                ->whereDate('date', $dateStr)
+                ->count();
+
+            $score = 0;
+            if ($hifzMax == 3) $score += 3; elseif ($hifzMax == 2) $score += 2; elseif ($hifzMax == 1) $score += 1;
+            if ($reviewMax == 3) $score += 3; elseif ($reviewMax == 2) $score += 2; elseif ($reviewMax == 1) $score += 1;
+            if ($attStatus === 'present') $score += 2; elseif ($attStatus === 'late') $score += 1;
+            if ($manualCriteriaCount > 0) $score += 1;
+
+            $case = 'weak';
+            $message = 'بإمكانك تقديم أداء أفضل، لا تدع الكسل يغلبك واستعن بالله!';
+            $color = 'zinc';
+            $icon = 'arrow-trending-down';
+
+            if ($score >= 7) {
+                $case = 'excellent';
+                $message = 'أداء مذهل ومثالي! أنت فخر لنا، استمر على هذا التميز والتألق في حفظ كتاب الله.';
+                $color = 'emerald';
+                $icon = 'star';
+            } elseif ($score >= 5) {
+                $case = 'good';
+                $message = 'أداء رائع جداً! خطواتك ثابتة، بقليل من الجهد الإضافي ستصل للقمة.';
+                $color = 'indigo';
+                $icon = 'arrow-trending-up';
+            } elseif ($score >= 3) {
+                $case = 'acceptable';
+                $message = 'أداء مقبول، لكننا نثق بأن قدراتك أعلى من ذلك بكثير. ننتظر منك الأفضل غداً!';
+                $color = 'amber';
+                $icon = 'minus';
+            }
+
+            $lastDayStats = [
+                'date' => $dateStr,
+                'hifz' => $hifzMax,
+                'review' => $reviewMax,
+                'attendance' => $attStatus,
+                'criteria_count' => $manualCriteriaCount,
+                'case' => $case,
+                'message' => $message,
+                'color' => $color,
+                'icon' => $icon
+            ];
+        }
+
         return [
             'student' => $student,
             'todayStr' => $todayStr,
@@ -100,6 +182,7 @@ new class extends Component {
             'lateness' => $lateness,
             'leaderboard' => $leaderboard,
             'leaderboardStandings' => $leaderboardStandings,
+            'lastDayStats' => $lastDayStats,
         ];
     }
     
@@ -134,6 +217,93 @@ new class extends Component {
             {{ __('إنشاء مسار جديد') }}
         </flux:button>
     </div>
+
+    <!-- Last Attended Day Summary -->
+    @if($lastDayStats)
+        <flux:card class="bg-{{ $lastDayStats['color'] }}-50 dark:bg-{{ $lastDayStats['color'] }}-900 border border-{{ $lastDayStats['color'] }}-200 dark:border-{{ $lastDayStats['color'] }}-800/50 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-2 h-full bg-{{ $lastDayStats['color'] }}-500"></div>
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div class="bg-white dark:bg-zinc-800 p-4 rounded-full shadow-sm border border-{{ $lastDayStats['color'] }}-100 dark:border-zinc-700 text-{{ $lastDayStats['color'] }}-500">
+                    <flux:icon icon="{{ $lastDayStats['icon'] }}" class="size-8" variant="solid" />
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <flux:heading size="lg" class="text-{{ $lastDayStats['color'] }}-700 dark:text-{{ $lastDayStats['color'] }}-400">{{ __('إنجازك في آخر يوم حضرته') }}</flux:heading>
+                        <flux:badge color="zinc" size="sm" class="text-xs">{{ $this->getHijriLabel($lastDayStats['date']) }}</flux:badge>
+                    </div>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400 font-medium mb-4">{{ $lastDayStats['message'] }}</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                        <!-- Hifz Checklist Item -->
+                        <div class="flex items-center gap-3 bg-white dark:bg-zinc-800/50 p-3 rounded-xl border {{ $lastDayStats['hifz'] > 0 ? 'border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'border-zinc-200 dark:border-zinc-800/50 opacity-70' }}">
+                            @if($lastDayStats['hifz'] > 0)
+                                <flux:icon icon="check-circle" variant="solid" class="size-6 text-emerald-500" />
+                            @else
+                                <div class="size-6 rounded-full border-2 border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                                    <flux:icon icon="minus" class="size-4 text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                            @endif
+                            <div class="flex flex-col">
+                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{{ __('تسميع الحفظ') }}</span>
+                                <span class="font-bold text-sm {{ $lastDayStats['hifz'] == 3 ? 'text-emerald-700 dark:text-emerald-400' : ($lastDayStats['hifz'] == 2 ? 'text-indigo-700 dark:text-indigo-400' : ($lastDayStats['hifz'] == 1 ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-400')) }}">
+                                    {{ $lastDayStats['hifz'] == 3 ? 'ممتاز' : ($lastDayStats['hifz'] == 2 ? 'جيد' : ($lastDayStats['hifz'] == 1 ? 'مقبول' : 'لم يسمع')) }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Review Checklist Item -->
+                        <div class="flex items-center gap-3 bg-white dark:bg-zinc-800/50 p-3 rounded-xl border {{ $lastDayStats['review'] > 0 ? 'border-emerald-200 dark:border-emerald-900/50 shadow-sm' : 'border-zinc-200 dark:border-zinc-800/50 opacity-70' }}">
+                            @if($lastDayStats['review'] > 0)
+                                <flux:icon icon="check-circle" variant="solid" class="size-6 text-emerald-500" />
+                            @else
+                                <div class="size-6 rounded-full border-2 border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                                    <flux:icon icon="minus" class="size-4 text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                            @endif
+                            <div class="flex flex-col">
+                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{{ __('تسميع المراجعة') }}</span>
+                                <span class="font-bold text-sm {{ $lastDayStats['review'] == 3 ? 'text-emerald-700 dark:text-emerald-400' : ($lastDayStats['review'] == 2 ? 'text-indigo-700 dark:text-indigo-400' : ($lastDayStats['review'] == 1 ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-400')) }}">
+                                    {{ $lastDayStats['review'] == 3 ? 'ممتاز' : ($lastDayStats['review'] == 2 ? 'جيد' : ($lastDayStats['review'] == 1 ? 'مقبول' : 'لم يراجع')) }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Attendance Checklist Item -->
+                        <div class="flex items-center gap-3 bg-white dark:bg-zinc-800/50 p-3 rounded-xl border {{ $lastDayStats['attendance'] == 'present' ? 'border-emerald-200 dark:border-emerald-900/50 shadow-sm' : ($lastDayStats['attendance'] == 'late' ? 'border-amber-200 dark:border-amber-900/50 shadow-sm' : 'border-zinc-200 dark:border-zinc-800/50 opacity-70') }}">
+                            @if($lastDayStats['attendance'] == 'present')
+                                <flux:icon icon="check-circle" variant="solid" class="size-6 text-emerald-500" />
+                            @elseif($lastDayStats['attendance'] == 'late')
+                                <flux:icon icon="exclamation-circle" variant="solid" class="size-6 text-amber-500" />
+                            @else
+                                <div class="size-6 rounded-full border-2 border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                                    <flux:icon icon="x-mark" class="size-4 text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                            @endif
+                            <div class="flex flex-col">
+                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{{ __('الحضور') }}</span>
+                                <span class="font-bold text-sm {{ $lastDayStats['attendance'] == 'present' ? 'text-emerald-700 dark:text-emerald-400' : ($lastDayStats['attendance'] == 'late' ? 'text-amber-700 dark:text-amber-400' : 'text-zinc-400') }}">
+                                    {{ $lastDayStats['attendance'] == 'present' ? 'حاضر (بدون تأخير)' : ($lastDayStats['attendance'] == 'late' ? 'متأخر' : 'غياب') }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Criteria Checklist Item (if > 0) -->
+                        @if($lastDayStats['criteria_count'] > 0)
+                        <div class="flex items-center gap-3 bg-white dark:bg-zinc-800/50 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 shadow-sm">
+                            <flux:icon icon="check-circle" variant="solid" class="size-6 text-emerald-500" />
+                            <div class="flex flex-col">
+                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{{ __('بنود السلوك') }}</span>
+                                <span class="font-bold text-sm text-emerald-700 dark:text-emerald-400">
+                                    {{ $lastDayStats['criteria_count'] }} {{ __('بنود إضافية') }}
+                                </span>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </flux:card>
+    @endif
 
     <!-- Pending Missions Widget -->
     @if(count($pendingMissions) > 0)
