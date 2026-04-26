@@ -122,10 +122,14 @@ new class extends Component {
             $hifzMax = $dayPlans->max('hifz_achievement') ?: 0;
             $reviewMax = $dayPlans->max('review_achievement') ?: 0;
             
-            $manualCriteriaCount = \Illuminate\Support\Facades\DB::table('leaderboard_scores')
-                ->where('student_id', $student->id)
-                ->whereDate('date', $dateStr)
-                ->count();
+            $manualCriteria = \Illuminate\Support\Facades\DB::table('leaderboard_scores')
+                ->join('leaderboard_criteria', 'leaderboard_scores.leaderboard_criterion_id', '=', 'leaderboard_criteria.id')
+                ->where('leaderboard_scores.student_id', $student->id)
+                ->whereDate('leaderboard_scores.date', $dateStr)
+                ->pluck('leaderboard_criteria.name')
+                ->toArray();
+                
+            $manualCriteriaCount = count($manualCriteria);
 
             $score = 0;
             if ($hifzMax == 3) $score += 3; elseif ($hifzMax == 2) $score += 2; elseif ($hifzMax == 1) $score += 1;
@@ -161,6 +165,7 @@ new class extends Component {
                 'review' => $reviewMax,
                 'attendance' => $attStatus,
                 'criteria_count' => $manualCriteriaCount,
+                'criteria_names' => $manualCriteria,
                 'case' => $case,
                 'message' => $message,
                 'color' => $color,
@@ -293,8 +298,8 @@ new class extends Component {
                             <flux:icon icon="check-circle" variant="solid" class="size-6 text-emerald-500" />
                             <div class="flex flex-col">
                                 <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">{{ __('بنود السلوك') }}</span>
-                                <span class="font-bold text-sm text-emerald-700 dark:text-emerald-400">
-                                    {{ $lastDayStats['criteria_count'] }} {{ __('بنود إضافية') }}
+                                <span class="font-bold text-sm text-emerald-700 dark:text-emerald-400 truncate" title="{{ implode('، ', $lastDayStats['criteria_names']) }}">
+                                    {{ implode('، ', $lastDayStats['criteria_names']) }}
                                 </span>
                             </div>
                         </div>
