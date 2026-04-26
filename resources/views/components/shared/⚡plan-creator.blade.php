@@ -540,7 +540,7 @@ new class extends Component {
 
     <!-- WIZARD UI -->
     @if(!$isGenerated)
-        <flux:card class="max-w-2xl mx-auto p-0 overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative">
+        <flux:card class="max-w-2xl mx-auto p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative">
             <!-- Header bar with Progress -->
             <div class="bg-zinc-50 dark:bg-zinc-800/50 p-6 border-b border-zinc-100 dark:border-zinc-800">
                 <div class="flex items-center justify-between mb-2">
