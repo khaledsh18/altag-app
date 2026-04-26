@@ -159,6 +159,33 @@ new class extends Component {
                 $icon = 'minus';
             }
 
+            $themeClasses = [
+                'zinc' => [
+                    'card' => 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800',
+                    'strip' => 'bg-zinc-500',
+                    'iconWrapper' => 'border-zinc-100 dark:border-zinc-700 text-zinc-500',
+                    'heading' => 'text-zinc-700 dark:text-zinc-400'
+                ],
+                'emerald' => [
+                    'card' => 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50',
+                    'strip' => 'bg-emerald-500',
+                    'iconWrapper' => 'border-emerald-100 dark:border-zinc-700 text-emerald-500',
+                    'heading' => 'text-emerald-700 dark:text-emerald-400'
+                ],
+                'indigo' => [
+                    'card' => 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800/50',
+                    'strip' => 'bg-indigo-500',
+                    'iconWrapper' => 'border-indigo-100 dark:border-zinc-700 text-indigo-500',
+                    'heading' => 'text-indigo-700 dark:text-indigo-400'
+                ],
+                'amber' => [
+                    'card' => 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50',
+                    'strip' => 'bg-amber-500',
+                    'iconWrapper' => 'border-amber-100 dark:border-zinc-700 text-amber-500',
+                    'heading' => 'text-amber-700 dark:text-amber-400'
+                ],
+            ];
+
             $lastDayStats = [
                 'date' => $dateStr,
                 'hifz' => $hifzMax,
@@ -168,7 +195,7 @@ new class extends Component {
                 'criteria_names' => $manualCriteria,
                 'case' => $case,
                 'message' => $message,
-                'color' => $color,
+                'theme' => $themeClasses[$color],
                 'icon' => $icon
             ];
         }
@@ -225,15 +252,15 @@ new class extends Component {
 
     <!-- Last Attended Day Summary -->
     @if($lastDayStats)
-        <flux:card class="bg-{{ $lastDayStats['color'] }}-50 dark:bg-{{ $lastDayStats['color'] }}-900 border border-{{ $lastDayStats['color'] }}-200 dark:border-{{ $lastDayStats['color'] }}-800/50 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-2 h-full bg-{{ $lastDayStats['color'] }}-500"></div>
+        <flux:card class="{{ $lastDayStats['theme']['card'] }} relative overflow-hidden border">
+            <div class="absolute top-0 right-0 w-2 h-full {{ $lastDayStats['theme']['strip'] }}"></div>
             <div class="flex flex-col md:flex-row gap-6 items-center">
-                <div class="bg-white dark:bg-zinc-800 p-4 rounded-full shadow-sm border border-{{ $lastDayStats['color'] }}-100 dark:border-zinc-700 text-{{ $lastDayStats['color'] }}-500">
+                <div class="bg-white dark:bg-zinc-800 p-4 rounded-full shadow-sm border {{ $lastDayStats['theme']['iconWrapper'] }}">
                     <flux:icon icon="{{ $lastDayStats['icon'] }}" class="size-8" variant="solid" />
                 </div>
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                        <flux:heading size="lg" class="text-{{ $lastDayStats['color'] }}-700 dark:text-{{ $lastDayStats['color'] }}-400">{{ __('إنجازك في آخر يوم حضرته') }}</flux:heading>
+                        <flux:heading size="lg" class="{{ $lastDayStats['theme']['heading'] }} font-bold">{{ __('إنجازك في آخر يوم حضرته') }}</flux:heading>
                         <flux:badge color="zinc" size="sm" class="text-xs">{{ $this->getHijriLabel($lastDayStats['date']) }}</flux:badge>
                     </div>
                     <p class="text-sm text-zinc-600 dark:text-zinc-400 font-medium mb-4">{{ $lastDayStats['message'] }}</p>
