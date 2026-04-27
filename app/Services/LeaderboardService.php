@@ -39,7 +39,15 @@ class LeaderboardService
                 ->get();
             
             $manualScore = $manualScoresList->sum('points');
-            $totalScore += $manualScore;
+            
+            // 1.5 Extra Points
+            $extraPointsList = DB::table('leaderboard_extra_points')
+                ->where('leaderboard_id', $leaderboard->id)
+                ->where('student_id', $student->id)
+                ->get();
+            $extraPointsScore = $extraPointsList->sum('points');
+            
+            $totalScore += $manualScore + $extraPointsScore;
             
             // Count occurrences per criterion
             $criteriaCounts = [];
@@ -93,6 +101,8 @@ class LeaderboardService
                 'score' => $totalScore,
                 'details' => [
                     'manual' => $manualScore,
+                    'extra_points_score' => $extraPointsScore,
+                    'extra_points_list' => $extraPointsList,
                     'attendance' => $attendanceScore,
                     'hifz' => $hifzScore,
                     'review' => $reviewScore,

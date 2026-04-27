@@ -38,6 +38,8 @@ class Leaderboards extends Component
     public $attendance_present = 4;
     public $attendance_late = 2;
 
+    public $extra_points_enabled = true;
+
     // Custom Criteria
     public $criteria = [];
 
@@ -100,6 +102,8 @@ class Leaderboards extends Component
         $this->attendance_present = 4;
         $this->attendance_late = 2;
 
+        $this->extra_points_enabled = true;
+
         $this->criteria = [];
         $this->isEditing = false;
         $this->showModal = true;
@@ -129,6 +133,8 @@ class Leaderboards extends Component
         $this->attendance_enabled = $settings['attendance_enabled'] ?? true;
         $this->attendance_present = $settings['attendance_present'] ?? 4;
         $this->attendance_late = $settings['attendance_late'] ?? 2;
+
+        $this->extra_points_enabled = $settings['extra_points_enabled'] ?? true;
 
         $this->criteria = $leaderboard->criteria->map(function ($criterion) {
             return [
@@ -178,6 +184,8 @@ class Leaderboards extends Component
             'attendance_enabled' => $this->attendance_enabled,
             'attendance_present' => (int)$this->attendance_present,
             'attendance_late' => (int)$this->attendance_late,
+            
+            'extra_points_enabled' => $this->extra_points_enabled,
         ];
 
         $leaderboard = Leaderboard::updateOrCreate(

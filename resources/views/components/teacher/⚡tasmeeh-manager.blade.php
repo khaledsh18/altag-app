@@ -12,6 +12,14 @@ new class extends Component {
     public $planId = null;
     public $dayId = null;
 
+    // Reservation session properties
+    public $showSessionModal = false;
+    public $sessionStartTime = '16:00';
+    public $sessionEndTime = '18:00';
+    public $sessionStartDate;
+    public $sessionEndDate;
+    public $sessionDaysOfWeek = [0,1,2,3,4,5,6];
+
     /** Persisted in DB — also @entangled to Alpine for instant visual feedback */
     public $hifzAchievement = null;
     public $reviewAchievement = null;
@@ -44,6 +52,23 @@ new class extends Component {
             ->whereDate('date', $todayStr)
             ->get()
             ->keyBy('student_id');
+
+        $allSessions = \App\Models\TurnReservationSession::where('teacher_id', $teacher->id)->get();
+        $activeSession = null;
+        foreach ($allSessions as $session) {
+            if ($session->isActiveToday()) {
+                $activeSession = $session;
+                break;
+            }
+        }
+
+        $reservations = collect();
+        if ($activeSession) {
+            $reservations = \App\Models\TurnReservation::where('turn_reservation_session_id', $activeSession->id)
+                ->whereDate('date', $todayStr)
+                ->get()
+                ->keyBy('student_id');
+        }
 
         $studentsWithPlansPresent = [];
         $studentsWithPlansAbsent = [];
@@ -93,6 +118,7 @@ new class extends Component {
                 }
                 
                 $student->tasmeeh_color = $color;
+                $student->turn_number = isset($reservations[$student->id]) ? $reservations[$student->id]->turn_number : 9999;
                 
                 $attendanceStatus = isset($todayAttendances[$student->id]) ? $todayAttendances[$student->id]->status : 'present';
                 if (in_array($attendanceStatus, ['absent', 'excused'])) {
@@ -130,10 +156,13 @@ new class extends Component {
             }
         }
 
+        $studentsWithPlansPresent = collect($studentsWithPlansPresent)->sortBy('turn_number')->values();
+
         return [
-            'studentsWithPlansPresent' => collect($studentsWithPlansPresent),
+            'studentsWithPlansPresent' => $studentsWithPlansPresent,
             'studentsWithPlansAbsent' => collect($studentsWithPlansAbsent),
             'studentsWithoutPlans' => collect($studentsWithoutPlans),
+            'activeSession' => $activeSession,
             'plans' => $plans,
             'currentDay' => $currentDay,
             'hasNext' => $hasNext,
@@ -255,6 +284,69 @@ new class extends Component {
             Flux::toast('تم حفظ التقييم', variant: 'success');
         }
     }
+
+    public function openSessionModal()
+    {
+        $teacher = Auth::guard('teacher')->user();
+        $session = \App\Models\TurnReservationSession::where('teacher_id', $teacher->id)->first();
+
+        if ($session) {
+            $this->sessionStartTime = \Carbon\Carbon::parse($session->start_time)->format('H:i');
+            $this->sessionEndTime = \Carbon\Carbon::parse($session->end_time)->format('H:i');
+            $this->sessionStartDate = \Carbon\Carbon::parse($session->start_date)->format('Y-m-d');
+            $this->sessionEndDate = \Carbon\Carbon::parse($session->end_date)->format('Y-m-d');
+            $this->sessionDaysOfWeek = $session->days_of_week ?? [0,1,2,3,4,5,6];
+        } else {
+            $this->sessionStartTime = '16:00';
+            $this->sessionEndTime = '18:00';
+            $this->sessionStartDate = \Carbon\Carbon::now('Asia/Riyadh')->format('Y-m-d');
+            $this->sessionEndDate = \Carbon\Carbon::now('Asia/Riyadh')->addMonths(1)->format('Y-m-d');
+            $this->sessionDaysOfWeek = [0,1,2,3,4]; // Default to Sunday-Thursday
+        }
+
+        $this->showSessionModal = true;
+    }
+
+    public function saveSession()
+    {
+        $this->validate([
+            'sessionStartTime' => 'required',
+            'sessionEndTime' => 'required',
+            'sessionStartDate' => 'required|date',
+            'sessionEndDate' => 'required|date|after_or_equal:sessionStartDate',
+            'sessionDaysOfWeek' => 'required|array|min:1',
+        ]);
+
+        $teacher = Auth::guard('teacher')->user();
+        
+        // Convert string arrays to integers
+        $days = array_map('intval', $this->sessionDaysOfWeek);
+
+        $session = \App\Models\TurnReservationSession::where('teacher_id', $teacher->id)->first();
+
+        if ($session) {
+            $session->update([
+                'start_time' => $this->sessionStartTime,
+                'end_time' => $this->sessionEndTime,
+                'start_date' => $this->sessionStartDate,
+                'end_date' => $this->sessionEndDate,
+                'days_of_week' => $days,
+            ]);
+        } else {
+            \App\Models\TurnReservationSession::create([
+                'teacher_id' => $teacher->id,
+                'start_time' => $this->sessionStartTime,
+                'end_time' => $this->sessionEndTime,
+                'start_date' => $this->sessionStartDate,
+                'end_date' => $this->sessionEndDate,
+                'days_of_week' => $days,
+            ]);
+        }
+
+        $this->showSessionModal = false;
+        Flux::toast('تم حفظ إعدادات حجز الأدوار بنجاح', variant: 'success');
+    }
+
 };
 ?>
 
@@ -286,6 +378,17 @@ new class extends Component {
         <div>
             <flux:heading size="xl" level="1">{{ __('التسميع والمتابعة') }}</flux:heading>
             <flux:subheading>{{ __('اختر الطالب ثم الخطة لعرض المهام المطلوبة وتقييم الإنجاز يومياً.') }}</flux:subheading>
+        </div>
+        <div class="flex items-center gap-2">
+            @if($activeSession)
+                <flux:badge color="emerald" variant="pill" icon="clock">
+                    {{ __('حجز الأدوار مفعل') }} 
+                    ({{ \Carbon\Carbon::parse($activeSession->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($activeSession->end_time)->format('g:i A') }})
+                </flux:badge>
+            @endif
+            <flux:button wire:click="openSessionModal" icon="ticket" variant="outline" class="shrink-0">
+                {{ __('إعدادات حجز الأدوار') }}
+            </flux:button>
         </div>
     </div>
 
@@ -324,6 +427,11 @@ new class extends Component {
                                 <div class="size-2.5 rounded-full bg-{{ $student->tasmeeh_color }}-500 shadow-sm shadow-{{ $student->tasmeeh_color }}-500/30 shrink-0"></div>
                                 <span class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300' }} truncate">{{ $student->name }}</span>
                             </div>
+                            @if($student->turn_number !== 9999)
+                                <span class="shrink-0 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-md {{ $studentId == $student->id ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300' }}">
+                                    {{ $student->turn_number }}
+                                </span>
+                            @endif
                         </button>
                     @empty
                         <div class="text-xs text-center text-zinc-400 py-3">{{ __('لا يوجد طلاب حالياً.') }}</div>
@@ -550,4 +658,50 @@ new class extends Component {
 @endif
         </div>
     </div>
+
+    <!-- Session Settings Modal -->
+    <flux:modal wire:model="showSessionModal" class="md:w-[500px]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('إعدادات طابور التسميع') }}</flux:heading>
+                <flux:subheading>{{ __('قم بتحديد جدول طابور التسميع والأيام التي سيكون متاحاً فيها للطلاب.') }}</flux:subheading>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input type="date" wire:model="sessionStartDate" label="{{ __('تاريخ البداية') }}" />
+                    <flux:input type="date" wire:model="sessionEndDate" label="{{ __('تاريخ النهاية') }}" />
+                </div>
+                
+                <flux:field>
+                    <flux:label>{{ __('أيام الحجز') }}</flux:label>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="0" label="الأحد" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="1" label="الإثنين" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="2" label="الثلاثاء" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="3" label="الأربعاء" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="4" label="الخميس" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="5" label="الجمعة" />
+                        <flux:checkbox wire:model="sessionDaysOfWeek" value="6" label="السبت" />
+                    </div>
+                    <flux:error name="sessionDaysOfWeek" />
+                </flux:field>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <flux:input type="time" wire:model="sessionStartTime" label="{{ __('وقت بداية الحجز') }}" />
+                    <flux:input type="time" wire:model="sessionEndTime" label="{{ __('وقت نهاية الحجز') }}" />
+                </div>
+                
+                <div class="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg flex gap-2">
+                    <flux:icon icon="information-circle" class="size-4 shrink-0 mt-0.5" />
+                    <p>{{ __('الأدوار تتجدد يومياً بناءً على هذا الجدول. في الوقت المحدد سيظهر للطلاب زر لطلب رقم. الطلاب أصحاب الأرقام سيظهرون أعلى قائمة "حاضر" هنا.') }}</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <flux:button wire:click="$set('showSessionModal', false)" variant="ghost">{{ __('إلغاء') }}</flux:button>
+                <flux:button wire:click="saveSession" variant="primary" class="bg-indigo-600 hover:bg-indigo-700 text-white border-none">{{ __('حفظ التفعيل') }}</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

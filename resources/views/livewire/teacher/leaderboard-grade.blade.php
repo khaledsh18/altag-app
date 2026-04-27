@@ -13,11 +13,11 @@
         </div>
     </div>
 
-    @if($leaderboard->criteria->isEmpty())
+    @if($leaderboard->criteria->isEmpty() && empty($leaderboard->settings['extra_points_enabled']))
         <div class="text-center py-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
             <flux:icon icon="clipboard-document" class="size-10 mx-auto text-zinc-400 mb-3" />
             <flux:heading size="md" class="mb-2">{{ __('لا توجد بنود مخصصة') }}</flux:heading>
-            <p class="text-zinc-500">{{ __('لم تقم بإضافة بنود التقييم لهذه المسابقة (مثل: الزي، الهدوء). يمكنك إضافتها من إعدادات اللوحة.') }}</p>
+            <p class="text-zinc-500">{{ __('لم تقم بإضافة بنود التقييم أو تفعيل النقاط الإضافية لهذه المسابقة. يمكنك إضافتها من إعدادات اللوحة.') }}</p>
         </div>
     @else
         <flux:card class="p-0 overflow-hidden">
@@ -36,6 +36,16 @@
                                     </div>
                                 </th>
                             @endforeach
+
+                            <!-- Extra Points Header -->
+                            @if(!empty($leaderboard->settings['extra_points_enabled']))
+                                <th class="p-4 font-semibold text-amber-600 dark:text-amber-500 text-center border-r border-zinc-200 dark:border-zinc-700 bg-amber-50/50 dark:bg-amber-900/10">
+                                    <div class="flex flex-col items-center">
+                                        <flux:icon icon="star" class="size-5 mb-1" />
+                                        <span>{{ __('نقاط إضافية') }}</span>
+                                    </div>
+                                </th>
+                            @endif
 
                             <!-- Automated Points Headers -->
                             <th class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 border-r border-zinc-200 dark:border-zinc-700 w-16">
@@ -62,9 +72,13 @@
                         @foreach($students as $student)
                             @php
                                 $studentScoreIds = $scoresMap->get($student->id, []);
+                                $studentExtraPoints = $extraPointsMap->get($student->id, collect());
                                 $dailyTotal = $dailyScores[$student->id]['total'] ?? 0;
                                 $dailyAutomated = $dailyScores[$student->id]['automated'] ?? 0;
                                 $dailyManual = $dailyScores[$student->id]['manual'] ?? 0;
+                                // Add extra points to manual total for display in this view
+                                $dailyManual += $studentExtraPoints->sum('points');
+                                $dailyTotal += $studentExtraPoints->sum('points');
                             @endphp
                             <tr class="even:bg-zinc-50/50 odd:bg-white dark:even:bg-zinc-800/20 dark:odd:bg-zinc-900/10 hover:!bg-zinc-100/80 dark:hover:!bg-zinc-800/50 transition-colors">
                                 <td class="p-4 font-medium text-zinc-900 dark:text-zinc-100 w-1/4">
@@ -104,6 +118,31 @@
                                     </td>
                                 @endforeach
 
+                                <!-- Extra Points Cell -->
+                                @if(!empty($leaderboard->settings['extra_points_enabled']))
+                                    <td class="p-2 text-center border-x border-zinc-100 dark:border-zinc-800 bg-amber-50/30 dark:bg-amber-900/5">
+                                        <div class="flex flex-col gap-2 items-center">
+                                            @foreach($studentExtraPoints as $ep)
+                                                <div class="group relative flex items-center justify-between w-full max-w-[120px] bg-white dark:bg-zinc-800 rounded-lg p-1.5 border border-amber-200 dark:border-amber-700 shadow-sm text-xs" title="{{ $ep->notes }}">
+                                                    <span class="font-bold text-amber-600 dark:text-amber-400 px-1">+{{ $ep->points }}</span>
+                                                    <span class="truncate max-w-[60px] text-zinc-500">{{ $ep->notes }}</span>
+                                                    <button wire:click="deleteExtraPoints({{ $ep->id }})" wire:confirm="{{ __('هل أنت متأكد من حذف هذه النقاط الإضافية؟') }}" class="text-red-400 hover:text-red-600 hidden group-hover:block absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5">
+                                                        <flux:icon icon="x-mark" variant="micro" class="size-3" />
+                                                    </button>
+                                                </div>
+                                            @endforeach
+                                            
+                                            <button 
+                                                wire:click="openExtraPointsModal({{ $student->id }})"
+                                                class="inline-flex w-8 h-8 items-center justify-center rounded-lg border border-dashed border-amber-300 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-600 dark:hover:bg-amber-900/30 transition-colors"
+                                                title="{{ __('إضافة نقاط إضافية') }}"
+                                            >
+                                                <flux:icon icon="plus" variant="micro" class="size-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                @endif
+
                                 <!-- Automated Points Cells -->
                                 <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30 border-r border-zinc-200/50 dark:border-zinc-700/50">
                                     @if(($dailyScores[$student->id]['hifz'] ?? 0) > 0)
@@ -139,4 +178,26 @@
             </div>
         </flux:card>
     @endif
+
+    <!-- Extra Points Modal -->
+    <flux:modal wire:model="showExtraPointsModal" class="md:w-[400px]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg" class="text-amber-600">{{ __('منح نقاط إضافية') }}</flux:heading>
+                <flux:subheading>{{ __('أضف نقاط إضافية للطالب مع كتابة ملاحظة تبرر ذلك.') }}</flux:subheading>
+            </div>
+
+            <div class="space-y-4">
+                <flux:input type="number" wire:model="extraPointsAmount" label="{{ __('عدد النقاط') }}" placeholder="مثال: 5" required />
+                <flux:textarea wire:model="extraPointsNotes" label="{{ __('ملاحظة / السبب') }}" placeholder="مثال: مشاركة مميزة، مساعدة زميل..." rows="3" required />
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <flux:button wire:click="$set('showExtraPointsModal', false)" variant="ghost">{{ __('إلغاء') }}</flux:button>
+                <flux:button wire:click="saveExtraPoints" variant="primary" class="bg-amber-500 hover:bg-amber-600 border-none text-white">
+                    {{ __('حفظ النقاط') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

@@ -5,6 +5,11 @@
         @php
             $navItems = [
                 [
+                    'name' => 'التحضير',
+                    'route' => 'teacher.attendance',
+                    'icon' => 'calendar'
+                ],
+                [
                     'name' => 'التسميع',
                     'route' => 'teacher.tasmeeh',
                     'icon' => 'book-open'
@@ -13,11 +18,6 @@
                     'name' => 'البنود',
                     'route' => 'teacher.leaderboards',
                     'icon' => 'star'
-                ],
-                [
-                    'name' => 'التحضير',
-                    'route' => 'teacher.attendance',
-                    'icon' => 'calendar'
                 ],
                 [
                     'name' => 'الخطط',

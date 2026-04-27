@@ -218,6 +218,11 @@
                                 label="{{ __('حاضر متأخر') }}" />
                         </div>
                     </div>
+                    
+                    <!-- Extra Points -->
+                    <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-3">
+                        <flux:switch wire:model="extra_points_enabled" label="{{ __('السماح بالنقاط الإضافية (يدوياً)') }}" description="{{ __('تمكين المعلم من منح نقاط إضافية للطلاب مع كتابة ملاحظة.') }}" />
+                    </div>
                 </div>
             </div>
 
