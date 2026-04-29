@@ -26,11 +26,13 @@ new class extends Component {
 
     public $planDays = [];
     public $allSurahs = [];
+    public $juzSurahs = [];
+    public $versesData = [];
     public $fillDirection = 'reverse';
     public $fillTarget = 'hifz';
     public $bulkStartSurah;
     public $bulkStartVerse;
-    
+
     public $selectAll = false;
     public $selectionStart = null;
 
@@ -44,6 +46,45 @@ new class extends Component {
     {
         $this->userLevel = Auth::guard('student')->check() ? 'student' : 'teacher';
         $this->allSurahs = Surah::orderBy('id')->get();
+
+        $ayahs = Ayah::orderBy('surah_id')->orderBy('verse_number')->get(['surah_id', 'verse_number', 'page_number', 'line_number_start', 'line_number_end', 'juz_number']);
+
+        $this->juzSurahs = [];
+        $this->versesData = [];
+
+        $mapping = $ayahs->unique(function ($item) {
+            return $item->surah_id . '-' . $item->juz_number; });
+        foreach ($mapping as $row) {
+            $this->juzSurahs[$row->juz_number][] = $row->surah_id;
+        }
+
+        foreach ($ayahs->groupBy('surah_id') as $surahId => $surahAyahs) {
+            $first = $surahAyahs->first();
+            $last = $surahAyahs->last();
+            $startAbs = $first->page_number * 15 + $first->line_number_start;
+            $endAbs = $last->page_number * 15 + $last->line_number_end;
+            $midAbs = ($startAbs + $endAbs) / 2;
+
+            $middleVerseNumber = 1;
+            $minDiff = 999999;
+            $pages = [];
+
+            foreach ($surahAyahs as $ayah) {
+                $abs = $ayah->page_number * 15 + $ayah->line_number_start;
+                $diff = abs($abs - $midAbs);
+                if ($diff < $minDiff) {
+                    $minDiff = $diff;
+                    $middleVerseNumber = $ayah->verse_number;
+                }
+                $pages[$ayah->page_number][] = $ayah->verse_number;
+            }
+
+            $this->versesData[$surahId] = [
+                'mid' => $middleVerseNumber,
+                'pages' => $pages
+            ];
+        }
+
         $this->bulkStartSurah = 114;
         $this->bulkStartVerse = 1;
         $this->memorizedUpToSurah = 114;
@@ -56,7 +97,7 @@ new class extends Component {
             $this->activeDays = $plan->active_days ?? [];
             $this->description = $plan->description;
             $this->planType = $plan->plan_type;
-            
+
             $this->isGenerated = true;
             $this->step = 7;
 
@@ -146,7 +187,8 @@ new class extends Component {
 
     public function toggleDaySelection($index)
     {
-        if (!isset($this->planDays[$index])) return;
+        if (!isset($this->planDays[$index]))
+            return;
 
         if ($this->selectionStart === null) {
             $this->selectionStart = $index;
@@ -242,7 +284,7 @@ new class extends Component {
         unset($day);
 
         $target = $target ?? $this->fillTarget;
-        
+
         if ($this->planType === 'review') {
             $target = 'review';
         } elseif ($this->planType === 'hifz') {
@@ -301,7 +343,8 @@ new class extends Component {
                     $maxPossibleEnd = Ayah::where('surah_id', $this->memorizedUpToSurah)
                         ->where('verse_number', $this->memorizedUpToVerse)
                         ->first();
-                    if (!$fixedReviewStart) continue;
+                    if (!$fixedReviewStart)
+                        continue;
                 }
 
                 // 1. Determine the Start of this day's review
@@ -530,7 +573,8 @@ new class extends Component {
 
     <!-- WIZARD UI -->
     @if(!$isGenerated)
-        <flux:card class="max-w-2xl mx-auto p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative">
+        <flux:card
+            class="max-w-2xl mx-auto p-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative">
             <!-- Header bar with Progress -->
             <div class="bg-zinc-50 dark:bg-zinc-800/50 p-6 border-b border-zinc-100 dark:border-zinc-800">
                 <div class="flex items-center justify-between mb-2">
@@ -538,12 +582,14 @@ new class extends Component {
                         <flux:heading size="xl" level="1">{{ __('إعداد الخطة الدراسية') }}</flux:heading>
                         <flux:subheading>{{ __('معالج إنشاء الجدول بخطوات بسيطة') }}</flux:subheading>
                     </div>
-                    <div class="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
+                    <div
+                        class="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
                         {{ __('خطوة') }} {{ $step }} {{ __('من') }} 6
                     </div>
                 </div>
                 <div class="relative w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden mt-4">
-                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500 transition-all duration-300" style="width: {{ ($step / 6) * 100 }}%"></div>
+                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500 transition-all duration-300"
+                        style="width: {{ ($step / 6) * 100 }}%"></div>
                 </div>
             </div>
 
@@ -551,7 +597,8 @@ new class extends Component {
                 <!-- STEP 1: Student -->
                 @if($step == 1 && $userLevel == 'teacher')
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-indigo-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-indigo-500 mb-4">
+                        <div
+                            class="mx-auto bg-indigo-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-indigo-500 mb-4">
                             <flux:icon icon="user" class="size-8" />
                         </div>
                         <flux:heading size="lg" class="mb-4">{{ __('لمن تريد إنشاء الخطة؟') }}</flux:heading>
@@ -568,21 +615,28 @@ new class extends Component {
                 <!-- STEP 2: Plan Type -->
                 @if($step == 2)
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-emerald-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-emerald-500 mb-4">
+                        <div
+                            class="mx-auto bg-emerald-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-emerald-500 mb-4">
                             <flux:icon icon="rectangle-stack" class="size-8" />
                         </div>
                         <flux:heading size="lg" class="mb-6">{{ __('حدد نوع المسار القرآني') }}</flux:heading>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg mx-auto">
-                            <button @click="planType = 'hifz'" :class="planType === 'hifz' ? 'ring-2 ring-emerald-500 shadow-md bg-emerald-50 dark:bg-emerald-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 pointer-events-auto'" class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                            <button @click="planType = 'hifz'"
+                                :class="planType === 'hifz' ? 'ring-2 ring-emerald-500 shadow-md bg-emerald-50 dark:bg-emerald-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 pointer-events-auto'"
+                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
                                 <flux:icon icon="book-open" class="size-8 text-emerald-600 dark:text-emerald-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('حفظ فقط') }}</span>
                             </button>
-                            <button @click="planType = 'hifz_review'" :class="planType === 'hifz_review' ? 'ring-2 ring-indigo-500 shadow-md bg-indigo-50 dark:bg-indigo-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'" class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                            <button @click="planType = 'hifz_review'"
+                                :class="planType === 'hifz_review' ? 'ring-2 ring-indigo-500 shadow-md bg-indigo-50 dark:bg-indigo-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
                                 <flux:icon icon="document-duplicate" class="size-8 text-indigo-600 dark:text-indigo-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('حفظ ومراجعة') }}</span>
                             </button>
-                            <button @click="planType = 'review'" :class="planType === 'review' ? 'ring-2 ring-amber-500 shadow-md bg-amber-50 dark:bg-amber-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'" class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                            <button @click="planType = 'review'"
+                                :class="planType === 'review' ? 'ring-2 ring-amber-500 shadow-md bg-amber-50 dark:bg-amber-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
                                 <flux:icon icon="arrow-path" class="size-8 text-amber-600 dark:text-amber-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('مراجعة فقط') }}</span>
                             </button>
@@ -593,20 +647,25 @@ new class extends Component {
                 <!-- STEP 3: Direction -->
                 @if($step == 3)
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-blue-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-blue-500 mb-4">
+                        <div
+                            class="mx-auto bg-blue-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-blue-500 mb-4">
                             <flux:icon icon="arrows-up-down" class="size-8" />
                         </div>
                         <flux:heading size="lg" class="mb-6">{{ __('حدد اتجاه الحفظ / المراجعة') }}</flux:heading>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
-                            <button @click="fillDirection = 'forward'" :class="fillDirection === 'forward' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'" class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
+                            <button @click="fillDirection = 'forward'"
+                                :class="fillDirection === 'forward' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
                                 <div class="w-full flex items-center justify-between mb-2">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('تصاعدي') }}</span>
                                     <flux:icon icon="arrow-up" class="size-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <span class="text-xs text-zinc-500">{{ __('مثال: من الفاتحة إلى البقرة') }}</span>
                             </button>
-                            <button @click="fillDirection = 'reverse'" :class="fillDirection === 'reverse' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'" class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
+                            <button @click="fillDirection = 'reverse'"
+                                :class="fillDirection === 'reverse' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
                                 <div class="w-full flex items-center justify-between mb-2">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('تنازلي') }}</span>
                                     <flux:icon icon="arrow-down" class="size-5 text-blue-600 dark:text-blue-400" />
@@ -620,17 +679,19 @@ new class extends Component {
                 <!-- STEP 4: Dates & Count -->
                 @if($step == 4)
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-rose-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-rose-500 mb-4">
+                        <div
+                            class="mx-auto bg-rose-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-rose-500 mb-4">
                             <flux:icon icon="calendar-days" class="size-8" />
                         </div>
                         <flux:heading size="lg" class="mb-6">{{ __('من متى تبدأ الخطة؟ وما مدتها؟') }}</flux:heading>
-                        
+
                         <div class="max-w-md mx-auto space-y-4 text-right">
                             <div class="space-y-1">
                                 <flux:label>{{ __('تاريخ البدء') }}</flux:label>
                                 <livewire:teacher.hijri-datepicker wire:model="startDate" />
                             </div>
-                            <flux:input type="number" min="1" max="365" label="{{ __('عدد الأيام المراد جدولتها') }}" wire:model="daysCount" placeholder="مثال: 16" />
+                            <flux:input type="number" min="1" max="365" label="{{ __('عدد الأيام المراد جدولتها') }}"
+                                wire:model="daysCount" placeholder="مثال: 16" />
                         </div>
                     </div>
                 @endif
@@ -638,17 +699,21 @@ new class extends Component {
                 <!-- STEP 5: Active Days -->
                 @if($step == 5)
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-purple-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-purple-500 mb-4">
+                        <div
+                            class="mx-auto bg-purple-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-purple-500 mb-4">
                             <flux:icon icon="calendar" class="size-8" />
                         </div>
                         <flux:heading size="lg" class="mb-6">{{ __('أيام التسميع خلال الأسبوع') }}</flux:heading>
-                        
-                        <div class="max-w-md mx-auto text-right bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
+
+                        <div
+                            class="max-w-md mx-auto text-right bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 @foreach(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $d)
-                                    <div class="flex items-center gap-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm">
+                                    <div
+                                        class="flex items-center gap-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800 shadow-sm">
                                         <flux:checkbox wire:model="activeDays" value="{{ $d }}" id="day-{{ $d }}" />
-                                        <flux:label for="day-{{ $d }}" class="text-sm cursor-pointer">{{ $this->translateDay($d) }}</flux:label>
+                                        <flux:label for="day-{{ $d }}" class="text-sm cursor-pointer">{{ $this->translateDay($d) }}
+                                        </flux:label>
                                     </div>
                                 @endforeach
                             </div>
@@ -662,24 +727,30 @@ new class extends Component {
                 <!-- STEP 6: Starting Surah / Memorized -->
                 @if($step == 6)
                     <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
-                        <div class="mx-auto bg-teal-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-teal-500 mb-4">
+                        <div
+                            class="mx-auto bg-teal-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-teal-500 mb-4">
                             <flux:icon icon="map-pin" class="size-8" />
                         </div>
-                        
+
                         <template x-if="planType === 'review'">
                             <div>
                                 <flux:heading size="lg" class="mb-2">{{ __('إلى أين يحفظ الطالب؟') }}</flux:heading>
-                                <p class="text-sm text-zinc-500 mb-6 px-4">{{ __('هذا سيمثل الحاجز أو النهاية التي تتوقف عندها خطة المراجعة ولن تتجاوزها.') }}</p>
-                                <div class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <flux:select wire:model.live="memorizedUpToSurah" label="{{ __('غيباً وإتقاناً حتى سورة:') }}">
+                                <p class="text-sm text-zinc-500 mb-6 px-4">
+                                    {{ __('هذا سيمثل الحاجز أو النهاية التي تتوقف عندها خطة المراجعة ولن تتجاوزها.') }}</p>
+                                <div
+                                    class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <flux:select wire:model.live="memorizedUpToSurah"
+                                        label="{{ __('غيباً وإتقاناً حتى سورة:') }}">
                                         @foreach($allSurahs as $surah)
-                                            <flux:select.option value="{{ $surah->id }}">{{ $surah->name_arabic }}</flux:select.option>
+                                            <flux:select.option value="{{ $surah->id }}">{{ $surah->name_arabic }}
+                                            </flux:select.option>
                                         @endforeach
                                     </flux:select>
 
                                     <div>
                                         <flux:label>{{ __('وحتى آية:') }}</flux:label>
-                                        <select wire:model="memorizedUpToVerse" class="w-full text-sm p-2 border border-zinc-200 rounded-lg dark:bg-zinc-900 dark:border-zinc-700">
+                                        <select wire:model="memorizedUpToVerse"
+                                            class="w-full text-sm p-2 border border-zinc-200 rounded-lg dark:bg-zinc-900 dark:border-zinc-700">
                                             @php
                                                 $memSurah = $allSurahs->find($memorizedUpToSurah);
                                                 $memCount = $memSurah?->verses_count ?? 1;
@@ -695,18 +766,23 @@ new class extends Component {
 
                         <template x-if="planType !== 'review'">
                             <div>
-                                <flux:heading size="lg" class="mb-2">{{ __('ما هي نقطة البداية الافتراضية للجدول؟') }}</flux:heading>
-                                <p class="text-sm text-zinc-500 mb-6 px-4">{{ __('سيتم ملء اليوم الأول بهذه السورة ويمكنك إكمال الجدول تلقائياً منها.') }}</p>
-                                <div class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                <flux:heading size="lg" class="mb-2">{{ __('ما هي نقطة البداية الافتراضية للجدول؟') }}
+                                </flux:heading>
+                                <p class="text-sm text-zinc-500 mb-6 px-4">
+                                    {{ __('سيتم ملء اليوم الأول بهذه السورة ويمكنك إكمال الجدول تلقائياً منها.') }}</p>
+                                <div
+                                    class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
                                     <flux:select wire:model.live="bulkStartSurah" label="{{ __('السورة') }}">
                                         @foreach($allSurahs as $surah)
-                                            <flux:select.option value="{{ $surah->id }}">{{ $surah->name_arabic }}</flux:select.option>
+                                            <flux:select.option value="{{ $surah->id }}">{{ $surah->name_arabic }}
+                                            </flux:select.option>
                                         @endforeach
                                     </flux:select>
 
                                     <div>
                                         <flux:label>{{ __('الآية') }}</flux:label>
-                                        <select wire:model="bulkStartVerse" class="w-full text-sm p-2 border border-zinc-200 rounded-lg dark:bg-zinc-900 dark:border-zinc-700">
+                                        <select wire:model="bulkStartVerse"
+                                            class="w-full text-sm p-2 border border-zinc-200 rounded-lg dark:bg-zinc-900 dark:border-zinc-700">
                                             @php
                                                 $startSurah = $allSurahs->find($bulkStartSurah);
                                                 $startCount = $startSurah?->verses_count ?? 1;
@@ -724,17 +800,20 @@ new class extends Component {
             </div>
 
             <!-- Footer Toolbar -->
-            <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center transition-all">
-                <flux:button variant="ghost" icon="arrow-right" class="" wire:click="prevStep" :disabled="$step == 1 || ($step == 2 && $userLevel == 'student')">
+            <div
+                class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center transition-all">
+                <flux:button variant="ghost" icon="arrow-right" class="" wire:click="prevStep"
+                    :disabled="$step == 1 || ($step == 2 && $userLevel == 'student')">
                     {{ __('السابق') }}
                 </flux:button>
-                
+
                 @if($step < 6)
                     <flux:button variant="primary" wire:click="nextStep" class="min-w-[120px]">
                         {{ __('التالي') }}
                     </flux:button>
                 @else
-                    <flux:button variant="primary" wire:click="generateDays" icon="sparkles" class="min-w-[120px] bg-indigo-600 hover:bg-indigo-700 border-none">
+                    <flux:button variant="primary" wire:click="generateDays" icon="sparkles"
+                        class="min-w-[120px] bg-indigo-600 hover:bg-indigo-700 border-none">
                         {{ __('توليد وتأكيد الجدول') }}
                     </flux:button>
                 @endif
@@ -744,33 +823,44 @@ new class extends Component {
         <!-- GENERATED STATE -->
 
         <!-- Summary Bar -->
-        <flux:card class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10 mb-6">
+        <flux:card
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50/50 dark:bg-emerald-900/10 mb-6">
             <div class="flex items-center gap-4">
-                <div class="bg-emerald-100 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-300 shrink-0">
+                <div
+                    class="bg-emerald-100 dark:bg-emerald-800 w-12 h-12 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-300 shrink-0">
                     <flux:icon icon="document-check" class="size-6" />
                 </div>
                 <div>
-                    <h3 class="font-bold text-zinc-900 dark:text-zinc-100 text-lg">{{ __('تم توليد مسودة الجدول بنجاح!') }}</h3>
+                    <h3 class="font-bold text-zinc-900 dark:text-zinc-100 text-lg">{{ __('تم توليد مسودة الجدول بنجاح!') }}
+                    </h3>
                     <div class="flex flex-wrap items-center gap-2 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                        <flux:badge color="zinc" size="sm">{{ $planType === 'hifz' ? __('مسار حفظ') : ($planType === 'review' ? __('مسار مراجعة') : __('حفظ ومراجعة')) }}</flux:badge>
-                        <flux:badge color="zinc" size="sm">{{ $fillDirection === 'forward' ? __('تصاعدي') : __('تنازلي') }}</flux:badge>
-                        <span class="flex items-center gap-1"><flux:icon icon="calendar" class="size-3"/> {{ $daysCount }} يوم</span>
+                        <flux:badge color="zinc" size="sm">
+                            {{ $planType === 'hifz' ? __('مسار حفظ') : ($planType === 'review' ? __('مسار مراجعة') : __('حفظ ومراجعة')) }}
+                        </flux:badge>
+                        <flux:badge color="zinc" size="sm">{{ $fillDirection === 'forward' ? __('تصاعدي') : __('تنازلي') }}
+                        </flux:badge>
+                        <span class="flex items-center gap-1">
+                            <flux:icon icon="calendar" class="size-3" /> {{ $daysCount }} يوم
+                        </span>
                     </div>
                 </div>
             </div>
-            
-            <flux:button wire:click="resetPlan" variant="ghost" icon="arrow-path" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/40">
+
+            <flux:button wire:click="resetPlan" variant="ghost" icon="arrow-path"
+                class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/40">
                 {{ __('إعادة ضبط وملء من جديد') }}
             </flux:button>
         </flux:card>
 
         <!-- TABLE SECTION -->
-        <div class="space-y-4 h-[80vh]">
+        <div class="space-y-4 h-[80vh] -mx-2 sm:mx-0">
             @if(count($planDays) > 0)
-                <flux:card class="p-0 overflow-hidden flex flex-col h-[calc(100vh-250px)]">
+                <flux:card
+                    class="p-0 overflow-hidden flex flex-col h-[calc(100vh-250px)] border-x-0 rounded-none sm:border-x sm:rounded-xl">
 
                     {{-- Toolbar --}}
-                    <div class="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/90 shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div
+                        class="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/90 shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                             <flux:heading size="sm" class="flex items-center gap-2">
                                 <flux:icon icon="bolt" class="size-4 text-indigo-500" />
@@ -778,61 +868,83 @@ new class extends Component {
                             </flux:heading>
 
                             {{-- fillTarget — Alpine only --}}
-                            <div x-show="planType === 'hifz_review'" class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
-                                <button @click="fillTarget = 'hifz'" :class="fillTarget === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'" class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
+                            <div x-show="planType === 'hifz_review'"
+                                class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+                                <button @click="fillTarget = 'hifz'"
+                                    :class="fillTarget === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
                                     {{ __('الحفظ') }}
                                 </button>
-                                <button @click="fillTarget = 'review'" :class="fillTarget === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400'" class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
+                                <button @click="fillTarget = 'review'"
+                                    :class="fillTarget === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400'"
+                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
                                     {{ __('المراجعة') }}
                                 </button>
                             </div>
                         </div>
 
                         {{-- Fill buttons --}}
-                        <div class="flex flex-wrap gap-1 items-center bg-white dark:bg-zinc-900 px-2 py-1.5 rounded border border-zinc-200 dark:border-zinc-700">
+                        <div
+                            class="flex flex-wrap gap-1 items-center bg-white dark:bg-zinc-900 px-2 py-1.5 rounded border border-zinc-200 dark:border-zinc-700">
                             <div x-show="planType === 'review' || fillTarget === 'review'" class="flex flex-wrap gap-1">
                                 <template x-if="planType === 'hifz_review'">
-                                    <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('all_previous')">{{ __('جميع ما سبق') }}</flux:button>
+                                    <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                        @click="doFill('all_previous')">{{ __('جميع ما سبق') }}</flux:button>
                                 </template>
-                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('juz')">{{ __('جزء') }}</flux:button>
-                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('half_juz')">{{ __('نصف جزء') }}</flux:button>
-                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('5_pages')">{{ __('5 صفحات') }}</flux:button>
-                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('3_surahs')">{{ __('3 سور') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('juz')">{{ __('جزء') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('half_juz')">{{ __('نصف جزء') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('5_pages')">{{ __('5 صفحات') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('3_surahs')">{{ __('3 سور') }}</flux:button>
                             </div>
-                            <div x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget !== 'review')" class="flex flex-wrap gap-1">
-                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700" @click="doFill('surah')">{{ __('سورة') }}</flux:button>
+                            <div x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget !== 'review')"
+                                class="flex flex-wrap gap-1">
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('surah')">{{ __('سورة') }}</flux:button>
                                 <flux:button size="xs" variant="ghost" @click="doFill('page')">{{ __('صفحة') }}</flux:button>
-                                <flux:button size="xs" variant="ghost" @click="doFill('half')">{{ __('1/2 صفحة') }}</flux:button>
-                                <flux:button size="xs" variant="ghost" @click="doFill('third')">{{ __('1/3 صفحة') }}</flux:button>
+                                <flux:button size="xs" variant="ghost" @click="doFill('half')">{{ __('1/2 صفحة') }}
+                                </flux:button>
+                                <flux:button size="xs" variant="ghost" @click="doFill('third')">{{ __('1/3 صفحة') }}
+                                </flux:button>
                             </div>
                         </div>
                     </div>
 
                     {{-- Progress bar --}}
                     <div x-show="filling" x-cloak class="relative h-1 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                        <div class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" style="animation: shimmer 1.2s ease-in-out infinite;"></div>
+                        <div class="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+                            style="animation: shimmer 1.2s ease-in-out infinite;"></div>
                     </div>
 
                     <div class="overflow-auto flex-1 h-full min-h-[300px]">
                         <table class="w-full text-sm text-right align-middle whitespace-nowrap relative">
-                            <thead class="sticky top-0 z-10 bg-zinc-100 dark:bg-zinc-800 shadow-sm border-b border-zinc-200 dark:border-zinc-700">
+                            <thead
+                                class="sticky top-0 z-10 bg-zinc-100 dark:bg-zinc-800 shadow-sm border-b border-zinc-200 dark:border-zinc-700">
                                 <tr>
-                                    <th class="p-4 w-32 font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition" @click="toggleAll()">
+                                    <th class="p-4 w-32 font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                                        @click="toggleAll()">
                                         <div class="flex items-center gap-2">
                                             <flux:icon icon="check-circle" class="size-4 opacity-50" />
                                             <span>{{ __('التاريخ') }}</span>
                                         </div>
                                     </th>
 
-                                    <th x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')" class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
-                                        <span class="text-indigo-600 dark:text-indigo-400 font-bold ml-2">{{ __('الحفظ') }}</span>
+                                    <th x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')"
+                                        class="p-3 min-w-[360px] border-r border-zinc-200 dark:border-zinc-700">
+                                        <span
+                                            class="text-indigo-600 dark:text-indigo-400 font-bold ml-2">{{ __('الحفظ') }}</span>
                                         <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
                                             <span>من</span><span>إلى</span>
                                         </div>
                                     </th>
 
-                                    <th x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')" class="p-3 min-w-[300px] border-r border-zinc-200 dark:border-zinc-700">
-                                        <span class="text-emerald-600 dark:text-emerald-400 font-bold ml-2">{{ __('المراجعة') }}</span>
+                                    <th x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')"
+                                        class="p-3 min-w-[360px] border-r border-zinc-200 dark:border-zinc-700">
+                                        <span
+                                            class="text-emerald-600 dark:text-emerald-400 font-bold ml-2">{{ __('المراجعة') }}</span>
                                         <div class="grid grid-cols-2 text-xs text-zinc-500 mt-1">
                                             <span>من</span><span>إلى</span>
                                         </div>
@@ -844,74 +956,95 @@ new class extends Component {
                                     <tr wire:key="row-{{ $index }}">
                                         <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
                                             :class="{
-                                                'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
-                                                'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
-                                            }" 
-                                            @click="toggleDay({{ $index }})">
+                                                            'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
+                                                            'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
+                                                        }" @click="toggleDay({{ $index }})">
                                             <div class="flex flex-col">
-                                                <span class="font-bold whitespace-normal leading-tight" :class="selected[{{ $index }}] ? 'text-indigo-700 dark:text-indigo-300' : ''">
+                                                <span class="font-bold whitespace-normal leading-tight"
+                                                    :class="selected[{{ $index }}] ? 'text-indigo-700 dark:text-indigo-300' : ''">
                                                     {{ $day['day_name_ar'] }}
                                                 </span>
-                                                <span class="text-[11px] mt-0.5 whitespace-normal" :class="selected[{{ $index }}] ? 'text-indigo-500 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'">
+                                                <span class="text-[11px] mt-0.5 whitespace-normal"
+                                                    :class="selected[{{ $index }}] ? 'text-indigo-500 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'">
                                                     {{ $day['hijri'] }}
                                                 </span>
                                             </div>
                                         </td>
 
-                                        <td x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')" class="h-16 border-r border-zinc-200 dark:border-zinc-700 p-2">
-                                            <div class="h-full grid grid-cols-2 gap-2">
-                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.from_surah_id'), verse: @entangle('planDays.'.$index.'.from_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
-                                                        @foreach($allSurahs as $surah)
-                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        <template x-for="i in versesCount" :key="i">
-                                                            <option :value="i" x-text="i"></option>
-                                                        </template>
-                                                    </select>
+                                        <td x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')"
+                                            class="border-r border-zinc-200 dark:border-zinc-700 p-2">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div x-data="{ surahId: @entangle('planDays.' . $index . '.from_surah_id'), verse: @entangle('planDays.' . $index . '.from_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
+                                                    @surah-selected-{{$index}}-from.window="surahId = $event.detail.surahId; verse = 1;"
+                                                    class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <button type="button"
+                                                        @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'from', currentSurah: surahId })"
+                                                        class="flex-1 min-w-[80px] text-xs p-1 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded outline-none text-right flex justify-between items-center">
+                                                        <span x-text="$store.surahsData?.[surahId]?.name || 'اختر'"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
+                                                    <button type="button"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'from', surahId: surahId })"
+                                                        class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
+                                                        <span x-text="verse"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
                                                 </div>
-                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.to_surah_id'), verse: @entangle('planDays.'.$index.'.to_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
-                                                        @foreach($allSurahs as $surah)
-                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        <template x-for="i in versesCount" :key="i">
-                                                            <option :value="i" x-text="i"></option>
-                                                        </template>
-                                                    </select>
+                                                <div x-data="{ surahId: @entangle('planDays.' . $index . '.to_surah_id'), verse: @entangle('planDays.' . $index . '.to_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
+                                                    @surah-selected-{{$index}}-to.window="surahId = $event.detail.surahId; verse = $store.surahsData?.[surahId]?.count || 1;"
+                                                    @verse-selected-{{$index}}-to.window="verse = $event.detail.verse;"
+                                                    class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <button type="button"
+                                                        @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'to', currentSurah: surahId })"
+                                                        class="flex-1 min-w-[80px] text-xs p-1 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded outline-none text-right flex justify-between items-center">
+                                                        <span x-text="$store.surahsData?.[surahId]?.name || 'اختر'"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
+                                                    <button type="button"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'to', surahId: surahId })"
+                                                        class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
+                                                        <span x-text="verse"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        <td x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')" class="h-16 border-r border-zinc-200 dark:border-zinc-700 p-2">
-                                            <div class="h-full grid grid-cols-2 gap-2">
-                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.review_from_surah_id'), verse: @entangle('planDays.'.$index.'.review_from_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
-                                                        @foreach($allSurahs as $surah)
-                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        <template x-for="i in versesCount" :key="i">
-                                                            <option :value="i" x-text="i"></option>
-                                                        </template>
-                                                    </select>
+                                        <td x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')"
+                                            class="border-r border-zinc-200 dark:border-zinc-700 p-2">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div x-data="{ surahId: @entangle('planDays.' . $index . '.review_from_surah_id'), verse: @entangle('planDays.' . $index . '.review_from_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
+                                                    @surah-selected-{{$index}}-rfrom.window="surahId = $event.detail.surahId; verse = 1;"
+                                                    class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <button type="button"
+                                                        @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'rfrom', currentSurah: surahId })"
+                                                        class="flex-1 min-w-[80px] text-xs p-1 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded outline-none text-right flex justify-between items-center">
+                                                        <span x-text="$store.surahsData?.[surahId]?.name || 'اختر'"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
+                                                    <button type="button"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rfrom', surahId: surahId })"
+                                                        class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
+                                                        <span x-text="verse"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
                                                 </div>
-                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.review_to_surah_id'), verse: @entangle('planDays.'.$index.'.review_to_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
-                                                        @foreach($allSurahs as $surah)
-                                                            <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        <template x-for="i in versesCount" :key="i">
-                                                            <option :value="i" x-text="i"></option>
-                                                        </template>
-                                                    </select>
+                                                <div x-data="{ surahId: @entangle('planDays.' . $index . '.review_to_surah_id'), verse: @entangle('planDays.' . $index . '.review_to_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
+                                                    @surah-selected-{{$index}}-rto.window="surahId = $event.detail.surahId; verse = $store.surahsData?.[surahId]?.count || 1;"
+                                                    @verse-selected-{{$index}}-rto.window="verse = $event.detail.verse;"
+                                                    class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <button type="button"
+                                                        @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'rto', currentSurah: surahId })"
+                                                        class="flex-1 min-w-[80px] text-xs p-1 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded outline-none text-right flex justify-between items-center">
+                                                        <span x-text="$store.surahsData?.[surahId]?.name || 'اختر'"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
+                                                    <button type="button"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rto', surahId: surahId })"
+                                                        class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
+                                                        <span x-text="verse"></span>
+                                                        <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         </td>
@@ -921,9 +1054,13 @@ new class extends Component {
                         </table>
                     </div>
 
-                    <div class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between bg-zinc-50 dark:bg-zinc-800/90 z-20">
-                        <div class="text-sm text-zinc-500 pt-2">{{ __('تأكد من مراجعة النطاقات التلقائية أو تعديلها قبل الحفظ النهائي.') }}</div>
-                        <flux:button variant="primary" wire:click="save" icon="check" class="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[200px] border-none">{{ __('اعتماد الخطة وإرسالها') }}</flux:button>
+                    <div
+                        class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between bg-zinc-50 dark:bg-zinc-800/90 z-20">
+                        <div class="text-sm text-zinc-500 pt-2">
+                            {{ __('تأكد من مراجعة النطاقات التلقائية أو تعديلها قبل الحفظ النهائي.') }}</div>
+                        <flux:button variant="primary" wire:click="save" icon="check"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[200px] border-none">
+                            {{ __('اعتماد الخطة وإرسالها') }}</flux:button>
                     </div>
                 </flux:card>
             @endif
@@ -931,12 +1068,190 @@ new class extends Component {
     @endif
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('surahsData', {
-                @foreach($allSurahs as $surah)
-                    {{ $surah->id }}: {{ $surah->verses_count }},
+        (function () {
+            const initStores = () => {
+                Alpine.store('surahsData', {
+                    @foreach($allSurahs as $surah)
+                        {{ $surah->id }}: { count: {{ $surah->verses_count }}, name: '{{ $surah->name_arabic }}' },
+                    @endforeach
+                });
+
+            Alpine.store('juzSurahs', {
+                @foreach($juzSurahs as $juz => $surahs)
+                    {{ $juz }}: {{ json_encode($surahs) }},
                 @endforeach
-            });
-        });
+                });
+
+        Alpine.store('versesData', @json($versesData));
+            };
+
+        if (window.Alpine) {
+            initStores();
+        } else {
+            document.addEventListener('alpine:init', initStores);
+        }
+        }) ();
     </script>
+
+    <!-- Global Surah Selection Modal -->
+    <div x-data="{
+        isOpen: false,
+        targetIndex: null,
+        targetField: null,
+        activeJuz: null,
+        currentSurah: null,
+        prevSurah: null,
+        
+        get orderedJuzs() {
+            if (!$store.juzSurahs) return [];
+            const keys = Object.keys($store.juzSurahs).map(Number);
+            if (fillDirection === 'reverse') {
+                return keys.sort((a, b) => b - a);
+            }
+            return keys.sort((a, b) => a - b);
+        },
+
+        getOrderedSurahs(juz) {
+            if (!$store.juzSurahs || !$store.juzSurahs[juz]) return [];
+            const surahs = [...$store.juzSurahs[juz]];
+            if (fillDirection === 'reverse') {
+                return surahs.reverse();
+            }
+            return surahs;
+        },
+        
+        async openModal(e) {
+            this.targetIndex = e.detail.index;
+            this.targetField = e.detail.field;
+            this.currentSurah = e.detail.currentSurah;
+            this.prevSurah = null;
+            
+            try {
+                let planDays = await $wire.get('planDays');
+                if (this.targetField === 'from' && this.targetIndex > 0) {
+                    this.prevSurah = planDays[this.targetIndex - 1]['to_surah_id'];
+                } else if (this.targetField === 'to') {
+                    this.prevSurah = planDays[this.targetIndex]['from_surah_id'];
+                } else if (this.targetField === 'rfrom' && this.targetIndex > 0) {
+                    this.prevSurah = planDays[this.targetIndex - 1]['review_to_surah_id'];
+                } else if (this.targetField === 'rto') {
+                    this.prevSurah = planDays[this.targetIndex]['review_from_surah_id'];
+                }
+            } catch (err) {
+                console.warn('Could not determine previous Surah');
+            }
+
+            let targetForScroll = this.prevSurah || this.currentSurah;
+
+            if (targetForScroll && $store.juzSurahs) {
+                for (const [juz, surahs] of Object.entries($store.juzSurahs)) {
+                    if (surahs.includes(targetForScroll)) {
+                        this.activeJuz = Number(juz);
+                        break;
+                    }
+                }
+            } else {
+                this.activeJuz = fillDirection === 'reverse' ? 30 : 1;
+            }
+
+            this.isOpen = true;
+            
+            $nextTick(() => {
+                setTimeout(() => {
+                    const el = document.getElementById('surah-btn-' + targetForScroll);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            });
+        },
+        
+        selectSurah(surahId) {
+            $dispatch('surah-selected-' + this.targetIndex + '-' + this.targetField, { surahId: surahId });
+            this.isOpen = false;
+        }
+    }" @open-surah-modal.window="openModal($event)">
+        <flux:modal x-model="isOpen" class="md:w-[500px]">
+            <flux:heading class="mb-4 text-center">{{ __('اختر السورة') }}</flux:heading>
+
+            <div class="max-h-[60vh] overflow-y-auto space-y-2 px-1 scroll-smooth">
+                <template x-for="juz in orderedJuzs" :key="juz">
+                    <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                        <button type="button" @click="activeJuz = activeJuz === juz ? null : juz"
+                            class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                            <span class="font-bold text-zinc-700 dark:text-zinc-300">الجزء <span
+                                    x-text="juz"></span></span>
+                            <flux:icon icon="chevron-down" class="size-4 transition-transform text-zinc-500"
+                                ::class="activeJuz === juz ? 'rotate-180' : ''" />
+                        </button>
+                        <div x-show="activeJuz === juz" x-collapse>
+                            <div
+                                class="p-2 grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800">
+                                <template x-for="surahId in getOrderedSurahs(juz)" :key="surahId">
+                                    <button type="button" @click="selectSurah(surahId)"
+                                        :id="'surah-btn-' + surahId"
+                                        class="py-2 px-1 text-sm text-center rounded border transition"
+                                        :class="{
+                                            'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': surahId === currentSurah,
+                                            'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': surahId === prevSurah && surahId !== currentSurah,
+                                            'bg-white border-zinc-200 text-zinc-800 hover:bg-indigo-50 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-indigo-900/30': surahId !== currentSurah && surahId !== prevSurah
+                                        }"
+                                        x-text="$store.surahsData?.[surahId].name"></button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </flux:modal>
+    </div>
+    <!-- Global Verse Selection Modal -->
+    <div x-data="{
+        isOpen: false,
+        targetIndex: null,
+        targetField: null,
+        surahId: null,
+        
+        openModal(e) {
+            this.targetIndex = e.detail.index;
+            this.targetField = e.detail.field;
+            this.surahId = e.detail.surahId;
+            this.isOpen = true;
+        },
+        
+        selectVerse(verse) {
+            $dispatch('verse-selected-' + this.targetIndex + '-' + this.targetField, { verse: verse });
+            this.isOpen = false;
+        }
+    }" @open-verse-modal.window="openModal($event)">
+        <flux:modal x-model="isOpen" class="md:w-[500px]">
+            <flux:heading class="mb-4 text-center">{{ __('اختر الآية') }}</flux:heading>
+
+            <div class="max-h-[60vh] overflow-y-auto space-y-4 px-1" x-show="surahId">
+                <template x-if="surahId && $store.versesData?.[surahId]">
+                    <div>
+                        <template x-for="(verses, page) in $store.versesData?.[surahId].pages" :key="page">
+                            <div class="mb-4">
+                                <div
+                                    class="text-sm font-bold text-zinc-500 dark:text-zinc-400 mb-2 border-b border-zinc-100 dark:border-zinc-800 pb-1">
+                                    {{ __('وجه') }} <span x-text="page"></span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="v in verses" :key="v">
+                                        <button type="button" @click="selectVerse(v)"
+                                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all"
+                                            :class="v === $store.versesData?.[surahId].mid 
+                                                ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-400 font-bold ring-2 ring-amber-400 ring-offset-1' 
+                                                : 'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40'">
+                                            <span x-text="v"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </flux:modal>
+    </div>
 </div>
