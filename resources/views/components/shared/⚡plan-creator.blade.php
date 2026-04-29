@@ -76,7 +76,7 @@ new class extends Component {
                     $minDiff = $diff;
                     $middleVerseNumber = $ayah->verse_number;
                 }
-                $pages[$ayah->page_number][] = $ayah->verse_number;
+                $pages[$ayah->page_number][$ayah->line_number_end][] = $ayah->verse_number;
             }
 
             $this->versesData[$surahId] = [
@@ -985,7 +985,7 @@ new class extends Component {
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
                                                     </button>
                                                     <button type="button"
-                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'from', surahId: surahId })"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'from', surahId: surahId, currentVerse: verse })"
                                                         class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
                                                         <span x-text="verse"></span>
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
@@ -1002,7 +1002,7 @@ new class extends Component {
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
                                                     </button>
                                                     <button type="button"
-                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'to', surahId: surahId })"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'to', surahId: surahId, currentVerse: verse })"
                                                         class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
                                                         <span x-text="verse"></span>
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
@@ -1025,7 +1025,7 @@ new class extends Component {
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
                                                     </button>
                                                     <button type="button"
-                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rfrom', surahId: surahId })"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rfrom', surahId: surahId, currentVerse: verse })"
                                                         class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
                                                         <span x-text="verse"></span>
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
@@ -1042,7 +1042,7 @@ new class extends Component {
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
                                                     </button>
                                                     <button type="button"
-                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rto', surahId: surahId })"
+                                                        @click="$dispatch('open-verse-modal', { index: {{ $index }}, field: 'rto', surahId: surahId, currentVerse: verse })"
                                                         class="w-16 text-xs p-1 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded font-mono text-center outline-none flex justify-center items-center gap-1">
                                                         <span x-text="verse"></span>
                                                         <flux:icon icon="chevron-down" class="size-3 text-zinc-400" />
@@ -1098,6 +1098,7 @@ new class extends Component {
     <!-- Global Surah Selection Modal -->
     <div x-data="{
         isOpen: false,
+        showHelp: false,
         targetIndex: null,
         targetField: null,
         activeJuz: null,
@@ -1174,7 +1175,25 @@ new class extends Component {
         }
     }" @open-surah-modal.window="openModal($event)">
         <flux:modal x-model="isOpen" class="md:w-[500px]">
-            <flux:heading class="mb-4 text-center">{{ __('اختر السورة') }}</flux:heading>
+            <div class="flex items-center justify-center gap-2 mb-4 relative">
+                <flux:heading class="!mb-0">{{ __('اختر السورة') }}</flux:heading>
+                <button type="button" @click="showHelp = !showHelp" class="text-zinc-400 hover:text-blue-500 transition outline-none" title="شرح الألوان">
+                    <flux:icon icon="question-mark-circle" class="size-5" />
+                </button>
+            </div>
+
+            <div x-show="showHelp" x-collapse>
+                <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded bg-blue-100 border border-blue-400 shrink-0"></div>
+                        <span><strong>الأزرق:</strong> السورة المحددة حالياً.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded bg-orange-100 border border-orange-400 shrink-0"></div>
+                        <span><strong>البرتقالي:</strong> السورة المرتبطة بالتحديد السابق لتسهيل استكمال الحفظ/المراجعة.</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="max-h-[60vh] overflow-y-auto space-y-2 px-1 scroll-smooth">
                 <template x-for="juz in orderedJuzs" :key="juz">
@@ -1207,18 +1226,60 @@ new class extends Component {
             </div>
         </flux:modal>
     </div>
+
     <!-- Global Verse Selection Modal -->
     <div x-data="{
         isOpen: false,
+        showHelp: false,
+        groupByLine: false,
         targetIndex: null,
         targetField: null,
         surahId: null,
+        currentVerse: null,
+        prevVerse: null,
         
-        openModal(e) {
+        async openModal(e) {
             this.targetIndex = e.detail.index;
             this.targetField = e.detail.field;
             this.surahId = e.detail.surahId;
+            this.currentVerse = e.detail.currentVerse;
+            this.prevVerse = null;
+            
+            try {
+                let planDays = await $wire.get('planDays');
+                if (this.targetField === 'from' && this.targetIndex > 0) {
+                    if (planDays[this.targetIndex - 1]['to_surah_id'] == this.surahId) {
+                        this.prevVerse = planDays[this.targetIndex - 1]['to_verse'];
+                    }
+                } else if (this.targetField === 'to') {
+                    if (planDays[this.targetIndex]['from_surah_id'] == this.surahId) {
+                        this.prevVerse = planDays[this.targetIndex]['from_verse'];
+                    }
+                } else if (this.targetField === 'rfrom' && this.targetIndex > 0) {
+                    if (planDays[this.targetIndex - 1]['review_to_surah_id'] == this.surahId) {
+                        this.prevVerse = planDays[this.targetIndex - 1]['review_to_verse'];
+                    }
+                } else if (this.targetField === 'rto') {
+                    if (planDays[this.targetIndex]['review_from_surah_id'] == this.surahId) {
+                        this.prevVerse = planDays[this.targetIndex]['review_from_verse'];
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not determine previous Verse');
+            }
+
             this.isOpen = true;
+            
+            let targetForScroll = this.prevVerse || this.currentVerse;
+            
+            $nextTick(() => {
+                setTimeout(() => {
+                    const el = document.getElementById('verse-btn-' + targetForScroll);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            });
         },
         
         selectVerse(verse) {
@@ -1227,28 +1288,94 @@ new class extends Component {
         }
     }" @open-verse-modal.window="openModal($event)">
         <flux:modal x-model="isOpen" class="md:w-[500px]">
-            <flux:heading class="mb-4 text-center">{{ __('اختر الآية') }}</flux:heading>
+            <div class="flex items-center justify-center gap-2 mb-4 relative">
+                <flux:heading class="!mb-0">{{ __('اختر الآية') }}</flux:heading>
+                <button type="button" @click="showHelp = !showHelp" class="text-zinc-400 hover:text-blue-500 transition outline-none" title="شرح الألوان">
+                    <flux:icon icon="question-mark-circle" class="size-5" />
+                </button>
+            </div>
 
-            <div class="max-h-[60vh] overflow-y-auto space-y-4 px-1" x-show="surahId">
+            <div x-show="showHelp" x-collapse>
+                <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-blue-100 border border-blue-400 shrink-0"></div>
+                        <span><strong>الأزرق:</strong> الآية المحددة حالياً.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-orange-100 border border-orange-400 shrink-0"></div>
+                        <span><strong>البرتقالي:</strong> آية التوقف السابقة (لتكمل منها مباشرة).</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-amber-100 border border-amber-300 relative shrink-0">
+                            <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+                        </div>
+                        <span><strong>الذهبي:</strong> الآية التي تقع في منتصف السورة.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-h-[60vh] overflow-y-auto space-y-4 px-1 scroll-smooth" x-show="surahId">
+                <div class="flex items-center justify-between mb-2">
+                    <flux:switch x-model="groupByLine" label="تجميع حسب السطر" />
+                </div>
                 <template x-if="surahId && $store.versesData?.[surahId]">
                     <div>
-                        <template x-for="(verses, page) in $store.versesData?.[surahId].pages" :key="page">
+                        <template x-for="(lines, page) in $store.versesData[surahId].pages" :key="page">
                             <div class="mb-4">
                                 <div
                                     class="text-sm font-bold text-zinc-500 dark:text-zinc-400 mb-2 border-b border-zinc-100 dark:border-zinc-800 pb-1">
                                     {{ __('وجه') }} <span x-text="page"></span>
                                 </div>
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="v in verses" :key="v">
-                                        <button type="button" @click="selectVerse(v)"
-                                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all"
-                                            :class="v === $store.versesData?.[surahId].mid 
-                                                ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-400 font-bold ring-2 ring-amber-400 ring-offset-1' 
-                                                : 'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40'">
-                                            <span x-text="v"></span>
-                                        </button>
-                                    </template>
-                                </div>
+                                <template x-if="groupByLine">
+                                    <div class="space-y-2">
+                                        <template x-for="(verses, line) in lines" :key="line">
+                                            <div class="flex flex-wrap items-center gap-2 bg-zinc-50 dark:bg-zinc-800/30 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                                                <span class="text-[10px] text-zinc-400 font-bold shrink-0 w-8 text-center">{{ __('سطر') }} <span x-text="line"></span></span>
+                                                <div class="flex flex-wrap gap-2 flex-1">
+                                                    <template x-for="v in verses" :key="v">
+                                                        <button type="button" @click="selectVerse(v)"
+                                                            :id="groupByLine ? 'verse-btn-' + v : ''"
+                                                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all relative shrink-0"
+                                                            :class="{
+                                                                'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': v === currentVerse,
+                                                                'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': v === prevVerse && v !== currentVerse,
+                                                                'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-400 font-bold ring-2 ring-amber-400 ring-offset-1': v === $store.versesData[surahId].mid && v !== currentVerse && v !== prevVerse,
+                                                                'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40': v !== currentVerse && v !== prevVerse && v !== $store.versesData[surahId].mid
+                                                            }">
+                                                            <span x-text="v"></span>
+                                                            
+                                                            <template x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
+                                                                 <div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+                                                            </template>
+                                                        </button>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <template x-if="!groupByLine">
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="v in Object.values(lines).flat()" :key="v">
+                                            <button type="button" @click="selectVerse(v)"
+                                                :id="!groupByLine ? 'verse-btn-' + v : ''"
+                                                class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all relative shrink-0"
+                                                :class="{
+                                                    'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': v === currentVerse,
+                                                    'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': v === prevVerse && v !== currentVerse,
+                                                    'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-400 font-bold ring-2 ring-amber-400 ring-offset-1': v === $store.versesData[surahId].mid && v !== currentVerse && v !== prevVerse,
+                                                    'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40': v !== currentVerse && v !== prevVerse && v !== $store.versesData[surahId].mid
+                                                }">
+                                                <span x-text="v"></span>
+                                                
+                                                <template x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
+                                                     <div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+                                                </template>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
