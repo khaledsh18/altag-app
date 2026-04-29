@@ -976,6 +976,7 @@ new class extends Component {
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div x-data="{ surahId: @entangle('planDays.' . $index . '.from_surah_id'), verse: @entangle('planDays.' . $index . '.from_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
                                                     @surah-selected-{{$index}}-from.window="surahId = $event.detail.surahId; verse = 1;"
+                                                    @verse-selected-{{$index}}-from.window="verse = $event.detail.verse;"
                                                     class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
                                                     <button type="button"
                                                         @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'from', currentSurah: surahId })"
@@ -1015,6 +1016,7 @@ new class extends Component {
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div x-data="{ surahId: @entangle('planDays.' . $index . '.review_from_surah_id'), verse: @entangle('planDays.' . $index . '.review_from_verse'), get versesCount() { return $store.surahsData?.[this.surahId]?.count || 1; } }"
                                                     @surah-selected-{{$index}}-rfrom.window="surahId = $event.detail.surahId; verse = 1;"
+                                                    @verse-selected-{{$index}}-rfrom.window="verse = $event.detail.verse;"
                                                     class="flex flex-row items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
                                                     <button type="button"
                                                         @click="$dispatch('open-surah-modal', { index: {{ $index }}, field: 'rfrom', currentSurah: surahId })"
