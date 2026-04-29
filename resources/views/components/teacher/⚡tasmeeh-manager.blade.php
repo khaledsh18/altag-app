@@ -148,10 +148,10 @@ new class extends Component {
 
             if ($currentDay) {
                 $hasNext = StudentPlanDay::where('student_plan_id', $this->planId)
-                    ->where('date', '>', $currentDay->date)
+                    ->whereDate('date', '>', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                     ->exists();
                 $hasPrev = StudentPlanDay::where('student_plan_id', $this->planId)
-                    ->where('date', '<', $currentDay->date)
+                    ->whereDate('date', '<', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                     ->exists();
             }
         }
@@ -232,7 +232,7 @@ new class extends Component {
         $currentDay = StudentPlanDay::find($this->dayId);
         if ($currentDay) {
             $prev = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->where('date', '<', $currentDay->date)
+                ->whereDate('date', '<', Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                 ->orderBy('date', 'desc')
                 ->first();
             if ($prev) {
@@ -246,7 +246,7 @@ new class extends Component {
         $currentDay = StudentPlanDay::find($this->dayId);
         if ($currentDay) {
             $next = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->where('date', '>', $currentDay->date)
+                ->whereDate('date', '>', Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                 ->orderBy('date', 'asc')
                 ->first();
             if ($next) {
@@ -545,7 +545,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     </div>
 
                     @if($currentDay)
-                        <flux:card class="mt-2 border-zinc-200 dark:border-zinc-700">
+                        <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700">
 
 
                             {{-- Day navigation — Livewire (loads new day data) --}}
