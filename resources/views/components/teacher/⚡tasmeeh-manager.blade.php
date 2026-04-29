@@ -578,6 +578,24 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                             <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
                                                 {{ $currentDay->formatRange('hifz') ?? 'لا يوجد نص محدد' }}
                                             </p>
+                                            @php
+                                                $hFrom = $currentDay->fromAyah;
+                                                $hTo   = $currentDay->toAyah;
+                                                if ($hFrom && $hTo && $hFrom->surah_id === $hTo->surah_id) {
+                                                    $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number;
+                                                } elseif ($hFrom) {
+                                                    $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hFrom->surah->verses_count;
+                                                } else {
+                                                    $hUrl = null;
+                                                }
+                                            @endphp
+                                            @if($hUrl)
+                                                <a href="{{ $hUrl }}" target="_blank"
+                                                    class="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                    <flux:icon icon="book-open" class="size-3.5" />
+                                                    {{ __('افتح الآيات في القرآن') }}
+                                                </a>
+                                            @endif
                                         </div>
 
                                         <flux:separator />
@@ -626,6 +644,24 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                             <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
                                                 {{ $currentDay->formatRange('review') ?? 'لا يوجد نص محدد' }}
                                             </p>
+                                            @php
+                                                $rFrom = $currentDay->reviewFromAyah;
+                                                $rTo   = $currentDay->reviewToAyah;
+                                                if ($rFrom && $rTo && $rFrom->surah_id === $rTo->surah_id) {
+                                                    $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number;
+                                                } elseif ($rFrom) {
+                                                    $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rFrom->surah->verses_count;
+                                                } else {
+                                                    $rUrl = null;
+                                                }
+                                            @endphp
+                                            @if($rUrl)
+                                                <a href="{{ $rUrl }}" target="_blank"
+                                                    class="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
+                                                    <flux:icon icon="book-open" class="size-3.5" />
+                                                    {{ __('افتح الآيات في القرآن') }}
+                                                </a>
+                                            @endif
                                         </div>
 
                                         <flux:separator />

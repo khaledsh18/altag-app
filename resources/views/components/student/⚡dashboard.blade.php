@@ -507,9 +507,23 @@ new class extends Component {
                                         @endif
                                     </div>
                                     <div class="text-lg font-bold">
-                                        {{ $pendingMission->fromAyah->surah->name_arabic }} ({{ $pendingMission->fromAyah->verse_number }}) - 
+                                        {{ $pendingMission->fromAyah->surah->name_arabic }} ({{ $pendingMission->fromAyah->verse_number }}) -
                                         {{ $pendingMission->toAyah->surah->name_arabic }} ({{ $pendingMission->toAyah->verse_number }})
                                     </div>
+                                    @php
+                                        $hFrom = $pendingMission->fromAyah;
+                                        $hTo   = $pendingMission->toAyah;
+                                        if ($hFrom->surah_id === $hTo->surah_id) {
+                                            $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number;
+                                        } else {
+                                            $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hFrom->surah->verses_count;
+                                        }
+                                    @endphp
+                                    <a href="{{ $hUrl }}" target="_blank"
+                                        class="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-white/90 hover:text-white hover:underline">
+                                        <flux:icon icon="book-open" class="size-3.5" />
+                                        {{ __('افتح الآيات في القرآن') }}
+                                    </a>
                                 </div>
                                 @endif
 
@@ -522,9 +536,23 @@ new class extends Component {
                                         @endif
                                     </div>
                                     <div class="text-lg font-bold">
-                                        {{ $pendingMission->reviewFromAyah->surah->name_arabic }} ({{ $pendingMission->reviewFromAyah->verse_number }}) - 
+                                        {{ $pendingMission->reviewFromAyah->surah->name_arabic }} ({{ $pendingMission->reviewFromAyah->verse_number }}) -
                                         {{ $pendingMission->reviewToAyah->surah->name_arabic }} ({{ $pendingMission->reviewToAyah->verse_number }})
                                     </div>
+                                    @php
+                                        $rFrom = $pendingMission->reviewFromAyah;
+                                        $rTo   = $pendingMission->reviewToAyah;
+                                        if ($rFrom->surah_id === $rTo->surah_id) {
+                                            $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number;
+                                        } else {
+                                            $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rFrom->surah->verses_count;
+                                        }
+                                    @endphp
+                                    <a href="{{ $rUrl }}" target="_blank"
+                                        class="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-white/90 hover:text-white hover:underline">
+                                        <flux:icon icon="book-open" class="size-3.5" />
+                                        {{ __('افتح الآيات في القرآن') }}
+                                    </a>
                                 </div>
                                 @endif
                             </div>
@@ -569,9 +597,10 @@ new class extends Component {
             @php
                 $top3 = $leaderboardStandings->take(3)->values();
                 $rest = $leaderboardStandings->skip(3)->values();
-                $myRank = $leaderboardStandings->search(fn($s) => $s['student']->id === $student->id);
+                $currentStudentId = auth('student')->id();
+                $myRank = $leaderboardStandings->search(fn($s) => $s['student']->id === $currentStudentId);
                 $myRank = $myRank !== false ? $myRank + 1 : 0;
-                $myScore = $myRank > 0 ? $leaderboardStandings->firstWhere('student.id', $student->id)['score'] : 0;
+                $myScore = $myRank > 0 ? $leaderboardStandings->firstWhere('student.id', $currentStudentId)['score'] : 0;
             @endphp
 
             @if($top3->isNotEmpty())
