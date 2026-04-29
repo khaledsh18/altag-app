@@ -511,19 +511,55 @@ new class extends Component {
                                         {{ $pendingMission->toAyah->surah->name_arabic }} ({{ $pendingMission->toAyah->verse_number }})
                                     </div>
                                     @php
+                                        $hLinks = [];
                                         $hFrom = $pendingMission->fromAyah;
                                         $hTo   = $pendingMission->toAyah;
                                         if ($hFrom->surah_id === $hTo->surah_id) {
-                                            $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number;
+                                            $hLinks[] = [
+                                                'name' => $hFrom->surah->name_arabic,
+                                                'url'  => 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number,
+                                            ];
                                         } else {
-                                            $hUrl = 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hFrom->surah->verses_count;
+                                            $low  = min($hFrom->surah_id, $hTo->surah_id);
+                                            $high = max($hFrom->surah_id, $hTo->surah_id);
+                                            $direction = $hFrom->surah_id <= $hTo->surah_id ? 'asc' : 'desc';
+                                            $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
+                                            foreach ($surahs as $s) {
+                                                $from = $s->id === $hFrom->surah_id ? $hFrom->verse_number : 1;
+                                                $to   = $s->id === $hTo->surah_id   ? $hTo->verse_number   : $s->verses_count;
+                                                $hLinks[] = [
+                                                    'name' => $s->name_arabic,
+                                                    'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
+                                                ];
+                                            }
                                         }
                                     @endphp
-                                    <a href="{{ $hUrl }}" target="_blank"
-                                        class="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-white/90 hover:text-white hover:underline">
-                                        <flux:icon icon="book-open" class="size-3.5" />
-                                        {{ __('افتح الآيات في القرآن') }}
-                                    </a>
+                                    @if(count($hLinks) === 1)
+                                        <a href="{{ $hLinks[0]['url'] }}" target="_blank"
+                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                            <flux:icon icon="book-open" class="size-3.5" />
+                                            {{ __('افتح') }} {{ $hLinks[0]['name'] }}
+                                        </a>
+                                    @elseif(count($hLinks) > 1)
+                                        <div x-data="{ open: false }" class="mt-2">
+                                            <button type="button" @click="open = !open"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                <flux:icon icon="book-open" class="size-3.5" />
+                                                <span>{{ __('افتح الآيات في القرآن') }} ({{ count($hLinks) }})</span>
+                                                <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
+                                                    x-bind:class="open ? 'rotate-180' : ''" />
+                                            </button>
+                                            <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
+                                                @foreach($hLinks as $link)
+                                                    <a href="{{ $link['url'] }}" target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                        <flux:icon icon="book-open" class="size-3.5" />
+                                                        {{ $link['name'] }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                                 @endif
 
@@ -540,19 +576,55 @@ new class extends Component {
                                         {{ $pendingMission->reviewToAyah->surah->name_arabic }} ({{ $pendingMission->reviewToAyah->verse_number }})
                                     </div>
                                     @php
+                                        $rLinks = [];
                                         $rFrom = $pendingMission->reviewFromAyah;
                                         $rTo   = $pendingMission->reviewToAyah;
                                         if ($rFrom->surah_id === $rTo->surah_id) {
-                                            $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number;
+                                            $rLinks[] = [
+                                                'name' => $rFrom->surah->name_arabic,
+                                                'url'  => 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number,
+                                            ];
                                         } else {
-                                            $rUrl = 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rFrom->surah->verses_count;
+                                            $low  = min($rFrom->surah_id, $rTo->surah_id);
+                                            $high = max($rFrom->surah_id, $rTo->surah_id);
+                                            $direction = $rFrom->surah_id <= $rTo->surah_id ? 'asc' : 'desc';
+                                            $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
+                                            foreach ($surahs as $s) {
+                                                $from = $s->id === $rFrom->surah_id ? $rFrom->verse_number : 1;
+                                                $to   = $s->id === $rTo->surah_id   ? $rTo->verse_number   : $s->verses_count;
+                                                $rLinks[] = [
+                                                    'name' => $s->name_arabic,
+                                                    'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
+                                                ];
+                                            }
                                         }
                                     @endphp
-                                    <a href="{{ $rUrl }}" target="_blank"
-                                        class="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-white/90 hover:text-white hover:underline">
-                                        <flux:icon icon="book-open" class="size-3.5" />
-                                        {{ __('افتح الآيات في القرآن') }}
-                                    </a>
+                                    @if(count($rLinks) === 1)
+                                        <a href="{{ $rLinks[0]['url'] }}" target="_blank"
+                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                            <flux:icon icon="book-open" class="size-3.5" />
+                                            {{ __('افتح') }} {{ $rLinks[0]['name'] }}
+                                        </a>
+                                    @elseif(count($rLinks) > 1)
+                                        <div x-data="{ open: false }" class="mt-2">
+                                            <button type="button" @click="open = !open"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                <flux:icon icon="book-open" class="size-3.5" />
+                                                <span>{{ __('افتح الآيات في القرآن') }} ({{ count($rLinks) }})</span>
+                                                <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
+                                                    x-bind:class="open ? 'rotate-180' : ''" />
+                                            </button>
+                                            <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
+                                                @foreach($rLinks as $link)
+                                                    <a href="{{ $link['url'] }}" target="_blank"
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                        <flux:icon icon="book-open" class="size-3.5" />
+                                                        {{ $link['name'] }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                                 @endif
                             </div>

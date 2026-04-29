@@ -873,36 +873,28 @@ new class extends Component {
 
                                         <td x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget === 'hifz')" class="h-16 border-r border-zinc-200 dark:border-zinc-700 p-2">
                                             <div class="h-full grid grid-cols-2 gap-2">
-                                                <div class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select wire:model.live="planDays.{{ $index }}.from_surah_id" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
+                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.from_surah_id'), verse: @entangle('planDays.'.$index.'.from_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
                                                         @foreach($allSurahs as $surah)
                                                             <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <select wire:model="planDays.{{ $index }}.from_verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        @php
-                                                            $fSurah = $allSurahs->find($day['from_surah_id']);
-                                                            $fCount = $fSurah?->verses_count ?? 1;
-                                                        @endphp
-                                                        @for($i = 1; $i <= $fCount; $i++)
-                                                            <option value="{{ $i }}">{{ $i }}</option>
-                                                        @endfor
+                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
+                                                        <template x-for="i in versesCount" :key="i">
+                                                            <option :value="i" x-text="i"></option>
+                                                        </template>
                                                     </select>
                                                 </div>
-                                                <div class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select wire:model.live="planDays.{{ $index }}.to_surah_id" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
+                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.to_surah_id'), verse: @entangle('planDays.'.$index.'.to_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
                                                         @foreach($allSurahs as $surah)
                                                             <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <select wire:model="planDays.{{ $index }}.to_verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        @php
-                                                            $tSurah = $allSurahs->find($day['to_surah_id']);
-                                                            $tCount = $tSurah?->verses_count ?? 1;
-                                                        @endphp
-                                                        @for($i = 1; $i <= $tCount; $i++)
-                                                            <option value="{{ $i }}">{{ $i }}</option>
-                                                        @endfor
+                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
+                                                        <template x-for="i in versesCount" :key="i">
+                                                            <option :value="i" x-text="i"></option>
+                                                        </template>
                                                     </select>
                                                 </div>
                                             </div>
@@ -910,36 +902,28 @@ new class extends Component {
 
                                         <td x-show="planType === 'review' || (planType === 'hifz_review' && fillTarget === 'review')" class="h-16 border-r border-zinc-200 dark:border-zinc-700 p-2">
                                             <div class="h-full grid grid-cols-2 gap-2">
-                                                <div class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select wire:model.live="planDays.{{ $index }}.review_from_surah_id" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
+                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.review_from_surah_id'), verse: @entangle('planDays.'.$index.'.review_from_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
                                                         @foreach($allSurahs as $surah)
                                                             <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <select wire:model="planDays.{{ $index }}.review_from_verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        @php
-                                                            $rfSurah = $allSurahs->find($day['review_from_surah_id']);
-                                                            $rfCount = $rfSurah?->verses_count ?? 1;
-                                                        @endphp
-                                                        @for($i = 1; $i <= $rfCount; $i++)
-                                                            <option value="{{ $i }}">{{ $i }}</option>
-                                                        @endfor
+                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
+                                                        <template x-for="i in versesCount" :key="i">
+                                                            <option :value="i" x-text="i"></option>
+                                                        </template>
                                                     </select>
                                                 </div>
-                                                <div class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
-                                                    <select wire:model.live="planDays.{{ $index }}.review_to_surah_id" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
+                                                <div x-data="{ surahId: @entangle('planDays.'.$index.'.review_to_surah_id'), verse: @entangle('planDays.'.$index.'.review_to_verse'), get versesCount() { return $store.surahsData[this.surahId] || 1; } }" class="h-full flex flex-col md:flex-row md:items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded border border-zinc-100 dark:border-zinc-800">
+                                                    <select x-model="surahId" @change="verse = 1" class="w-full text-xs p-1 border-none bg-transparent focus:ring-0">
                                                         @foreach($allSurahs as $surah)
                                                             <option value="{{ $surah->id }}">{{ $surah->name_arabic }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <select wire:model="planDays.{{ $index }}.review_to_verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
-                                                        @php
-                                                            $rtSurah = $allSurahs->find($day['review_to_surah_id']);
-                                                            $rtCount = $rtSurah?->verses_count ?? 1;
-                                                        @endphp
-                                                        @for($i = 1; $i <= $rtCount; $i++)
-                                                            <option value="{{ $i }}">{{ $i }}</option>
-                                                        @endfor
+                                                    <select x-model="verse" class="w-full md:w-20 text-xs p-1 border-none bg-zinc-50 dark:bg-zinc-800 rounded font-mono text-center">
+                                                        <template x-for="i in versesCount" :key="i">
+                                                            <option :value="i" x-text="i"></option>
+                                                        </template>
                                                     </select>
                                                 </div>
                                             </div>
@@ -958,4 +942,14 @@ new class extends Component {
             @endif
         </div>
     @endif
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('surahsData', {
+                @foreach($allSurahs as $surah)
+                    {{ $surah->id }}: {{ $surah->verses_count }},
+                @endforeach
+            });
+        });
+    </script>
 </div>
