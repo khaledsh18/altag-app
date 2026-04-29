@@ -135,20 +135,7 @@ new class extends Component {
         $this->memorizedUpToVerse = 1;
     }
 
-    public function updatedPlanDays($value, $key)
-    {
-        if (
-            str_ends_with($key, 'from_surah_id') || str_ends_with($key, 'to_surah_id') ||
-            str_ends_with($key, 'review_from_surah_id') || str_ends_with($key, 'review_to_surah_id')
-        ) {
-            $parts = explode('.', $key);
-            $index = $parts[0];
-            $field = $parts[1];
 
-            $verseField = str_replace('_surah_id', '_verse', $field);
-            $this->planDays[$index][$verseField] = 1;
-        }
-    }
 
     public function updatedSelectAll($value)
     {
