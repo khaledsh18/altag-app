@@ -57,6 +57,7 @@ class Student extends Authenticatable
         'guardian_id',
         'access_token',
         'is_data_completed',
+        'birth_date',
     ];
 
     /**
@@ -127,6 +128,7 @@ class Student extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
         ];
     }
 }

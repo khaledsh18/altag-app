@@ -19,10 +19,20 @@
         </div>
         <flux:menu.separator />
         <flux:menu.radio.group>
-            <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                {{ __('Settings') }}
-            </flux:menu.item>
-            <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @if(auth('student')->check())
+                <flux:menu.item :href="route('student.settings')" icon="cog" wire:navigate>
+                    {{ __('Settings') }}
+                </flux:menu.item>
+            @else
+                <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
+                    {{ __('Settings') }}
+                </flux:menu.item>
+            @endif
+            @if(auth('student')->check())
+                <form method="POST" action="{{ route('student.logout') }}" class="w-full">
+            @else
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @endif
                 @csrf
                 <flux:menu.item
                     as="button"

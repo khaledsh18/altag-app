@@ -63,8 +63,21 @@ class QuranPlanService
                 $targetSurahId = max(1, $currentAyah->surah_id - 2);
             }
             $endAyah = Ayah::where('surah_id', $targetSurahId)->orderBy('verse_number', 'desc')->first();
+        } elseif ($type === '2_surahs') {
+            if ($direction === 'forward') {
+                $targetSurahId = min(114, $currentAyah->surah_id + 1);
+            } else {
+                $targetSurahId = max(1, $currentAyah->surah_id - 1);
+            }
+            $endAyah = Ayah::where('surah_id', $targetSurahId)->orderBy('verse_number', 'desc')->first();
+        } elseif ($type === '1_surah') {
+            $endAyah = Ayah::where('surah_id', $currentAyah->surah_id)->orderBy('verse_number', 'desc')->first();
         } elseif ($type === 'juz') {
-            $endAyah = $this->traverseLines($currentAyah, 300, $direction); // 20 pages * 15 lines
+            if ($currentAyah->surah_id == 114 && $currentAyah->verse_number == 1 && $direction === 'reverse') {
+                $endAyah = Ayah::where('surah_id', 78)->orderBy('verse_number', 'desc')->first();
+            } else {
+                $endAyah = $this->traverseLines($currentAyah, 300, $direction); // 20 pages * 15 lines
+            }
         } elseif ($type === 'half_juz') {
             $endAyah = $this->traverseLines($currentAyah, 150, $direction); // 10 pages * 15 lines
         } elseif ($type === '5_pages') {
@@ -230,7 +243,7 @@ class QuranPlanService
         $curr = $startAyah;
         $lastValidAyah = $curr;
 
-        while ($curr && $totalLines < $linesToConsume) {
+        while ($curr && $totalLines <= $linesToConsume) {
             $size = $this->getAyahSize($curr);
 
             // --edit 1 start

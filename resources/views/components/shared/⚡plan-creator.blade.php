@@ -176,6 +176,13 @@ new class extends Component {
         $this->memorizedUpToVerse = 1;
     }
 
+    public function updatedStartDate()
+    {
+        if ($this->isGenerated && !empty($this->planDays)) {
+            $this->updateStartDate();
+        }
+    }
+
 
 
     public function updatedSelectAll($value)
@@ -274,6 +281,25 @@ new class extends Component {
 
         $this->isGenerated = true;
         $this->step = 7;
+    }
+
+    public function updateStartDate()
+    {
+        $this->validate(['startDate' => 'required|date']);
+        $currentDate = Carbon::parse($this->startDate);
+        
+        foreach ($this->planDays as &$day) {
+            while (!in_array($currentDate->format('l'), $this->activeDays)) {
+                $currentDate->addDay();
+            }
+            
+            $day['date'] = $currentDate->toDateString();
+            $day['hijri'] = $this->getHijriLabel($currentDate);
+            $day['day_name_ar'] = $this->translateDay($currentDate->format('l'));
+            
+            $currentDate->addDay();
+        }
+        unset($day);
     }
 
     public function fillSelected($type, $target = null, array $selectedIndices = [])
@@ -544,6 +570,9 @@ new class extends Component {
             this.selected = Array((this.days && this.days.length) ? this.days.length : 0).fill(false);
         },
         toggleAll() {
+            if (this.selected.length === 0 && this.days && this.days.length > 0) {
+                this.init();
+            }
             this.selectAll = ! this.selectAll;
             this.selected = this.selected.map(() => this.selectAll);
         },
@@ -846,10 +875,18 @@ new class extends Component {
                 </div>
             </div>
 
-            <flux:button wire:click="resetPlan" variant="ghost" icon="arrow-path"
-                class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/40">
-                {{ __('إعادة ضبط وملء من جديد') }}
-            </flux:button>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div class="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1">
+                    <span class="text-xs text-zinc-500">{{ __('تاريخ البدء:') }}</span>
+                    <div class="w-40">
+                        <livewire:teacher.hijri-datepicker wire:model.live="startDate" />
+                    </div>
+                </div>
+                <flux:button wire:click="resetPlan" variant="ghost" icon="arrow-path"
+                    class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/40">
+                    {{ __('إعادة ضبط وملء من جديد') }}
+                </flux:button>
+            </div>
         </flux:card>
 
         <!-- TABLE SECTION -->
@@ -899,6 +936,10 @@ new class extends Component {
                                     @click="doFill('5_pages')">{{ __('5 صفحات') }}</flux:button>
                                 <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
                                     @click="doFill('3_surahs')">{{ __('3 سور') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('2_surahs')">{{ __('سورتين') }}</flux:button>
+                                <flux:button size="xs" class="bg-indigo-600 text-white hover:bg-indigo-700"
+                                    @click="doFill('1_surah')">{{ __('سورة واحدة') }}</flux:button>
                             </div>
                             <div x-show="planType === 'hifz' || (planType === 'hifz_review' && fillTarget !== 'review')"
                                 class="flex flex-wrap gap-1">

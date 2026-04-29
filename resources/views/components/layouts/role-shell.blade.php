@@ -19,11 +19,21 @@
         <flux:spacer />
 
         <flux:sidebar.nav>
-            <flux:sidebar.item icon="cog" :href="route('profile.edit')" wire:navigate>
-                {{ __('إعدادات الحساب') }}
-            </flux:sidebar.item>
+            @if(auth('student')->check())
+                <flux:sidebar.item icon="cog" :href="route('student.settings')" :current="request()->routeIs('student.settings')" wire:navigate>
+                    {{ __('إعدادات الحساب') }}
+                </flux:sidebar.item>
+            @else
+                <flux:sidebar.item icon="cog" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
+                    {{ __('إعدادات الحساب') }}
+                </flux:sidebar.item>
+            @endif
 
-            <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @if(auth('student')->check())
+                <form method="POST" action="{{ route('student.logout') }}" class="w-full">
+            @else
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @endif
                 @csrf
                 <flux:sidebar.item as="button" type="submit" icon="arrow-right-start-on-rectangle"
                     class="w-full cursor-pointer">
@@ -49,10 +59,20 @@
         <flux:spacer />
 
         <flux:sidebar.nav>
-            <flux:sidebar.item icon="cog" :href="route('profile.edit')" wire:navigate>
-                {{ __('الإعدادات') }}
-            </flux:sidebar.item>
-            <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @if(auth('student')->check())
+                <flux:sidebar.item icon="cog" :href="route('student.settings')" :current="request()->routeIs('student.settings')" wire:navigate>
+                    {{ __('الإعدادات') }}
+                </flux:sidebar.item>
+            @else
+                <flux:sidebar.item icon="cog" :href="route('profile.edit')" :current="request()->routeIs('profile.edit')" wire:navigate>
+                    {{ __('الإعدادات') }}
+                </flux:sidebar.item>
+            @endif
+            @if(auth('student')->check())
+                <form method="POST" action="{{ route('student.logout') }}" class="w-full">
+            @else
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+            @endif
                 @csrf
                 <flux:sidebar.item as="button" type="submit" icon="arrow-right-start-on-rectangle"
                     class="w-full cursor-pointer">

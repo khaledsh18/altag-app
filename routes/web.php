@@ -149,6 +149,15 @@ Route::middleware(['auth:student', 'approved'])->prefix('student')->name('studen
     Route::view('/plan/create', 'student.plan-creator')->name('plan-creator');
     Route::view('/plan/show/{id}', 'student.show-plan')->name('show-plan');
     Route::view('/attendance', 'student.attendance')->name('attendance');
+    Route::get('/settings', function () {
+        return view('student.settings-page');
+    })->name('settings');
+    Route::post('/logout', function (Request $request) {
+        auth()->guard('student')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('home');
+    })->name('logout');
 });
 Route::view('/student/complete-profile', 'student.complete-profile')->middleware(['auth:student'])->name('student.complete-profile');
 Route::view('/teacher/complete-profile', 'teacher.complete-profile')->middleware(['auth:teacher'])->name('teacher.complete-profile');
