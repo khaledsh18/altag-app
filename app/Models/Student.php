@@ -41,6 +41,12 @@ class Student extends Authenticatable
         return $this->hasMany(StudentPlan::class);
     }
 
+    /** @return HasMany<StudentStatusHistory, $this> */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(StudentStatusHistory::class)->orderBy('start_date', 'desc');
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -58,7 +64,27 @@ class Student extends Authenticatable
         'access_token',
         'is_data_completed',
         'birth_date',
+        'joined_at',
+        'status',
     ];
+
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_approved' => 'boolean',
+            'is_data_completed' => 'boolean',
+            'birth_date' => 'date',
+            'joined_at' => 'date',
+        ];
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -118,17 +144,5 @@ class Student extends Authenticatable
         return $this->guardian?->phone;
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'birth_date' => 'date',
-        ];
-    }
+
 }

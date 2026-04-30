@@ -60,7 +60,7 @@ class Settings extends Component
 
         $filename = 'manual_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
         $backupDir = storage_path('app/backups');
-        
+
         if (!file_exists($backupDir)) {
             mkdir($backupDir, 0755, true);
         }
@@ -71,19 +71,32 @@ class Settings extends Component
 
     public function uploadBackup()
     {
+        if (!$this->uploadedBackup) {
+            Flux::toast('لم يتم استلام أي ملف بعد. يرجى الانتظار قليلاً بعد اختيار الملف.', variant: 'danger');
+            return;
+        }
         $this->validate([
             'uploadedBackup' => 'required|file',
         ]);
 
-        $extension = $this->uploadedBackup->getClientOriginalExtension();
-        if ($extension !== 'sqlite' && $extension !== 'db') {
-            Flux::toast('يجب أن يكون الملف بصيغة sqlite.', variant: 'danger');
+        $filename = $this->uploadedBackup->getClientOriginalName();
+        if (!str_ends_with($filename, '.sqlite') && !str_ends_with($filename, '.db')) {
+
+            Flux::toast('يجب أن يكون الملف بصيغة sqlite أو db.', variant: 'danger');
             return;
         }
 
-        $filename = 'uploaded_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
-        $this->uploadedBackup->storeAs('backups', $filename, 'local');
-        
+        $newFilename = 'uploaded_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
+        $backupDir = storage_path('app/backups');
+        if (!file_exists($backupDir) && !str_ends_with($backupDir, '/')) {
+            $backupDir .= '/';
+        }
+        if (!file_exists($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        copy($this->uploadedBackup->getRealPath(), $backupDir . '/' . $newFilename);
+
         $this->uploadedBackup = null;
         Flux::toast('تم رفع النسخة الاحتياطية بنجاح.', variant: 'success');
     }
@@ -124,7 +137,7 @@ class Settings extends Component
                         'size' => round($file->getSize() / 1024 / 1024, 2) . ' MB',
                         'time' => date('Y-m-d H:i:s', $file->getMTime()),
                     ];
-                    
+
                     if (str_starts_with($item['name'], 'scheduled_')) {
                         $scheduledBackups[] = $item;
                     } elseif (str_starts_with($item['name'], 'uploaded_')) {
@@ -135,8 +148,8 @@ class Settings extends Component
                 }
             }
         }
-        
-        $sortFn = function($a, $b) {
+
+        $sortFn = function ($a, $b) {
             return $b['time'] <=> $a['time'];
         };
 

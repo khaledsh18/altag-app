@@ -21,6 +21,8 @@ new class extends Component {
     public $editName = '';
     public $editPhone = '';
     public $editCircleId = null;
+    public $editStatus = '';
+    public $editJoinedAt = '';
     public $stats = [];
 
     // Unassigned students modal state
@@ -48,7 +50,7 @@ new class extends Component {
         }
 
         $student = Student::whereNull('circle_id')->findOrFail($studentId);
-        $student->update(['circle_id' => $circle->id]);
+        $student->update(['circle_id' => $circle->id, 'joined_at' => now()->format('Y-m-d')]);
 
         Flux::toast('تمت إضافة الطالب للحلقة بنجاح', variant: 'success');
     }
@@ -61,7 +63,13 @@ new class extends Component {
             abort(403);
         }
 
-        $this->viewingStudent->update(['circle_id' => null]);
+        $this->viewingStudent->update(['circle_id' => null, 'status' => 'left']);
+        $this->viewingStudent->statusHistories()->create([
+            'status' => 'left',
+            'start_date' => now(),
+            'notes' => 'تمت إزالته من الحلقة عبر إدارة الطلاب',
+        ]);
+
         Flux::modal('student-details')->close();
         Flux::toast('تم إزالة الطالب من الحلقة بنجاح', variant: 'success');
     }
@@ -81,7 +89,7 @@ new class extends Component {
             return;
         }
 
-        Student::create([
+        $student = Student::create([
             'name' => $this->name,
             'phone' => $this->phone,
             'email' => 'student_' . Str::random(10) . '@uncompleted.altag.app',
@@ -90,6 +98,14 @@ new class extends Component {
             'is_approved' => true,
             'access_token' => Str::random(32),
             'is_data_completed' => false,
+            'status' => 'active',
+            'joined_at' => now()->format('Y-m-d'),
+        ]);
+
+        $student->statusHistories()->create([
+            'status' => 'active',
+            'start_date' => now(),
+            'notes' => 'تسجيل جديد',
         ]);
 
         $this->reset(['name', 'phone']);
@@ -110,6 +126,7 @@ new class extends Component {
                 $q->latest();
             },
             'attendances',
+            'statusHistories',
         ])
             ->whereIn('circle_id', $circleIds)
             ->findOrFail($studentId);
@@ -117,6 +134,8 @@ new class extends Component {
         $this->editName = $this->viewingStudent->name;
         $this->editPhone = $this->viewingStudent->phone;
         $this->editCircleId = $this->viewingStudent->circle_id;
+        $this->editStatus = $this->viewingStudent->status;
+        $this->editJoinedAt = $this->viewingStudent->joined_at ? $this->viewingStudent->joined_at->format('Y-m-d') : null;
 
         $this->stats = [
             'present' => $this->viewingStudent->attendances->where('status', 'present')->count(),
@@ -132,12 +151,30 @@ new class extends Component {
         $this->validate([
             'editName' => 'required|string|min:2|max:255',
             'editPhone' => 'nullable|string|max:20',
+            'editStatus' => 'required|in:active,registering,suspended,left',
+            'editJoinedAt' => 'nullable|date',
         ]);
+
+        $oldStatus = $this->viewingStudent->status;
 
         $this->viewingStudent->update([
             'name' => $this->editName,
             'phone' => $this->editPhone,
+            'status' => $this->editStatus,
+            'joined_at' => $this->editJoinedAt,
         ]);
+
+        if ($oldStatus !== $this->editStatus) {
+            $lastHistory = $this->viewingStudent->statusHistories()->latest('start_date')->first();
+            if ($lastHistory) {
+                $lastHistory->update(['end_date' => now()]);
+            }
+
+            $this->viewingStudent->statusHistories()->create([
+                'status' => $this->editStatus,
+                'start_date' => now(),
+            ]);
+        }
 
         Flux::toast('تم حفظ بيانات الطالب بنجاح', variant: 'success');
     }
@@ -215,7 +252,8 @@ new class extends Component {
             <flux:table.columns>
                 <flux:table.column>{{ __('اسم الطالب') }}</flux:table.column>
                 <flux:table.column>{{ __('واتساب') }}</flux:table.column>
-                <flux:table.column>{{ __('الحلقة') }}</flux:table.column>
+                <flux:table.column>{{ __('تاريخ الالتحاق') }}</flux:table.column>
+                <flux:table.column>{{ __('حالة الطالب') }}</flux:table.column>
                 <flux:table.column>{{ __('حالة البيانات') }}</flux:table.column>
                 <flux:table.column>{{ __('رابط الدخول') }}</flux:table.column>
                 <flux:table.column class="w-10"></flux:table.column>
@@ -242,7 +280,26 @@ new class extends Component {
                             @endif
                         </flux:table.cell>
                         <flux:table.cell wire:click="viewStudent({{ $student->id }})">
-                            {{ $student->circle->name ?? '-' }}
+                            {{ $student->joined_at ? $student->joined_at->format('Y-m-d') : '-' }}
+                        </flux:table.cell>
+                        <flux:table.cell wire:click="viewStudent({{ $student->id }})">
+                            @php
+                                $statusColors = [
+                                    'active' => 'green',
+                                    'registering' => 'blue',
+                                    'suspended' => 'amber',
+                                    'left' => 'red',
+                                ];
+                                $statusLabels = [
+                                    'active' => 'مشارك',
+                                    'registering' => 'تحت التسجيل',
+                                    'suspended' => 'موقوف',
+                                    'left' => 'غادر الحلقات',
+                                ];
+                                $stColor = $statusColors[$student->status] ?? 'zinc';
+                                $stLabel = $statusLabels[$student->status] ?? $student->status;
+                            @endphp
+                            <flux:badge :color="$stColor" size="sm">{{ $stLabel }}</flux:badge>
                         </flux:table.cell>
                         <flux:table.cell wire:click="viewStudent({{ $student->id }})">
                             @if ($student->is_data_completed)
@@ -307,6 +364,18 @@ new class extends Component {
 
                     <flux:input wire:model="editPhone" label="{{ __('رقم الهاتف') }}"
                         placeholder="{{ __('اختياري') }}" dir="ltr" class="text-right" />
+                        
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select wire:model="editStatus" label="{{ __('حالة الطالب') }}">
+                            <flux:select.option value="active">مشارك</flux:select.option>
+                            <flux:select.option value="registering">تحت التسجيل</flux:select.option>
+                            <flux:select.option value="suspended">موقوف</flux:select.option>
+                            <flux:select.option value="left">غادر الحلقات</flux:select.option>
+                        </flux:select>
+                        
+                        <flux:input type="date" wire:model="editJoinedAt" label="{{ __('تاريخ الالتحاق') }}" />
+                    </div>
+
                     <div class="flex justify-between pt-2">
                         <flux:button type="submit" variant="primary" size="sm" icon="check">
                             {{ __('حفظ التعديلات') }}
@@ -404,6 +473,51 @@ new class extends Component {
                             <div class="text-xs text-amber-600/70 dark:text-amber-500/70 mt-1">{{ __('تأخر') }}
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <!-- Status History -->
+                <div>
+                    <flux:heading size="sm" class="mb-3">{{ __('سجل الحالات') }}</flux:heading>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                        @forelse($viewingStudent->statusHistories as $history)
+                            <div class="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700/50 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium">
+                                        @php
+                                            $hStatusLabels = [
+                                                'active' => 'مشارك',
+                                                'registering' => 'تحت التسجيل',
+                                                'suspended' => 'موقوف',
+                                                'left' => 'غادر الحلقات',
+                                            ];
+                                            $hColor = [
+                                                'active' => 'green',
+                                                'registering' => 'blue',
+                                                'suspended' => 'amber',
+                                                'left' => 'red',
+                                            ][$history->status] ?? 'zinc';
+                                        @endphp
+                                        <flux:badge color="{{ $hColor }}" size="sm">{{ $hStatusLabels[$history->status] ?? $history->status }}</flux:badge>
+                                    </span>
+                                    <span class="text-xs text-zinc-500 mt-1">
+                                        {{ $history->start_date->format('Y/m/d') }} 
+                                        @if($history->end_date)
+                                            - {{ $history->end_date->format('Y/m/d') }}
+                                        @else
+                                            - {{ __('الآن') }}
+                                        @endif
+                                    </span>
+                                    @if($history->notes)
+                                        <span class="text-xs text-zinc-400 mt-1">{{ $history->notes }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-sm text-zinc-500 text-center py-4">{{ __('لا يوجد سجل حالات.') }}</div>
+                        @endforelse
                     </div>
                 </div>
             </div>

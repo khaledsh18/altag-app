@@ -84,25 +84,41 @@ class AttendanceReports extends Component
             'printTo' => 'required|date|after_or_equal:printFrom',
         ]);
 
-        $startDate = Carbon::parse($this->printFrom);
-        $endDate = Carbon::parse($this->printTo);
+        $startDate = Carbon::parse($this->printFrom)->format('Y-m-d');
+        $endDate = Carbon::parse($this->printTo)->format('Y-m-d');
+        
         $dates = [];
-        for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
+        $d = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        while ($d->lte($end)) {
             $dates[] = $d->format('Y-m-d');
+            $d->addDay();
         }
 
         $circles = Circle::with('stage')->get();
 
-        $attendances = Attendance::whereBetween('date', [$this->printFrom, $this->printTo])
-            ->select('circle_id', 'date', DB::raw('COUNT(*) as total'), DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"))
-            ->groupBy('circle_id', 'date')
+        $attendances = Attendance::whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->select(
+                'circle_id', 
+                DB::raw("DATE(date) as mapped_date"), 
+                DB::raw('COUNT(*) as total'), 
+                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
+                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
+                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+            )
+            ->groupBy('circle_id', DB::raw('DATE(date)'))
             ->get();
 
         $attendanceData = [];
         foreach ($attendances as $att) {
-            $dateStr = $att->date instanceof Carbon ? $att->date->format('Y-m-d') : substr((string) $att->date, 0, 10);
+            $dateStr = $att->mapped_date;
             $attendanceData[$att->circle_id][$dateStr] = [
                 'present' => $att->present_count,
+                'late' => $att->late_count,
+                'absent' => $att->absent_count,
+                'excused' => $att->excused_count,
                 'total' => $att->total,
             ];
         }
@@ -132,13 +148,18 @@ class AttendanceReports extends Component
 
     public function render()
     {
-        $query = Attendance::query();
+        $query = Attendance::query()
+            ->join('students', 'attendances.student_id', '=', 'students.id')
+            ->where(function ($q) {
+                $q->whereNull('students.joined_at')
+                  ->orWhereColumn('students.joined_at', '<=', 'attendances.date');
+            });
 
         if ($this->fromDate) {
-            $query->where('date', '>=', $this->fromDate);
+            $query->where('attendances.date', '>=', $this->fromDate);
         }
         if ($this->toDate) {
-            $query->where('date', '<=', $this->toDate);
+            $query->where('attendances.date', '<=', $this->toDate);
         }
 
         // --- 1. Overall Reports (By Date or By Month) ---
@@ -147,22 +168,22 @@ class AttendanceReports extends Component
         if ($this->viewType === 'months') {
             // Group by month using SQLite strftime
             $overallQuery->select(
-                DB::raw("strftime('%Y-%m', date) as period"),
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+                DB::raw("strftime('%Y-%m', attendances.date) as period"),
+                DB::raw('COUNT(attendances.id) as total'),
+                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
             )->groupBy('period')->orderBy('period', 'desc');
         } else {
             $overallQuery->select(
-                'date as period',
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('date')->orderBy('date', 'desc');
+                'attendances.date as period',
+                DB::raw('COUNT(attendances.id) as total'),
+                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+            )->groupBy('attendances.date')->orderBy('attendances.date', 'desc');
         }
 
         $reportsByPeriod = $overallQuery->get();
@@ -174,32 +195,32 @@ class AttendanceReports extends Component
 
         if ($this->viewType === 'months') {
             $treeQuery->select(
-                DB::raw("strftime('%Y-%m', date) as period"),
+                DB::raw("strftime('%Y-%m', attendances.date) as period"),
                 'stages.id as stage_id',
                 'stages.name as stage_name',
                 'circles.id as circle_id',
                 'circles.name as circle_name',
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+                DB::raw('COUNT(attendances.id) as total'),
+                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
             )->groupBy('period', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
                 ->orderBy('stages.id')->orderBy('period', 'desc')->orderBy('circles.id');
         } else {
             $treeQuery->select(
-                'date as period',
+                'attendances.date as period',
                 'stages.id as stage_id',
                 'stages.name as stage_name',
                 'circles.id as circle_id',
                 'circles.name as circle_name',
-                DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('date', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
-                ->orderBy('stages.id')->orderBy('date', 'desc')->orderBy('circles.id');
+                DB::raw('COUNT(attendances.id) as total'),
+                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+            )->groupBy('attendances.date', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
+                ->orderBy('stages.id')->orderBy('attendances.date', 'desc')->orderBy('circles.id');
         }
 
         $rawRecords = $treeQuery->get();

@@ -61,10 +61,24 @@ class Attendance extends Component
             return;
         }
 
-        $this->students = Student::where('circle_id', $this->selectedCircle)
+        $studentsQuery = Student::where('circle_id', $this->selectedCircle)
             ->where('is_approved', true)
+            ->where(function ($query) {
+                $query->whereNull('joined_at')
+                      ->orWhere('joined_at', '<=', $this->date);
+            })
+            ->with(['statusHistories' => function ($query) {
+                $query->where('start_date', '<=', $this->date)->orderBy('start_date', 'desc');
+            }])
             ->orderBy('name')
             ->get();
+
+        $this->students = $studentsQuery->filter(function ($student) {
+            $history = $student->statusHistories->first();
+            $statusOnDate = $history ? $history->status : $student->status;
+            
+            return in_array($statusOnDate, ['active', 'registering']);
+        })->values();
 
         $existing = AttendanceModel::where('circle_id', $this->selectedCircle)
             ->whereDate('date', $this->date)

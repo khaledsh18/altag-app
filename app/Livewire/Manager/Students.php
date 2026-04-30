@@ -47,8 +47,8 @@ class Students extends Component
 
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('name', 'like', '%'.$this->search.'%')
-                    ->orWhere('email', 'like', '%'.$this->search.'%');
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%');
             });
         }
 
@@ -94,7 +94,7 @@ class Students extends Component
     {
         $student = Student::find($id);
 
-        if (! $student) {
+        if (!$student) {
             Flux::toast(__('الطالب غير موجود'), variant: 'danger');
 
             return;
@@ -109,21 +109,40 @@ class Students extends Component
         Flux::toast(__('تمت الموافقة على الطالب بنجاح'), variant: 'success');
     }
 
+    public $viewingStudent = null;
+    public $stats = [];
+
     public function edit($id)
     {
-        $student = Student::find($id);
+        $this->viewingStudent = Student::with([
+            'circle.stage',
+            'guardian',
+            'plans' => function ($q) {
+                $q->latest();
+            },
+            'attendances',
+            'statusHistories',
+        ])->find($id);
 
-        if (! $student) {
+        if (!$this->viewingStudent) {
             Flux::toast(__('الطالب غير موجود'), variant: 'danger');
 
             return;
         }
 
-        $this->editingStudentId = $student->id;
-        $this->name = $student->name;
-        $this->email = $student->email;
-        $this->circle_id = $student->circle_id;
-        $this->guardian_id = $student->guardian_id;
+        $this->editingStudentId = $this->viewingStudent->id;
+        $this->name = $this->viewingStudent->name;
+        $this->email = $this->viewingStudent->email;
+        $this->circle_id = $this->viewingStudent->circle_id;
+        $this->guardian_id = $this->viewingStudent->guardian_id;
+        $this->editStatus = $this->viewingStudent->status ?? 'active';
+        $this->editJoinedAt = $this->viewingStudent->joined_at ? $this->viewingStudent->joined_at->format('Y-m-d') : '';
+
+        $this->stats = [
+            'present' => $this->viewingStudent->attendances->where('status', 'present')->count(),
+            'absent' => $this->viewingStudent->attendances->where('status', 'absent')->count(),
+            'late' => $this->viewingStudent->attendances->where('status', 'late')->count(),
+        ];
 
         Flux::modal('student-modal')->show();
     }
@@ -132,9 +151,11 @@ class Students extends Component
     {
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,'.$this->editingStudentId,
+            'email' => 'required|email|unique:students,email,' . $this->editingStudentId,
             'circle_id' => 'nullable|exists:circles,id',
             'guardian_id' => 'nullable|exists:guardians,id',
+            'editStatus' => 'required|in:active,registering,suspended,left',
+            'editJoinedAt' => 'nullable|date',
         ]);
 
         Student::find($this->editingStudentId)->update([
@@ -142,12 +163,30 @@ class Students extends Component
             'email' => $this->email,
             'circle_id' => $this->circle_id,
             'guardian_id' => $this->guardian_id,
+            'status' => $this->editStatus,
+            'joined_at' => $this->editJoinedAt ?: null,
         ]);
 
         Flux::toast(__('تم تحديث بيانات الطالب بنجاح'), variant: 'success');
-        $this->reset(['name', 'email', 'circle_id', 'guardian_id', 'editingStudentId']);
+        $this->reset(['name', 'email', 'circle_id', 'guardian_id', 'editStatus', 'editJoinedAt', 'editingStudentId']);
         $this->loadData();
         Flux::modal('student-modal')->close();
+    }
+
+
+    public function resetToken($id)
+    {
+        $student = Student::find($id);
+        if ($student) {
+            $student->update([
+                'access_token' => Str::random(32),
+            ]);
+            $this->loadData();
+            if ($this->viewingStudent && $this->viewingStudent->id === $student->id) {
+                $this->viewingStudent->access_token = $student->access_token;
+            }
+            Flux::toast(__('تم إنشاء رابط الدخول بنجاح'), variant: 'success');
+        }
     }
 
     public function delete($id)
@@ -158,17 +197,6 @@ class Students extends Component
         Flux::toast(__('تم حذف الطالب بنجاح'), variant: 'success');
     }
 
-    public function resetToken($id)
-    {
-        $student = Student::find($id);
-        if ($student) {
-            $student->update([
-                'access_token' => Str::random(32),
-            ]);
-            $this->loadData();
-            Flux::toast(__('تم إعادة إنشاء الرابط السحري بنجاح'), variant: 'success');
-        }
-    }
 
     public function cancel()
     {

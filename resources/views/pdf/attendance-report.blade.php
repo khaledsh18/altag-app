@@ -8,10 +8,16 @@
             margin: 0;
             padding: 20px;
             font-size: 11px; /* Smaller font to fit columns */
+            font-family: 'Tajawal', 'DejaVu Sans', sans-serif;
         }
         .header {
             text-align: center;
             margin-bottom: 20px;
+        }
+        .header img {
+            height: 80px;
+            margin-bottom: 10px;
+            object-fit: contain;
         }
         .header h1 {
             font-size: 18px;
@@ -58,6 +64,7 @@
 </head>
 <body>
     <div class="header">
+        <img src="{{ public_path('images/altag_logo.png') }}" alt="Logo">
         <h1>تقرير الحضور والغياب للحلقات</h1>
         <p>الفترة من: {{ $printFrom }} إلى {{ $printTo }}</p>
     </div>
@@ -107,11 +114,15 @@
                             <td>
                                 @if($cellData)
                                     @php
-                                        $circleTotalPresent += $cellData['present'];
+                                        $presentAndLate = $cellData['present'] + $cellData['late'];
+                                        $circleTotalPresent += $presentAndLate;
                                         $circleGlobalTotal += $cellData['total'];
                                         $totalDaysWithData++;
                                     @endphp
-                                    <span class="present">{{ $cellData['present'] }}</span> / {{ $cellData['total'] }}
+                                    <div style="font-size: 10px; line-height: 1.4;">
+                                        <span class="present">ح: {{ $presentAndLate }}</span><br>
+                                        <span style="color: #ef4444;">غ: {{ $cellData['absent'] }}</span>
+                                    </div>
                                 @else
                                     -
                                 @endif
@@ -121,7 +132,10 @@
                             @php
                                 $avgStudents = $totalDaysWithData > 0 ? round($circleGlobalTotal / $totalDaysWithData) : 0;
                             @endphp
-                            <span class="present">{{ $circleTotalPresent }}</span> / {{ $circleGlobalTotal }}
+                            <div style="font-size: 10px; line-height: 1.4;">
+                                <span class="present">ح: {{ $circleTotalPresent }}</span><br>
+                                <span>متوسط المسجلين: {{ $avgStudents }}</span>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

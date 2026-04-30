@@ -25,12 +25,27 @@ class Guardians extends Component
 
     public array $selectedStudents = [];
 
-    public $studentsList = [];
+    public string $studentSearch = '';
 
     public function mount()
     {
-        $this->studentsList = Student::all();
         $this->loadData();
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function groupedStudents()
+    {
+        $query = Student::with('circle');
+        
+        if ($this->studentSearch) {
+            $query->where('name', 'like', '%' . $this->studentSearch . '%');
+        }
+        
+        $students = $query->get();
+        
+        return $students->groupBy(function($s) {
+            return $s->circle ? $s->circle->name : 'بدون حلقة';
+        });
     }
 
     public function loadData()
@@ -81,21 +96,23 @@ class Guardians extends Component
         Flux::toast(__('تمت الموافقة على ولي الأمر بنجاح'), variant: 'success');
     }
 
+    public $viewingGuardian = null;
+
     public function edit($id)
     {
-        $guardian = Guardian::find($id);
+        $this->viewingGuardian = Guardian::with('students')->find($id);
 
-        if (! $guardian) {
+        if (! $this->viewingGuardian) {
             Flux::toast(__('ولي الأمر غير موجود'), variant: 'danger');
 
             return;
         }
 
-        $this->editingGuardianId = $guardian->id;
-        $this->name = $guardian->name;
-        $this->email = $guardian->email;
-        $this->phone = $guardian->phone ?? '';
-        $this->selectedStudents = $guardian->students->pluck('id')->toArray();
+        $this->editingGuardianId = $this->viewingGuardian->id;
+        $this->name = $this->viewingGuardian->name;
+        $this->email = $this->viewingGuardian->email;
+        $this->phone = $this->viewingGuardian->phone ?? '';
+        $this->selectedStudents = $this->viewingGuardian->students->pluck('id')->toArray();
         Flux::modal('guardian-modal')->show();
     }
 
@@ -129,6 +146,22 @@ class Guardians extends Component
         $this->reset(['name', 'email', 'phone', 'selectedStudents', 'editingGuardianId']);
         $this->loadData();
         Flux::modal('guardian-modal')->close();
+    }
+
+    public function resetToken($id)
+    {
+        $guardian = Guardian::find($id);
+        if ($guardian) {
+            $guardian->update([
+                'access_token' => \Illuminate\Support\Str::random(32),
+            ]);
+            $this->loadData();
+            // Update viewingGuardian so the modal shows the new token immediately
+            if ($this->viewingGuardian && $this->viewingGuardian->id === $guardian->id) {
+                $this->viewingGuardian->access_token = $guardian->access_token;
+            }
+            Flux::toast(__('تم إنشاء رابط الدخول بنجاح'), variant: 'success');
+        }
     }
 
     public function delete($id)

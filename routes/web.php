@@ -189,6 +189,15 @@ Route::get('/teacher-magic/{token}', function ($token) {
     return redirect()->route('teacher.dashboard');
 })->name('teacher.magic-link');
 
+Route::get('/guardian-magic/{token}', function ($token) {
+    $guardian = App\Models\Guardian::where('access_token', $token)->firstOrFail();
+
+    auth()->guard('guardian')->login($guardian);
+
+    // If you add a complete profile step for guardians later, handle it here.
+    return redirect()->route('guardian.dashboard');
+})->name('guardian.magic-link');
+
 Route::get('/magic/{token}/login-as', function ($token) {
     if (! auth()->guard('teacher')->check()) {
         abort(403);

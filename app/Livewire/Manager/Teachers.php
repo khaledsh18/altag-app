@@ -132,25 +132,30 @@ class Teachers extends Component
                 'access_token' => Str::random(32),
             ]);
             $this->loadData();
+            if ($this->viewingTeacher && $this->viewingTeacher->id === $teacher->id) {
+                $this->viewingTeacher->access_token = $teacher->access_token;
+            }
             Flux::toast(__('تم إعادة إنشاء الرابط السحري بنجاح'), variant: 'success');
         }
     }
 
+    public $viewingTeacher = null;
+
     public function edit($id)
     {
-        $teacher = Teacher::find($id);
+        $this->viewingTeacher = Teacher::with('circles')->find($id);
 
-        if (! $teacher) {
+        if (! $this->viewingTeacher) {
             Flux::toast(__('المعلم غير موجود'), variant: 'danger');
 
             return;
         }
 
-        $this->editingTeacherId = $teacher->id;
-        $this->name = $teacher->name;
-        $this->email = $teacher->email;
-        $this->phone = $teacher->phone ?? '';
-        $this->selectedCircles = $teacher->circles->pluck('id')->toArray();
+        $this->editingTeacherId = $this->viewingTeacher->id;
+        $this->name = $this->viewingTeacher->name;
+        $this->email = $this->viewingTeacher->email;
+        $this->phone = $this->viewingTeacher->phone ?? '';
+        $this->selectedCircles = $this->viewingTeacher->circles->pluck('id')->toArray();
         Flux::modal('teacher-modal')->show();
     }
 

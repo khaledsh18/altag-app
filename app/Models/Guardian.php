@@ -33,6 +33,8 @@ class Guardian extends Authenticatable
         'phone',
         'is_approved',
         'approved_by',
+        'access_token',
+        'is_data_completed',
     ];
 
     /**

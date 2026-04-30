@@ -38,82 +38,54 @@
         </div>
     </div>
 
-    <div
-        class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
-        <flux:table class=" justify-center items-center w-full !min-w-full">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
+        <flux:table class="w-full">
             <flux:table.columns>
-                <flux:table.column class="text-right">الطالب</flux:table.column>
-                <flux:table.column class="text-right">الحلقة</flux:table.column>
-                <flux:table.column class="text-right">ولي الأمر</flux:table.column>
-                <flux:table.column class="text-center">حالة البيانات</flux:table.column>
-                <flux:table.column class="text-center">رابط الدخول</flux:table.column>
-                <flux:table.column class="text-center">حالة الاعتماد</flux:table.column>
-                <flux:table.column class="text-center">تاريخ الإضافة</flux:table.column>
-                <flux:table.column></flux:table.column>
+                <flux:table.column>{{ __('الطالب') }}</flux:table.column>
+                <flux:table.column class="hidden md:table-cell">{{ __('الحلقة') }}</flux:table.column>
+                <flux:table.column class="hidden sm:table-cell">{{ __('حالة الطالب') }}</flux:table.column>
+                <flux:table.column class="w-10"></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @foreach ($students as $student)
-                    <flux:table.row :key="$student->id">
+                    <flux:table.row :key="$student->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" wire:click="edit({{ $student->id }})">
                         <flux:table.cell>
-                            <div class="flex flex-col text-right">
+                            <div class="flex flex-col">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ $student->name }}</span>
-                                <span class="text-xs text-zinc-500">{{ $student->email }}</span>
+                                <div class="flex gap-2">
+                                    <span class="text-xs text-zinc-500">{{ $student->email }}</span>
+                                    @if ($student->guardian_id)
+                                        <span class="text-xs text-zinc-400">| {{ $student->guardian->name }}</span>
+                                    @endif
+                                </div>
                             </div>
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="hidden md:table-cell">
                             @if ($student->circle)
                                 <flux:badge size="sm" variant="neutral">{{ $student->circle->name }}</flux:badge>
-                                <span
-                                    class="text-xs text-zinc-400 block mt-1">{{ $student->circle->stage->name }}</span>
                             @else
-                                <span class="text-xs text-zinc-400 italic">بانتظار التوزيع</span>
+                                <span class="text-xs text-zinc-400">غير محدد</span>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell class="hidden sm:table-cell">
+                            @if ($student->status === 'active')
+                                <flux:badge size="sm" variant="success">مشارك</flux:badge>
+                            @elseif ($student->status === 'registering')
+                                <flux:badge size="sm" variant="warning">تحت التسجيل</flux:badge>
+                            @elseif ($student->status === 'suspended')
+                                <flux:badge size="sm" variant="danger">موقوف</flux:badge>
+                            @else
+                                <flux:badge size="sm" variant="neutral">غادر الحلقات</flux:badge>
                             @endif
                         </flux:table.cell>
                         <flux:table.cell>
-                            @if ($student->guardian)
-                                <flux:badge size="sm" variant="success">{{ $student->guardian->name }}</flux:badge>
-                            @else
-                                <span class="text-xs text-zinc-400 italic">بدون ولي أمر</span>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-center">
-                            @if($student->is_data_completed)
-                                <flux:badge color="green" size="sm" icon="check-circle">{{ __('مكتملة') }}</flux:badge>
-                            @else
-                                <flux:badge color="amber" size="sm" icon="clock">{{ __('غير مكتملة') }}</flux:badge>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            @if ($student->access_token)
-                                <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('magic-link', ['token' => $student->access_token]) }}' }" @click.stop>
-                                    <flux:input readonly copyable class="max-w-xs text-xs" :value="route('magic-link', ['token' => $student->access_token])" />
-                                </div>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-center">
-                            @if ($student->is_approved)
-                                <flux:badge size="sm" variant="success">معتمد</flux:badge>
-                            @else
-                                <flux:badge size="sm" variant="warning">قيد الانتظار</flux:badge>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell class="text-center text-xs text-zinc-400">
-                            {{ $student->created_at?->format('Y-m-d') }}
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <div class="flex items-center justify-end gap-2">
-                                @if (!$student->is_approved)
-                                    <flux:button size="sm" variant="primary"
-                                        class="bg-emerald-600 hover:bg-emerald-700"
-                                        wire:click="approve({{ $student->id }})">موافقة</flux:button>
-                                @endif
+                            <div class="flex items-center justify-end gap-2" @click.stop>
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item wire:click="edit({{ $student->id }})" icon="pencil-square">{{ __('تعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:menu.item wire:click="edit({{ $student->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
-                                        <flux:menu.item wire:click="resetToken({{ $student->id }})" wire:confirm="هل أنت متأكد من تغيير الرابط؟ سيتم إبطال الرابط القديم فوراً." variant="danger" icon="arrow-path">{{ __('إعادة إنشاء الرابط') }}</flux:menu.item>
                                         <flux:menu.item wire:click="delete({{ $student->id }})" wire:confirm="هل أنت متأكد من حذف هذا الطالب؟" variant="danger" icon="trash">{{ __('حذف الطالب') }}</flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>
@@ -125,40 +97,185 @@
         </flux:table>
     </div>
 
-    <flux:modal name="student-modal" class="md:w-[500px]">
-        <form wire:submit="save" class="space-y-6">
-            <div>
-                <flux:heading size="lg">تعديل بيانات الطالب</flux:heading>
-                <flux:subheading>تحديث البيانات الأساسية وتعيين الحلقة الدراسية.</flux:subheading>
+    <!-- Student Details Modal -->
+    <flux:modal name="student-modal" variant="flyout" class="md:w-[600px]">
+        @if ($viewingStudent)
+            <div class="space-y-8">
+                <div>
+                    <flux:heading size="xl">{{ __('ملف الطالب') }}</flux:heading>
+                    <flux:subheading>{{ __('إدارة بيانات الطالب وتتبع حالته وخططه القرآنية') }}</flux:subheading>
+                </div>
+
+                <form wire:submit="save" class="space-y-4">
+                    <flux:input wire:model="name" label="{{ __('الاسم الكامل') }}" required />
+                    <flux:input wire:model="email" label="{{ __('البريد الإلكتروني') }}" type="email" required />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select label="الحلقة الدراسية" wire:model="circle_id" placeholder="اختر الحلقة...">
+                            <flux:select.option value="">بدون حلقة (قيد الانتظار)</flux:select.option>
+                            @foreach ($circles as $circle)
+                                <flux:select.option :value="$circle->id">{{ $circle->name }} ({{ $circle->stage->name }})</flux:select.option>
+                            @endforeach
+                        </flux:select>
+
+                        <flux:select label="ولي الأمر" wire:model="guardian_id" placeholder="اختر ولي الأمر...">
+                            <flux:select.option value="">بدون ولي أمر</flux:select.option>
+                            @foreach ($guardiansList as $guardian)
+                                <flux:select.option :value="$guardian->id">{{ $guardian->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:select wire:model="editStatus" label="{{ __('حالة الطالب') }}">
+                            <flux:select.option value="active">مشارك</flux:select.option>
+                            <flux:select.option value="registering">تحت التسجيل</flux:select.option>
+                            <flux:select.option value="suspended">موقوف</flux:select.option>
+                            <flux:select.option value="left">غادر الحلقات</flux:select.option>
+                        </flux:select>
+                        
+                        <flux:input type="date" wire:model="editJoinedAt" label="{{ __('تاريخ الالتحاق') }}" />
+                    </div>
+
+                    <div class="flex justify-between pt-2">
+                        <flux:button type="submit" variant="primary" size="sm" icon="check">
+                            {{ __('حفظ التعديلات') }}
+                        </flux:button>
+                    </div>
+                </form>
+
+                <flux:separator />
+                
+                <div class="space-y-4">
+                    <flux:heading size="sm">{{ __('بيانات الدخول') }}</flux:heading>
+                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-medium text-sm">{{ __('رابط الدخول السحري') }}</div>
+                            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="resetToken({{ $viewingStudent->id }})" wire:confirm="هل أنت متأكد من إنشاء رابط جديد؟ سيتم إبطال الرابط القديم.">
+                                {{ $viewingStudent->access_token ? __('إعادة إنشاء') : __('إنشاء رابط') }}
+                            </flux:button>
+                        </div>
+                        @if($viewingStudent->access_token)
+                            <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('magic-link', ['token' => $viewingStudent->access_token]) }}' }">
+                                <flux:input readonly copyable class="w-full text-xs" :value="route('magic-link', ['token' => $viewingStudent->access_token])" />
+                            </div>
+                        @else
+                            <div class="text-xs text-zinc-500">{{ __('لم يتم إنشاء رابط دخول لهذا الطالب بعد.') }}</div>
+                        @endif
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <!-- Guardian Info -->
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('معلومات التواصل') }}</flux:heading>
+                    <div class="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                        @if ($viewingStudent->guardian)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 p-2 rounded-lg">
+                                        <flux:icon icon="user" class="size-5" />
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">{{ $viewingStudent->guardian->name }}</div>
+                                        <div class="text-xs text-zinc-500">{{ $viewingStudent->guardian->phone ?? 'لا يوجد رقم' }}</div>
+                                    </div>
+                                </div>
+                                @if ($viewingStudent->guardian->phone)
+                                    @php
+                                        $phone = ltrim($viewingStudent->guardian->phone, '0');
+                                        $phone = str_starts_with($phone, '966') ? $phone : '966'.$phone;
+                                    @endphp
+                                    <flux:button variant="ghost" size="sm" icon="chat-bubble-left-ellipsis" class="text-emerald-600 dark:text-emerald-400"
+                                        href="https://wa.me/{{ $phone }}" target="_blank">
+                                        {{ __('مراسلة') }}
+                                    </flux:button>
+                                @endif
+                            </div>
+                        @else
+                            <div class="text-center text-zinc-500 text-sm py-2">
+                                {{ __('لم يتم تعيين ولي أمر لهذا الطالب') }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <!-- Quran Plans -->
+                <div>
+                    <flux:heading size="sm" class="mb-3">{{ __('الخطط القرآنية (' . $viewingStudent->plans->count() . ')') }}</flux:heading>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                        @forelse($viewingStudent->plans as $plan)
+                            <div class="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700/50 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium">
+                                        @if ($plan->plan_type === 'hifz_review') {{ __('حفظ ومراجعة') }}
+                                        @elseif($plan->plan_type === 'hifz') {{ __('حفظ') }}
+                                        @else {{ __('مراجعة') }} @endif
+                                    </span>
+                                    <span class="text-xs text-zinc-500">{{ $plan->start_date->format('Y/m/d') }} • {{ $plan->days_count }} يوم</span>
+                                </div>
+                                <flux:button as="a" href="{{ route('teacher.print-plan', $plan->id) }}" target="_blank" size="xs" variant="ghost" icon="eye"></flux:button>
+                            </div>
+                        @empty
+                            <div class="text-sm text-zinc-500 text-center py-4">{{ __('ليس لديه خطط مسجلة.') }}</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <!-- Attendance Stats -->
+                <div>
+                    <flux:heading size="sm" class="mb-3">{{ __('سجل الحضور والغياب الإجمالي') }}</flux:heading>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="p-3 bg-green-50 dark:bg-green-500/10 rounded-xl border border-green-100 dark:border-green-500/20">
+                            <div class="text-2xl font-bold text-green-600 dark:text-green-500">{{ $stats['present'] ?? 0 }}</div>
+                            <div class="text-xs text-green-600/70 dark:text-green-500/70 mt-1">{{ __('حضور') }}</div>
+                        </div>
+                        <div class="p-3 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-100 dark:border-red-500/20">
+                            <div class="text-2xl font-bold text-red-600 dark:text-red-500">{{ $stats['absent'] ?? 0 }}</div>
+                            <div class="text-xs text-red-600/70 dark:text-red-500/70 mt-1">{{ __('غياب') }}</div>
+                        </div>
+                        <div class="p-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-100 dark:border-amber-500/20">
+                            <div class="text-2xl font-bold text-amber-600 dark:text-amber-500">{{ $stats['late'] ?? 0 }}</div>
+                            <div class="text-xs text-amber-600/70 dark:text-amber-500/70 mt-1">{{ __('تأخر') }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <!-- Status History -->
+                <div>
+                    <flux:heading size="sm" class="mb-3">{{ __('سجل الحالات') }}</flux:heading>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                        @forelse($viewingStudent->statusHistories as $history)
+                            <div class="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700/50 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium">
+                                        @php
+                                            $hStatusLabels = ['active' => 'مشارك', 'registering' => 'تحت التسجيل', 'suspended' => 'موقوف', 'left' => 'غادر الحلقات'];
+                                            $hColor = ['active' => 'green', 'registering' => 'blue', 'suspended' => 'amber', 'left' => 'red'][$history->status] ?? 'zinc';
+                                        @endphp
+                                        <flux:badge color="{{ $hColor }}" size="sm">{{ $hStatusLabels[$history->status] ?? $history->status }}</flux:badge>
+                                    </span>
+                                    <span class="text-xs text-zinc-500 mt-1">
+                                        {{ $history->start_date->format('Y/m/d') }} @if($history->end_date) - {{ $history->end_date->format('Y/m/d') }} @else - {{ __('الآن') }} @endif
+                                    </span>
+                                    @if($history->notes)
+                                        <span class="text-xs text-zinc-400 mt-1">{{ $history->notes }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-sm text-zinc-500 text-center py-4">{{ __('لا يوجد سجل حالات.') }}</div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
-
-            <div class="space-y-4">
-                <flux:input label="الاسم الكامل" wire:model="name" required />
-                <flux:input label="البريد الإلكتروني" wire:model="email" type="email" required />
-
-                <flux:select label="الحلقة الدراسية" wire:model="circle_id" placeholder="اختر الحلقة...">
-                    <flux:select.option value="">بدون حلقة (قيد الانتظار)</flux:select.option>
-                    @foreach ($circles as $circle)
-                        <flux:select.option :value="$circle->id">{{ $circle->name }} ({{ $circle->stage->name }})
-                        </flux:select.option>
-                    @endforeach
-                </flux:select>
-
-                <flux:select label="ولي الأمر" wire:model="guardian_id" placeholder="اختر ولي الأمر...">
-                    <flux:select.option value="">بدون ولي أمر</flux:select.option>
-                    @foreach ($guardiansList as $guardian)
-                        <flux:select.option :value="$guardian->id">{{ $guardian->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            </div>
-
-            <div class="flex gap-2 justify-end">
-                <flux:modal.close>
-                    <flux:button variant="ghost" wire:click="cancel">إلغاء</flux:button>
-                </flux:modal.close>
-                <flux:button type="submit" variant="primary" class="bg-maroon hover:bg-burgundy dark:bg-red-secondary">
-                    حفظ التعديلات</flux:button>
-            </div>
-        </form>
+        @endif
     </flux:modal>
 </div>
