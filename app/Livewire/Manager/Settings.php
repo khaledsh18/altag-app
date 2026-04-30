@@ -5,14 +5,16 @@ namespace App\Livewire\Manager;
 use App\Models\Setting;
 use Flux\Flux;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Settings extends Component
 {
+    use WithFileUploads;
+
     public $absenceLimit;
-
     public $latenessLimit;
-
     public $calculationPeriodDays;
+    public $uploadedBackup;
 
     public function mount()
     {
@@ -36,8 +38,116 @@ class Settings extends Component
         Flux::toast('تم حفظ الإعدادات بنجاح', variant: 'success');
     }
 
+    public function downloadBackup()
+    {
+        $dbPath = config('database.connections.sqlite.database');
+        if (!file_exists($dbPath)) {
+            Flux::toast('ملف قاعدة البيانات غير موجود.', variant: 'danger');
+            return;
+        }
+
+        $filename = 'manual_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
+        return response()->download($dbPath, $filename);
+    }
+
+    public function saveBackupToServer()
+    {
+        $dbPath = config('database.connections.sqlite.database');
+        if (!file_exists($dbPath)) {
+            Flux::toast('ملف قاعدة البيانات غير موجود.', variant: 'danger');
+            return;
+        }
+
+        $filename = 'manual_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
+        $backupDir = storage_path('app/backups');
+        
+        if (!file_exists($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        copy($dbPath, $backupDir . '/' . $filename);
+        Flux::toast('تم حفظ النسخة الاحتياطية على الخادم بنجاح.', variant: 'success');
+    }
+
+    public function uploadBackup()
+    {
+        $this->validate([
+            'uploadedBackup' => 'required|file',
+        ]);
+
+        $extension = $this->uploadedBackup->getClientOriginalExtension();
+        if ($extension !== 'sqlite' && $extension !== 'db') {
+            Flux::toast('يجب أن يكون الملف بصيغة sqlite.', variant: 'danger');
+            return;
+        }
+
+        $filename = 'uploaded_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
+        $this->uploadedBackup->storeAs('backups', $filename, 'local');
+        
+        $this->uploadedBackup = null;
+        Flux::toast('تم رفع النسخة الاحتياطية بنجاح.', variant: 'success');
+    }
+
+    public function downloadSpecificBackup($filename)
+    {
+        $path = storage_path('app/backups/' . $filename);
+        if (file_exists($path)) {
+            return response()->download($path);
+        }
+        Flux::toast('الملف غير موجود.', variant: 'danger');
+    }
+
+    public function deleteBackup($filename)
+    {
+        $path = storage_path('app/backups/' . $filename);
+        if (file_exists($path)) {
+            unlink($path);
+            Flux::toast('تم حذف النسخة الاحتياطية.', variant: 'success');
+        } else {
+            Flux::toast('الملف غير موجود.', variant: 'danger');
+        }
+    }
+
     public function render()
     {
-        return view('livewire.manager.settings');
+        $scheduledBackups = [];
+        $manualBackups = [];
+        $uploadedBackups = [];
+
+        $backupDir = storage_path('app/backups');
+        if (file_exists($backupDir)) {
+            $files = \Illuminate\Support\Facades\File::files($backupDir);
+            foreach ($files as $file) {
+                if ($file->getExtension() === 'sqlite') {
+                    $item = [
+                        'name' => $file->getFilename(),
+                        'size' => round($file->getSize() / 1024 / 1024, 2) . ' MB',
+                        'time' => date('Y-m-d H:i:s', $file->getMTime()),
+                    ];
+                    
+                    if (str_starts_with($item['name'], 'scheduled_')) {
+                        $scheduledBackups[] = $item;
+                    } elseif (str_starts_with($item['name'], 'uploaded_')) {
+                        $uploadedBackups[] = $item;
+                    } else {
+                        $manualBackups[] = $item;
+                    }
+                }
+            }
+        }
+        
+        $sortFn = function($a, $b) {
+            return $b['time'] <=> $a['time'];
+        };
+
+        usort($scheduledBackups, $sortFn);
+        usort($manualBackups, $sortFn);
+        usort($uploadedBackups, $sortFn);
+
+        return view('livewire.manager.settings', [
+            'scheduledBackups' => $scheduledBackups,
+            'manualBackups' => $manualBackups,
+            'uploadedBackups' => $uploadedBackups,
+        ]);
     }
 }

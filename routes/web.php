@@ -72,6 +72,7 @@ Route::middleware(['auth:manager', 'approved'])->prefix('manager')->name('manage
     Route::view('/quran-editor', 'manager.quran-editor')->name('quran-editor');
     Route::view('/settings', 'manager.settings')->name('settings');
     Route::view('/exceeded-limits', 'manager.exceeded-limits')->name('exceeded-limits');
+    Route::view('/backups/{filename}', 'manager.backup-browser')->name('backup-browser');
 });
 
 // القاسم المشترك لمسارات الضيوف (Guest Routes) لكل دور
