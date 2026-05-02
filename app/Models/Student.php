@@ -68,7 +68,6 @@ class Student extends Authenticatable
         'status',
     ];
 
-
     /**
      * Get the attributes that should be cast.
      *
@@ -144,5 +143,106 @@ class Student extends Authenticatable
         return $this->guardian?->phone;
     }
 
+    public function getMemorizedRange(): ?array
+    {
+        $latestPlan = StudentPlan::where('student_id', $this->id)
+            ->where('is_approved', true)
+            ->latest('start_date')
+            ->first();
 
+        if (!$latestPlan) {
+            return null;
+        }
+
+        $direction = $latestPlan->direction;
+
+        $days = StudentPlanDay::whereHas('plan', fn ($q) => $q->where('student_id', $this->id)->where('is_approved', true))
+            ->where(function ($q) {
+                $q->where(function ($sq) {
+                    $sq->where('hifz_achievement', '>=', 2)
+                       ->whereNotNull('from_ayah_id')
+                       ->whereNotNull('to_ayah_id');
+                })->orWhere(function ($sq) {
+                    $sq->where('review_achievement', '>=', 2)
+                       ->whereNotNull('review_from_ayah_id')
+                       ->whereNotNull('review_to_ayah_id');
+                });
+            })
+            ->get();
+
+        if ($days->isEmpty()) {
+            return null;
+        }
+
+        $furthestAyah = $direction === 'reverse' ? 6236 : 1;
+
+        foreach ($days as $day) {
+            if ($day->hifz_achievement >= 2 && $day->from_ayah_id && $day->to_ayah_id) {
+                if ($direction === 'reverse') {
+                    $furthestAyah = min($furthestAyah, $day->from_ayah_id, $day->to_ayah_id);
+                } else {
+                    $furthestAyah = max($furthestAyah, $day->from_ayah_id, $day->to_ayah_id);
+                }
+            }
+            if ($day->review_achievement >= 2 && $day->review_from_ayah_id && $day->review_to_ayah_id) {
+                if ($direction === 'reverse') {
+                    $furthestAyah = min($furthestAyah, $day->review_from_ayah_id, $day->review_to_ayah_id);
+                } else {
+                    $furthestAyah = max($furthestAyah, $day->review_from_ayah_id, $day->review_to_ayah_id);
+                }
+            }
+        }
+
+        if ($direction === 'reverse') {
+            return ['min' => $furthestAyah, 'max' => 6236];
+        }
+
+        return ['min' => 1, 'max' => $furthestAyah];
+    }
+
+    public function memorizedPagesCount(): int
+    {
+        $range = $this->getMemorizedRange();
+        if (!$range) {
+            return 0;
+        }
+        
+        if ($range['max'] === 6236 && $range['min'] !== 1) {
+            $page = Ayah::find($range['min'])?->page_number ?? 604;
+            return 604 - $page + 1;
+        }
+
+        $page = Ayah::find($range['max'])?->page_number ?? 1;
+        return $page;
+    }
+
+    public function memorizationPercentage(): float
+    {
+        return round($this->memorizedPagesCount() / 604 * 100, 1);
+    }
+
+    public function memorizationText(): string
+    {
+        $range = $this->getMemorizedRange();
+        if (!$range) {
+            return 'لا يوجد سجل محفوظ';
+        }
+
+        if ($range['min'] === 1 && $range['max'] === 6236) {
+            return 'القرآن كاملاً';
+        }
+
+        $startAyah = Ayah::with('surah')->find($range['min']);
+        $endAyah = Ayah::with('surah')->find($range['max']);
+
+        if (!$startAyah || !$endAyah) {
+            return 'لا يوجد سجل محفوظ';
+        }
+
+        if ($startAyah->surah_id === $endAyah->surah_id) {
+            return 'سورة ' . $startAyah->surah->name_arabic;
+        }
+
+        return 'من سورة ' . $startAyah->surah->name_arabic . ' إلى ' . $endAyah->surah->name_arabic;
+    }
 }

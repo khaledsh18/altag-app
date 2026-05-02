@@ -12,11 +12,18 @@
             {{ __('عرض الخطط المنشأة') }}</flux:sidebar.item>
         <flux:sidebar.item wire:navigate href="{{ route('teacher.tasmeeh') }}" icon="book-open">
             {{ __('التسميع والمتابعة') }}</flux:sidebar.item>
+        <flux:sidebar.item wire:navigate href="{{ route('teacher.pairs') }}" icon="users">
+            {{ __('التسميع المتبادل') }}</flux:sidebar.item>
     </flux:sidebar.group>
 
     <flux:sidebar.group heading="{{ __('التحفيز والمنافسة') }}" class="mt-4">
         <flux:sidebar.item wire:navigate href="{{ route('teacher.leaderboards') }}" icon="trophy" :current="request()->routeIs('teacher.leaderboards*')">
             {{ __('مسابقات الحلقة') }}</flux:sidebar.item>
+    </flux:sidebar.group>
+
+    <flux:sidebar.group heading="{{ __('الاختبارات') }}" class="mt-4">
+        <flux:sidebar.item wire:navigate href="{{ route('teacher.student-exams') }}" icon="academic-cap" :current="request()->routeIs('teacher.student-exams*')">
+            {{ __('اختبارات الطلاب') }}</flux:sidebar.item>
     </flux:sidebar.group>
 
     <flux:sidebar.group heading="{{ __('التحضير') }}" class="mt-4">

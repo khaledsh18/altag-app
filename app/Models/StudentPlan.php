@@ -15,6 +15,7 @@ class StudentPlan extends Model
         'description',
         'status',
         'plan_type',
+        'direction',
         'is_approved',
         'created_by_role',
     ];

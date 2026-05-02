@@ -225,6 +225,16 @@ new class extends Component {
                 ->first();
         }
 
+        $pendingChallenges = \App\Models\Challenge::where('student_id', $student->id)
+            ->where('status', 'pending')
+            ->with('items', 'guardian')
+            ->get();
+
+        $activeChallenges = \App\Models\Challenge::where('student_id', $student->id)
+            ->where('status', 'active')
+            ->with('items')
+            ->get();
+
         return [
             'student' => $student,
             'todayStr' => $todayStr,
@@ -242,9 +252,40 @@ new class extends Component {
             'lastDayStats' => $lastDayStats,
             'activeSession' => $activeSession,
             'studentReservation' => $studentReservation,
+            'pendingChallenges' => $pendingChallenges,
+            'activeChallenges' => $activeChallenges,
         ];
     }
-    
+
+    public function acceptChallenge($id)
+    {
+        $student = Auth::guard('student')->user();
+        $challenge = \App\Models\Challenge::where('student_id', $student->id)
+            ->where('id', $id)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $challenge->update([
+            'status' => 'active',
+            'accepted_at' => now(),
+        ]);
+
+        $this->dispatch('toast', variant: 'success', heading: 'تم قبول التحدي! بالتوفيق');
+    }
+
+    public function rejectChallenge($id)
+    {
+        $student = Auth::guard('student')->user();
+        $challenge = \App\Models\Challenge::where('student_id', $student->id)
+            ->where('id', $id)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $challenge->update(['status' => 'cancelled']);
+        
+        $this->dispatch('toast', variant: 'neutral', heading: 'تم رفض التحدي');
+    }
+
     protected function getHijriLabel(\DateTimeInterface|string $date)
     {
         $parsed = is_string($date) ? \Carbon\Carbon::parse($date) : $date;
@@ -307,6 +348,8 @@ new class extends Component {
             
         Flux::toast('تم إلغاء حجزك بنجاح.', variant: 'success');
     }
+
+
 };
 ?>
 
@@ -325,7 +368,75 @@ new class extends Component {
         </flux:button>
     </div>
 
-    @if($activeSession)
+    <!-- Student Top Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @php
+            $memorizedPages = $student->memorizedPagesCount();
+            $percentage = $student->memorizationPercentage();
+        @endphp
+        
+        {{-- Percentage & Range --}}
+        <div class="rounded-2xl border border-emerald-100 dark:border-emerald-900/50 bg-white dark:bg-zinc-900 p-5 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1.5 h-full bg-emerald-500"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-2.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <flux:icon icon="chart-pie" class="size-5" />
+                </div>
+                <p class="text-sm font-bold text-zinc-600 dark:text-zinc-400">نسبة الحفظ</p>
+            </div>
+            <p class="text-3xl font-black text-emerald-600 dark:text-emerald-400">{{ $percentage }}%</p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium line-clamp-1" title="{{ $student->memorizationText() }}">
+                {{ $student->memorizationText() }}
+            </p>
+        </div>
+        
+        {{-- Juz and Pages --}}
+        <div class="rounded-2xl border border-blue-100 dark:border-blue-900/50 bg-white dark:bg-zinc-900 p-5 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1.5 h-full bg-blue-500"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-2.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+                    <flux:icon icon="book-open" class="size-5" />
+                </div>
+                <p class="text-sm font-bold text-zinc-600 dark:text-zinc-400">الأجزاء المحفوظة</p>
+            </div>
+            <p class="text-3xl font-black text-blue-600 dark:text-blue-400">{{ floor($memorizedPages / 20) }} <span class="text-lg font-bold text-zinc-400">جزء</span></p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">بمجموع {{ number_format($memorizedPages) }} صفحة</p>
+        </div>
+
+        {{-- Discipline --}}
+        <div class="rounded-2xl border border-violet-100 dark:border-violet-900/50 bg-white dark:bg-zinc-900 p-5 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1.5 h-full bg-violet-500"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-2.5 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-xl">
+                    <flux:icon icon="check-badge" class="size-5" />
+                </div>
+                <p class="text-sm font-bold text-zinc-600 dark:text-zinc-400">أيام الإنجاز الرائع</p>
+            </div>
+            <p class="text-3xl font-black text-violet-600 dark:text-violet-400">{{ $excellent + $good }} <span class="text-lg font-bold text-zinc-400">يوم</span></p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">تقييم ممتاز أو جيد (آخر شهر)</p>
+        </div>
+        
+        {{-- Rank --}}
+        <div class="rounded-2xl border border-amber-100 dark:border-amber-900/50 bg-white dark:bg-zinc-900 p-5 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-1.5 h-full bg-amber-500"></div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="p-2.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl">
+                    <flux:icon icon="trophy" class="size-5" />
+                </div>
+                <p class="text-sm font-bold text-zinc-600 dark:text-zinc-400">الترتيب في الحلقة</p>
+            </div>
+            @php
+                $myStanding = collect($leaderboardStandings)->firstWhere('student.id', $student->id);
+            @endphp
+            @if($myStanding)
+                <p class="text-3xl font-black text-amber-600 dark:text-amber-400">#{{ $myStanding['rank'] }}</p>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">من أصل {{ count($leaderboardStandings) }} طلاب</p>
+            @else
+                <p class="text-3xl font-black text-zinc-400">—</p>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">لم تُصدر نتائج بعد</p>
+            @endif
+        </div>
+    </div>    @if($activeSession)
         <flux:card class="border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20 overflow-hidden relative">
             <div class="absolute top-0 right-0 p-4 opacity-10">
                 <flux:icon icon="ticket" class="w-24 h-24 text-indigo-500" />
@@ -372,6 +483,131 @@ new class extends Component {
                 </div>
             </div>
         </flux:card>
+    @endif
+
+    <!-- Pending Challenges -->
+    @if(count($pendingChallenges) > 0)
+        <div class="space-y-4">
+            <flux:heading size="lg" class="flex items-center gap-2">
+                <flux:icon icon="gift" class="size-6 text-indigo-500" variant="solid" />
+                {{ __('تحديات جديدة بانتظارك!') }}
+            </flux:heading>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($pendingChallenges as $challenge)
+                    <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h4 class="font-bold text-lg text-indigo-900 dark:text-indigo-100 mb-1">
+                                    {{ __('تحدي من:') }} {{ $challenge->guardian->name }}
+                                </h4>
+                                <p class="text-sm text-indigo-700 dark:text-indigo-400 font-medium">
+                                    {{ __('المكافأة:') }} {{ $challenge->prize_description }}
+                                </p>
+                            </div>
+                            <div class="bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300 p-2 rounded-lg">
+                                <flux:icon icon="trophy" class="size-6" />
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <flux:button wire:click="acceptChallenge({{ $challenge->id }})" variant="primary" class="flex-1 bg-indigo-600 hover:bg-indigo-700 border-none">
+                                {{ __('أنا قبلت التحدي! ✅') }}
+                            </flux:button>
+                            <flux:button wire:click="rejectChallenge({{ $challenge->id }})" variant="ghost" class="text-zinc-500 hover:text-red-500">
+                                {{ __('لا أريد') }}
+                            </flux:button>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    <!-- Active Rewards Status -->
+    @if(count($activeChallenges) > 0)
+        <div>
+            <flux:heading size="lg" class="mb-4 flex items-center gap-2">
+                <flux:icon icon="gift" class="size-6 text-orange-500" variant="solid" />
+                {{ __('المكافآت التحفيزية الحالية') }}
+            </flux:heading>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($activeChallenges as $challenge)
+                    <div class="bg-white dark:bg-zinc-900 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-orange-500"></div>
+
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-xs text-zinc-400 mb-0.5">المكافأة</p>
+                                <h4 class="font-bold text-base text-orange-600 dark:text-orange-400">
+                                    @if($challenge->prize_type === 'financial')
+                                        💰 {{ $challenge->prize_description }}
+                                    @else
+                                        🎁 {{ $challenge->prize_description }}
+                                    @endif
+                                </h4>
+                                @if($challenge->end_date)
+                                    <div class="text-xs text-zinc-500 flex items-center gap-1 mt-1">
+                                        <flux:icon icon="clock" class="size-3.5" />
+                                        {{ __('ينتهي في:') }} {{ $challenge->end_date->format('Y-m-d') }}
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="bg-orange-100 dark:bg-orange-900/30 text-orange-600 p-2 rounded-lg shrink-0">
+                                <flux:icon icon="trophy" class="size-6" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            @foreach($challenge->items as $item)
+                                @php
+                                    $calculatedProgress = $item->calculateProgress();
+                                    $progressPercent = $item->target_value > 0
+                                        ? min(100, round(($calculatedProgress / $item->target_value) * 100))
+                                        : 0;
+
+                                    $itemTitle = match($item->type) {
+                                        'attendance'        => '🗓️ مكافأة الحضور والانضباط',
+                                        'recitation_days'   => '📖 إنجاز أيام محددة',
+                                        'recitation_amount' => '📖 كمية الإنجاز',
+                                        'recitation_quality'=> '⭐ جودة التسميع',
+                                        'exam_passed'       => '📝 اجتياز الاختبار',
+                                        default             => 'بند المكافأة',
+                                    };
+
+                                    if ($item->type === 'exam_passed') {
+                                        $progressText = $calculatedProgress >= $item->target_value 
+                                            ? 'تم الاجتياز ✅' 
+                                            : "الدرجة المطلوبة: {$item->target_value}%";
+                                    } else {
+                                        $progressText = $item->target_value > 0
+                                            ? "{$calculatedProgress} / {$item->target_value}"
+                                            : 'مستمر';
+                                    }
+                                @endphp
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1.5">
+                                        <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $itemTitle }}</span>
+                                        <span class="font-bold text-zinc-900 dark:text-white">{{ $progressText }}</span>
+                                    </div>
+                                    @if($item->target_value > 0)
+                                        <div class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                                            <div class="h-2.5 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500"
+                                                style="width: {{ $progressPercent }}%"></div>
+                                        </div>
+                                    @else
+                                        <div class="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-2.5 overflow-hidden">
+                                            <div class="h-2.5 rounded-full bg-emerald-500 w-full animate-pulse"></div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     @endif
 
     <!-- Last Attended Day Summary -->

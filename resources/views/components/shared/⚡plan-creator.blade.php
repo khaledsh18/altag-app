@@ -463,6 +463,7 @@ new class extends Component {
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
                 'plan_type' => $this->planType,
+                'direction' => $this->fillDirection,
             ]);
 
             $existingIds = collect($this->planDays)->pluck('id')->filter()->toArray();
@@ -479,6 +480,7 @@ new class extends Component {
                 'active_days' => $this->activeDays,
                 'description' => $this->description,
                 'plan_type' => $this->planType,
+                'direction' => $this->fillDirection,
                 'status' => 'active',
                 'is_approved' => $this->userLevel === 'teacher',
                 'created_by_role' => $this->userLevel,

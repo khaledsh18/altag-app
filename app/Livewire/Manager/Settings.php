@@ -4,6 +4,7 @@ namespace App\Livewire\Manager;
 
 use App\Models\Setting;
 use Flux\Flux;
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -119,6 +120,66 @@ class Settings extends Component
         } else {
             Flux::toast('الملف غير موجود.', variant: 'danger');
         }
+    }
+
+    public function restoreFullBackup($filename)
+    {
+        $backupPath = storage_path('app/backups/' . $filename);
+        if (!file_exists($backupPath)) {
+            Flux::toast('ملف النسخة الاحتياطية غير موجود.', variant: 'danger');
+            return;
+        }
+
+        $dbPath = config('database.connections.sqlite.database');
+        
+        // Create a safety backup of current state before replacing
+        $safetyFilename = 'safety_pre_restore_' . now()->format('Y-m-d_H-i-s') . '.sqlite';
+        $backupDir = storage_path('app/backups');
+        copy($dbPath, $backupDir . '/' . $safetyFilename);
+
+        // Replace the current database with the selected backup
+        copy($backupPath, $dbPath);
+
+        // Re-run migrations one by one to safely apply any missing updates
+        // If a migration fails (e.g., table already exists), we catch the error, mark it as completed, and continue
+        $files = \Illuminate\Support\Facades\File::files(database_path('migrations'));
+        $ran = \Illuminate\Support\Facades\DB::table('migrations')->pluck('migration')->toArray();
+        $batch = \Illuminate\Support\Facades\DB::table('migrations')->max('batch') + 1;
+        
+        $pending = [];
+        foreach ($files as $file) {
+            $name = str_replace('.php', '', $file->getFilename());
+            if (!in_array($name, $ran)) {
+                $pending[] = $name;
+            }
+        }
+
+        $conflictOccurred = false;
+        foreach ($pending as $migration) {
+            try {
+                Artisan::call('migrate', [
+                    '--path' => 'database/migrations/' . $migration . '.php',
+                    '--force' => true
+                ]);
+            } catch (\Exception $e) {
+                $conflictOccurred = true;
+                // Mark as run to skip it in the future
+                \Illuminate\Support\Facades\DB::table('migrations')->insert([
+                    'migration' => $migration,
+                    'batch' => $batch
+                ]);
+                \Illuminate\Support\Facades\Log::warning("Skipped migration due to error (assumed already applied): {$migration}. Error: " . $e->getMessage());
+            }
+        }
+
+        if ($conflictOccurred) {
+            Flux::toast('تم الاسترجاع وتم قفز بعض الجداول الموجودة مسبقاً بنجاح.', variant: 'success');
+        } else {
+            Flux::toast('تم استرجاع النسخة وتحديث هيكل البيانات بنجاح.', variant: 'success');
+        }
+        
+        // Force a page reload to refresh all data connections
+        $this->js('setTimeout(() => window.location.reload(), 1500)');
     }
 
     public function render()

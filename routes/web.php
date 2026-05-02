@@ -3,6 +3,7 @@
 use App\Livewire\Auth\Manager\Login;
 use App\Livewire\Auth\Manager\Register;
 use App\Livewire\Manager\PendingApprovals;
+use App\Models\Guardian;
 use App\Models\Student;
 use App\Models\StudentPlan;
 use App\Models\Surah;
@@ -73,6 +74,8 @@ Route::middleware(['auth:manager', 'approved'])->prefix('manager')->name('manage
     Route::view('/settings', 'manager.settings')->name('settings');
     Route::view('/exceeded-limits', 'manager.exceeded-limits')->name('exceeded-limits');
     Route::view('/backups/{filename}', 'manager.backup-browser')->name('backup-browser');
+    Route::view('/exam-levels', 'manager.exam-levels')->name('exam-levels');
+    Route::view('/student-exams', 'manager.student-exams')->name('student-exams');
 });
 
 // القاسم المشترك لمسارات الضيوف (Guest Routes) لكل دور
@@ -117,14 +120,16 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     Route::view('/student-plans', 'teacher.student-plans')->name('student-plans');
     Route::view('/tasmeeh', 'teacher.tasmeeh')->name('tasmeeh');
     Route::view('/exceeded-limits', 'teacher.exceeded-limits')->name('exceeded-limits');
+    Route::view('/pairs', 'teacher.pairs')->name('pairs');
     Route::view('/leaderboards', 'teacher.leaderboards')->name('leaderboards');
-    
+    Route::view('/student-exams', 'teacher.student-exams')->name('student-exams');
+
     // Grading page route will be mapped to a view wrapper soon, for now just use view
-    Route::get('/leaderboards/{id}/grade', function($id) {
+    Route::get('/leaderboards/{id}/grade', function ($id) {
         return view('teacher.leaderboards-grade', ['leaderboardId' => $id]);
     })->name('leaderboards.grade');
 
-    Route::get('/leaderboards/{id}/report', function($id) {
+    Route::get('/leaderboards/{id}/report', function ($id) {
         return view('teacher.leaderboards-report', ['leaderboardId' => $id]);
     })->name('leaderboards.report');
 
@@ -157,12 +162,19 @@ Route::middleware(['auth:student', 'approved'])->prefix('student')->name('studen
         auth()->guard('student')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('home');
     })->name('logout');
 });
 Route::view('/student/complete-profile', 'student.complete-profile')->middleware(['auth:student'])->name('student.complete-profile');
 Route::view('/teacher/complete-profile', 'teacher.complete-profile')->middleware(['auth:teacher'])->name('teacher.complete-profile');
-Route::middleware(['auth:guardian', 'approved'])->get('/parent/dashboard', fn () => view('guardian.dashboard'))->name('guardian.dashboard');
+Route::middleware(['auth:guardian', 'approved'])->prefix('parent')->name('guardian.')->group(function () {
+    Route::get('/dashboard', fn () => view('guardian.dashboard'))->name('dashboard');
+    Route::get('/student/{id}', fn ($id) => view('guardian.student', ['studentId' => $id]))->name('student');
+    Route::get('/student/{id}/attendance', fn ($id) => view('guardian.student-attendance', ['studentId' => $id]))->name('student.attendance');
+    Route::get('/challenges', fn () => view('guardian.challenges'))->name('challenges');
+    Route::get('/student/{id}/challenge/create', fn ($id) => view('guardian.create-challenge', ['studentId' => $id]))->name('student.challenge.create');
+});
 
 // Magic Link Routes
 Route::get('/magic/{token}', function ($token) {
@@ -190,7 +202,7 @@ Route::get('/teacher-magic/{token}', function ($token) {
 })->name('teacher.magic-link');
 
 Route::get('/guardian-magic/{token}', function ($token) {
-    $guardian = App\Models\Guardian::where('access_token', $token)->firstOrFail();
+    $guardian = Guardian::where('access_token', $token)->firstOrFail();
 
     auth()->guard('guardian')->login($guardian);
 

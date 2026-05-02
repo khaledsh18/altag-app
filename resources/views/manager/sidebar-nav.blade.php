@@ -26,6 +26,16 @@
             الأوصياء
         </flux:sidebar.item>
         </flux:sidebar.group>
+        <flux:sidebar.group expandable expanded="false" heading="الاختبارات" class="grid">
+            <flux:sidebar.item icon="document-text" :href="route('manager.exam-levels')"
+                :current="request()->routeIs('manager.exam-levels')" wire:navigate>
+                مستويات الاختبارات
+            </flux:sidebar.item>
+            <flux:sidebar.item icon="academic-cap" :href="route('manager.student-exams')"
+                :current="request()->routeIs('manager.student-exams')" wire:navigate>
+                اختبارات الطلاب
+            </flux:sidebar.item>
+        </flux:sidebar.group>
          <flux:sidebar.group expandable expanded="false" heading="التقارير" class="grid">
             <flux:sidebar.item icon="chart-bar-square" :href="route('manager.attendance-reports')"
                 :current="request()->routeIs('manager.attendance-reports')" wire:navigate>
