@@ -220,6 +220,13 @@ new class extends Component {
 
         $activeChallenges = \App\Models\Challenge::where('student_id', $student->id)->where('status', 'active')->with('items')->get();
 
+        $nextExam = \App\Models\StudentExam::where('student_id', $student->id)
+            ->where('status', 'pending')
+            ->where('date_time', '>=', now())
+            ->with('examLevel.startAyah.surah', 'examLevel.endAyah.surah')
+            ->orderBy('date_time', 'asc')
+            ->first();
+
         return [
             'student' => $student,
             'todayStr' => $todayStr,
@@ -239,6 +246,7 @@ new class extends Component {
             'studentReservation' => $studentReservation,
             'pendingChallenges' => $pendingChallenges,
             'activeChallenges' => $activeChallenges,
+            'nextExam' => $nextExam,
         ];
     }
 
@@ -334,6 +342,100 @@ new class extends Component {
         </div>
     </div>
 
+    {{-- Next Exam Banner --}}
+    @if ($nextExam)
+        @php
+            $examDaysLeft = (int) now('Asia/Riyadh')->startOfDay()->diffInDays($nextExam->date_time->startOfDay(), false);
+
+            // Calculate exam readiness percentage
+            $examReadiness = 0;
+            $examLevel = $nextExam->examLevel;
+            if ($examLevel?->start_ayah_id && $examLevel?->end_ayah_id) {
+                $examStartId = min($examLevel->start_ayah_id, $examLevel->end_ayah_id);
+                $examEndId = max($examLevel->start_ayah_id, $examLevel->end_ayah_id);
+                $examTotal = $examEndId - $examStartId + 1;
+
+                $memorizedRange = $student->getMemorizedRange();
+                if ($memorizedRange && $examTotal > 0) {
+                    $memMin = $memorizedRange['min'];
+                    $memMax = $memorizedRange['max'];
+                    // Intersect the memorized range with the exam range
+                    $overlapStart = max($examStartId, $memMin);
+                    $overlapEnd = min($examEndId, $memMax);
+                    $overlap = max(0, $overlapEnd - $overlapStart + 1);
+                    $examReadiness = min(100, round(($overlap / $examTotal) * 100));
+                }
+            }
+
+            $readinessColor = match (true) {
+                $examReadiness >= 80 => ['bar' => 'from-emerald-400 to-emerald-600', 'text' => 'text-emerald-600 dark:text-emerald-400', 'bg' => 'bg-emerald-100 dark:bg-emerald-900/30'],
+                $examReadiness >= 50 => ['bar' => 'from-blue-400 to-blue-600', 'text' => 'text-blue-600 dark:text-blue-400', 'bg' => 'bg-blue-100 dark:bg-blue-900/30'],
+                $examReadiness >= 25 => ['bar' => 'from-amber-400 to-amber-600', 'text' => 'text-amber-600 dark:text-amber-400', 'bg' => 'bg-amber-100 dark:bg-amber-900/30'],
+                default => ['bar' => 'from-rose-400 to-rose-600', 'text' => 'text-rose-600 dark:text-rose-400', 'bg' => 'bg-rose-100 dark:bg-rose-900/30'],
+            };
+        @endphp
+        <div
+            class="relative overflow-hidden rounded-2xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-900/20 p-5 shadow-sm">
+            <div class="absolute top-0 right-0 w-1.5 h-full bg-indigo-500 rounded-r-2xl"></div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="p-3 bg-indigo-100 dark:bg-indigo-800/50 rounded-xl text-indigo-600 dark:text-indigo-300 shrink-0">
+                        <flux:icon icon="academic-cap" class="size-7" variant="solid" />
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">
+                            {{ __('الاختبار القادم') }}
+                        </p>
+                        <h3 class="font-black text-zinc-900 dark:text-white text-lg leading-tight">
+                            {{ $nextExam->examLevel->name ?? __('اختبار حفظ') }}
+                        </h3>
+                        @if ($nextExam->examLevel?->startAyah && $nextExam->examLevel?->endAyah)
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                {{ $nextExam->examLevel->startAyah->surah->name_arabic }}
+                                ({{ $nextExam->examLevel->startAyah->verse_number }})
+                                —
+                                {{ $nextExam->examLevel->endAyah->surah->name_arabic }}
+                                ({{ $nextExam->examLevel->endAyah->verse_number }})
+                            </p>
+                        @endif
+                        @if ($nextExam->location)
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5 flex items-center gap-1">
+                                <flux:icon icon="map-pin" class="size-3.5" />
+                                {{ $nextExam->location }}
+                            </p>
+                        @endif
+
+                        {{-- Readiness Progress --}}
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <span
+                                    class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{{ __('جاهزيتك للاختبار') }}</span>
+                                <span class="text-xs font-black {{ $readinessColor['text'] }}">{{ $examReadiness }}%</span>
+                            </div>
+                            <div class="{{ $readinessColor['bg'] }} rounded-full h-2.5 overflow-hidden w-full">
+                                <div class="h-2.5 rounded-full bg-gradient-to-l {{ $readinessColor['bar'] }} transition-all duration-700"
+                                    style="width: {{ $examReadiness }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="shrink-0 text-center bg-white dark:bg-zinc-900 border border-indigo-200 dark:border-indigo-700/50 rounded-2xl px-5 py-3 shadow-sm">
+                    @if ($examDaysLeft === 0)
+                        <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{ __('اليوم!') }}</p>
+                        <p class="text-xs text-zinc-500 mt-0.5">{{ $nextExam->date_time->format('g:i A') }}</p>
+                    @elseif ($examDaysLeft > 0)
+                        <p class="text-3xl font-black text-indigo-600 dark:text-indigo-400">{{ $examDaysLeft }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{{ __('يوم متبقي') }}</p>
+                    @else
+                        <p class="text-sm font-bold text-zinc-400">{{ __('قريباً') }}</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if ($activeSession)
         <flux:card
             class="border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/20 overflow-hidden relative">
@@ -425,7 +527,11 @@ new class extends Component {
                     </p>
                 </div>
                 <p class="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">{{ $percentage }}%</p>
-                <p class="text-[15px] md:text-sm text-zinc-500 dark:text-zinc-400 mt-1 md:mt-2 font-medium line-clamp-1"
+                <div class="mt-2 w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-2 overflow-hidden">
+                    <div class="h-2 rounded-full bg-gradient-to-l from-emerald-400 to-emerald-600 transition-all duration-700"
+                        style="width: {{ $percentage }}%"></div>
+                </div>
+                <p class="text-[15px] md:text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium line-clamp-1"
                     title="{{ $student->memorizationText() }}">
                     {{ $student->memorizationText() }}
                 </p>
@@ -1204,7 +1310,8 @@ new class extends Component {
                                                                     <flux:icon icon="academic-cap" class="size-7" />
                                                                 </div>
                                                                 <flux:badge color="emerald" size="sm" class="font-bold px-3 py-1 rounded-full">
-                                                                    {{ __('نشطة') }}</flux:badge>
+                                                                    {{ __('نشطة') }}
+                                                                </flux:badge>
                                                             </div>
 
                                                             <div class="mb-6">
