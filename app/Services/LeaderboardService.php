@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
 use App\Models\Leaderboard;
 use App\Models\Student;
 use App\Models\StudentPlanDay;
-use App\Models\Attendance;
 use Illuminate\Support\Facades\DB;
 
 class LeaderboardService
@@ -37,18 +37,18 @@ class LeaderboardService
                 ->where('leaderboard_scores.student_id', $student->id)
                 ->select('leaderboard_criteria.id as criterion_id', 'leaderboard_criteria.name', 'leaderboard_criteria.points')
                 ->get();
-            
+
             $manualScore = $manualScoresList->sum('points');
-            
+
             // 1.5 Extra Points
             $extraPointsList = DB::table('leaderboard_extra_points')
                 ->where('leaderboard_id', $leaderboard->id)
                 ->where('student_id', $student->id)
                 ->get();
             $extraPointsScore = $extraPointsList->sum('points');
-            
+
             $totalScore += $manualScore + $extraPointsScore;
-            
+
             // Count occurrences per criterion
             $criteriaCounts = [];
             foreach ($manualScoresList as $ms) {
@@ -61,7 +61,7 @@ class LeaderboardService
                     ->where('date', '>=', $startDate)
                     ->where('date', '<=', $endDate)
                     ->get();
-                
+
                 $attendanceScore += $attendances->where('status', 'present')->count() * ($settings['attendance_present'] ?? 4);
                 $attendanceScore += $attendances->where('status', 'late')->count() * ($settings['attendance_late'] ?? 2);
                 $totalScore += $attendanceScore;
@@ -69,10 +69,10 @@ class LeaderboardService
 
             // 3. Hifz & Review Points
             if (($settings['hifz_enabled'] ?? false) || ($settings['review_enabled'] ?? false)) {
-                $days = StudentPlanDay::whereHas('plan', function($q) use ($student) {
-                        $q->where('student_id', $student->id)
-                          ->where('is_approved', 1);
-                    })
+                $days = StudentPlanDay::whereHas('plan', function ($q) use ($student) {
+                    $q->where('student_id', $student->id)
+                        ->where('is_approved', 1);
+                })
                     ->where('date', '>=', $startDate)
                     ->where('date', '<=', $endDate)
                     ->get();
@@ -80,17 +80,24 @@ class LeaderboardService
                 if ($settings['hifz_enabled'] ?? false) {
                     foreach ($days as $day) {
                         $hifz = (int) $day->hifz_achievement;
-                        if ($hifz === 3) $hifzScore += ($settings['hifz_excellent'] ?? 10);
-                        elseif ($hifz === 2) $hifzScore += ($settings['hifz_good'] ?? 7);
-                        elseif ($hifz === 1) $hifzScore += ($settings['hifz_acceptable'] ?? 4);
+                        if ($hifz === 3) {
+                            $hifzScore += ($settings['hifz_excellent'] ?? 10);
+                        } elseif ($hifz === 2) {
+                            $hifzScore += ($settings['hifz_good'] ?? 7);
+                        } elseif ($hifz === 1) {
+                            $hifzScore += ($settings['hifz_acceptable'] ?? 4);
+                        }
                     }
                 }
 
                 if ($settings['review_enabled'] ?? false) {
                     foreach ($days as $day) {
                         $review = (int) $day->review_achievement;
-                        if ($review === 3) $reviewScore += ($settings['review_excellent'] ?? 5);
-                        elseif ($review === 2 || $review === 1) $reviewScore += ($settings['review_good'] ?? 3);
+                        if ($review === 3) {
+                            $reviewScore += ($settings['review_excellent'] ?? 5);
+                        } elseif ($review === 2 || $review === 1) {
+                            $reviewScore += ($settings['review_good'] ?? 3);
+                        }
                     }
                 }
                 $totalScore += $hifzScore + $reviewScore;
@@ -107,11 +114,18 @@ class LeaderboardService
                     'hifz' => $hifzScore,
                     'review' => $reviewScore,
                     'criteria_counts' => $criteriaCounts,
-                ]
+                ],
             ];
         }
 
-        return collect($standings)->sortByDesc('score')->values();
+        $standings = collect($standings)->sortByDesc('score')->values();
+
+        // Add rank for easier consumption in views
+        return $standings->map(function ($item, $index) {
+            $item['rank'] = $index + 1;
+
+            return $item;
+        });
     }
 
     // Proxy for original getStandings to not break student dashboard
@@ -124,7 +138,7 @@ class LeaderboardService
     {
         $students = Student::where('circle_id', $leaderboard->circle_id)->get();
         $settings = $leaderboard->settings ?? [];
-        
+
         $dailyScores = [];
 
         foreach ($students as $student) {
@@ -142,7 +156,7 @@ class LeaderboardService
                 ->where('leaderboard_scores.student_id', $student->id)
                 ->whereDate('leaderboard_scores.date', $date)
                 ->sum('leaderboard_criteria.points');
-            
+
             $totalScore += $manualScore;
 
             // 2. Attendance Points for TODAY
@@ -150,7 +164,7 @@ class LeaderboardService
                 $attendance = Attendance::where('student_id', $student->id)
                     ->whereDate('date', $date)
                     ->first();
-                
+
                 if ($attendance) {
                     if ($attendance->status === 'present') {
                         $attendanceScoreDaily = ($settings['attendance_present'] ?? 4);
@@ -163,30 +177,37 @@ class LeaderboardService
 
             // 3. Hifz & Review Points for TODAY
             if (($settings['hifz_enabled'] ?? false) || ($settings['review_enabled'] ?? false)) {
-                $days = StudentPlanDay::whereHas('plan', function($q) use ($student) {
-                        $q->where('student_id', $student->id)
-                          ->where('is_approved', 1);
-                    })
+                $days = StudentPlanDay::whereHas('plan', function ($q) use ($student) {
+                    $q->where('student_id', $student->id)
+                        ->where('is_approved', 1);
+                })
                     ->whereDate('date', $date)
                     ->get();
 
                 foreach ($days as $day) {
                     if ($settings['hifz_enabled'] ?? false) {
                         $hifz = (int) $day->hifz_achievement;
-                        if ($hifz === 3) $hifzScoreDaily += ($settings['hifz_excellent'] ?? 10);
-                        elseif ($hifz === 2) $hifzScoreDaily += ($settings['hifz_good'] ?? 7);
-                        elseif ($hifz === 1) $hifzScoreDaily += ($settings['hifz_acceptable'] ?? 4);
+                        if ($hifz === 3) {
+                            $hifzScoreDaily += ($settings['hifz_excellent'] ?? 10);
+                        } elseif ($hifz === 2) {
+                            $hifzScoreDaily += ($settings['hifz_good'] ?? 7);
+                        } elseif ($hifz === 1) {
+                            $hifzScoreDaily += ($settings['hifz_acceptable'] ?? 4);
+                        }
                     }
 
                     if ($settings['review_enabled'] ?? false) {
                         $review = (int) $day->review_achievement;
-                        if ($review === 3) $reviewScoreDaily += ($settings['review_excellent'] ?? 5);
-                        elseif ($review === 2 || $review === 1) $reviewScoreDaily += ($settings['review_good'] ?? 3);
+                        if ($review === 3) {
+                            $reviewScoreDaily += ($settings['review_excellent'] ?? 5);
+                        } elseif ($review === 2 || $review === 1) {
+                            $reviewScoreDaily += ($settings['review_good'] ?? 3);
+                        }
                     }
                 }
                 $automatedScore += $hifzScoreDaily + $reviewScoreDaily;
             }
-            
+
             $totalScore += $automatedScore;
 
             $dailyScores[$student->id] = [
