@@ -150,7 +150,7 @@ class Student extends Authenticatable
             ->latest('start_date')
             ->first();
 
-        if (!$latestPlan) {
+        if (! $latestPlan) {
             return null;
         }
 
@@ -160,12 +160,12 @@ class Student extends Authenticatable
             ->where(function ($q) {
                 $q->where(function ($sq) {
                     $sq->where('hifz_achievement', '>=', 2)
-                       ->whereNotNull('from_ayah_id')
-                       ->whereNotNull('to_ayah_id');
+                        ->whereNotNull('from_ayah_id')
+                        ->whereNotNull('to_ayah_id');
                 })->orWhere(function ($sq) {
                     $sq->where('review_achievement', '>=', 2)
-                       ->whereNotNull('review_from_ayah_id')
-                       ->whereNotNull('review_to_ayah_id');
+                        ->whereNotNull('review_from_ayah_id')
+                        ->whereNotNull('review_to_ayah_id');
                 });
             })
             ->get();
@@ -203,16 +203,18 @@ class Student extends Authenticatable
     public function memorizedPagesCount(): int
     {
         $range = $this->getMemorizedRange();
-        if (!$range) {
+        if (! $range) {
             return 0;
         }
-        
+
         if ($range['max'] === 6236 && $range['min'] !== 1) {
             $page = Ayah::find($range['min'])?->page_number ?? 604;
+
             return 604 - $page + 1;
         }
 
         $page = Ayah::find($range['max'])?->page_number ?? 1;
+
         return $page;
     }
 
@@ -224,7 +226,7 @@ class Student extends Authenticatable
     public function memorizationText(): string
     {
         $range = $this->getMemorizedRange();
-        if (!$range) {
+        if (! $range) {
             return 'لا يوجد سجل محفوظ';
         }
 
@@ -235,14 +237,14 @@ class Student extends Authenticatable
         $startAyah = Ayah::with('surah')->find($range['min']);
         $endAyah = Ayah::with('surah')->find($range['max']);
 
-        if (!$startAyah || !$endAyah) {
+        if (! $startAyah || ! $endAyah) {
             return 'لا يوجد سجل محفوظ';
         }
 
         if ($startAyah->surah_id === $endAyah->surah_id) {
-            return 'سورة ' . $startAyah->surah->name_arabic;
+            return 'سورة '.$startAyah->surah->name_arabic;
         }
 
-        return 'من سورة ' . $startAyah->surah->name_arabic . ' إلى ' . $endAyah->surah->name_arabic;
+        return 'من سورة '.$startAyah->surah->name_arabic.' إلى '.$endAyah->surah->name_arabic;
     }
 }
