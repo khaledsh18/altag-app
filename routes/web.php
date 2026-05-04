@@ -124,6 +124,10 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     Route::view('/leaderboards', 'teacher.leaderboards')->name('leaderboards');
     Route::view('/student-exams', 'teacher.student-exams')->name('student-exams');
 
+    Route::get('/student-recitation-log/{studentId}', function ($studentId) {
+        return view('teacher.student-recitation-log', ['studentId' => $studentId]);
+    })->name('student-recitation-log');
+
     // Grading page route will be mapped to a view wrapper soon, for now just use view
     Route::get('/leaderboards/{id}/grade', function ($id) {
         return view('teacher.leaderboards-grade', ['leaderboardId' => $id]);

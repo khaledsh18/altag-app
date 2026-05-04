@@ -73,30 +73,46 @@ class LeaderboardService
                     $q->where('student_id', $student->id)
                         ->where('is_approved', 1);
                 })
-                    ->where('date', '>=', $startDate)
-                    ->where('date', '<=', $endDate)
-                    ->get();
+                ->where(function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('hifz_graded_at', [$startDate, $endDate])
+                      ->orWhereBetween('review_graded_at', [$startDate, $endDate])
+                      ->orWhere(function($sub) use ($startDate, $endDate) {
+                          $sub->whereNull('hifz_graded_at')
+                              ->whereNull('review_graded_at')
+                              ->whereBetween('date', [$startDate, $endDate])
+                              ->where(function($s) {
+                                  $s->whereNotNull('hifz_achievement')
+                                    ->orWhereNotNull('review_achievement');
+                              });
+                      });
+                })->get();
 
                 if ($settings['hifz_enabled'] ?? false) {
                     foreach ($days as $day) {
-                        $hifz = (int) $day->hifz_achievement;
-                        if ($hifz === 3) {
-                            $hifzScore += ($settings['hifz_excellent'] ?? 10);
-                        } elseif ($hifz === 2) {
-                            $hifzScore += ($settings['hifz_good'] ?? 7);
-                        } elseif ($hifz === 1) {
-                            $hifzScore += ($settings['hifz_acceptable'] ?? 4);
+                        $gradedAt = $day->hifz_graded_at ?? $day->date;
+                        if ($gradedAt >= $startDate && $gradedAt <= $endDate && $day->hifz_achievement !== null) {
+                            $hifz = (int) $day->hifz_achievement;
+                            if ($hifz === 3) {
+                                $hifzScore += ($settings['hifz_excellent'] ?? 10);
+                            } elseif ($hifz === 2) {
+                                $hifzScore += ($settings['hifz_good'] ?? 7);
+                            } elseif ($hifz === 1) {
+                                $hifzScore += ($settings['hifz_acceptable'] ?? 4);
+                            }
                         }
                     }
                 }
 
                 if ($settings['review_enabled'] ?? false) {
                     foreach ($days as $day) {
-                        $review = (int) $day->review_achievement;
-                        if ($review === 3) {
-                            $reviewScore += ($settings['review_excellent'] ?? 5);
-                        } elseif ($review === 2 || $review === 1) {
-                            $reviewScore += ($settings['review_good'] ?? 3);
+                        $gradedAt = $day->review_graded_at ?? $day->date;
+                        if ($gradedAt >= $startDate && $gradedAt <= $endDate && $day->review_achievement !== null) {
+                            $review = (int) $day->review_achievement;
+                            if ($review === 3) {
+                                $reviewScore += ($settings['review_excellent'] ?? 5);
+                            } elseif ($review === 2 || $review === 1) {
+                                $reviewScore += ($settings['review_good'] ?? 3);
+                            }
                         }
                     }
                 }
@@ -181,27 +197,44 @@ class LeaderboardService
                     $q->where('student_id', $student->id)
                         ->where('is_approved', 1);
                 })
-                    ->whereDate('date', $date)
-                    ->get();
+                ->where(function($q) use ($date) {
+                    $q->whereDate('hifz_graded_at', $date)
+                      ->orWhereDate('review_graded_at', $date)
+                      ->orWhere(function($sub) use ($date) {
+                          $sub->whereNull('hifz_graded_at')
+                              ->whereNull('review_graded_at')
+                              ->whereDate('date', $date)
+                              ->where(function($s) {
+                                  $s->whereNotNull('hifz_achievement')
+                                    ->orWhereNotNull('review_achievement');
+                              });
+                      });
+                })->get();
 
                 foreach ($days as $day) {
                     if ($settings['hifz_enabled'] ?? false) {
-                        $hifz = (int) $day->hifz_achievement;
-                        if ($hifz === 3) {
-                            $hifzScoreDaily += ($settings['hifz_excellent'] ?? 10);
-                        } elseif ($hifz === 2) {
-                            $hifzScoreDaily += ($settings['hifz_good'] ?? 7);
-                        } elseif ($hifz === 1) {
-                            $hifzScoreDaily += ($settings['hifz_acceptable'] ?? 4);
+                        $gradedAt = $day->hifz_graded_at ? $day->hifz_graded_at->format('Y-m-d') : $day->date->format('Y-m-d');
+                        if ($gradedAt === $date && $day->hifz_achievement !== null) {
+                            $hifz = (int) $day->hifz_achievement;
+                            if ($hifz === 3) {
+                                $hifzScoreDaily += ($settings['hifz_excellent'] ?? 10);
+                            } elseif ($hifz === 2) {
+                                $hifzScoreDaily += ($settings['hifz_good'] ?? 7);
+                            } elseif ($hifz === 1) {
+                                $hifzScoreDaily += ($settings['hifz_acceptable'] ?? 4);
+                            }
                         }
                     }
 
                     if ($settings['review_enabled'] ?? false) {
-                        $review = (int) $day->review_achievement;
-                        if ($review === 3) {
-                            $reviewScoreDaily += ($settings['review_excellent'] ?? 5);
-                        } elseif ($review === 2 || $review === 1) {
-                            $reviewScoreDaily += ($settings['review_good'] ?? 3);
+                        $gradedAt = $day->review_graded_at ? $day->review_graded_at->format('Y-m-d') : $day->date->format('Y-m-d');
+                        if ($gradedAt === $date && $day->review_achievement !== null) {
+                            $review = (int) $day->review_achievement;
+                            if ($review === 3) {
+                                $reviewScoreDaily += ($settings['review_excellent'] ?? 5);
+                            } elseif ($review === 2 || $review === 1) {
+                                $reviewScoreDaily += ($settings['review_good'] ?? 3);
+                            }
                         }
                     }
                 }

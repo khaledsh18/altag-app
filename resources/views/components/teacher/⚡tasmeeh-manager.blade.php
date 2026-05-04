@@ -262,7 +262,7 @@ new class extends Component {
     public function saveHifz($val = null)
     {
         $this->hifzAchievement = $val;
-        $this->persist();
+        $this->persist('hifz');
     }
 
     /**
@@ -271,16 +271,24 @@ new class extends Component {
     public function saveReview($val = null)
     {
         $this->reviewAchievement = $val;
-        $this->persist();
+        $this->persist('review');
     }
 
-    private function persist()
+    private function persist($type = null)
     {
         if ($this->dayId) {
-            StudentPlanDay::where('id', $this->dayId)->update([
+            $updateData = [
                 'hifz_achievement' => $this->hifzAchievement,
                 'review_achievement' => $this->reviewAchievement,
-            ]);
+            ];
+            
+            if ($type === 'hifz') {
+                $updateData['hifz_graded_at'] = $this->hifzAchievement !== null ? now() : null;
+            } elseif ($type === 'review') {
+                $updateData['review_graded_at'] = $this->reviewAchievement !== null ? now() : null;
+            }
+
+            StudentPlanDay::where('id', $this->dayId)->update($updateData);
             Flux::toast('تم حفظ التقييم', variant: 'success');
         }
     }

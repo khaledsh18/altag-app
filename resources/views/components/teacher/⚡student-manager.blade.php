@@ -442,6 +442,11 @@ new class extends Component {
                             <div class="text-sm text-zinc-500 text-center py-4">{{ __('ليس لديه خطط مسجلة.') }}</div>
                         @endforelse
                     </div>
+                    <div class="mt-3">
+                        <flux:button as="a" href="{{ route('teacher.student-recitation-log', $viewingStudent->id) }}" variant="outline" size="sm" icon="clipboard-document-list" class="w-full">
+                            {{ __('سجل التسميع الدقيق (الأداء الفعلي)') }}
+                        </flux:button>
+                    </div>
                 </div>
 
                 <flux:separator />

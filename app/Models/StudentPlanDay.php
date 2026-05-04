@@ -16,10 +16,14 @@ class StudentPlanDay extends Model
         'review_to_ayah_id',
         'hifz_achievement',
         'review_achievement',
+        'hifz_graded_at',
+        'review_graded_at',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'hifz_graded_at' => 'datetime',
+        'review_graded_at' => 'datetime',
     ];
 
     public function plan()
@@ -52,7 +56,7 @@ class StudentPlanDay extends Model
         $from = $type === 'review' ? $this->reviewFromAyah : $this->fromAyah;
         $to = $type === 'review' ? $this->reviewToAyah : $this->toAyah;
 
-        if (! $from || ! $to) {
+        if (!$from || !$to) {
             return null;
         }
 
@@ -67,7 +71,7 @@ class StudentPlanDay extends Model
                 return $fromSurah->name_arabic;
             }
 
-            return $fromSurah->name_arabic.' '.$vFrom.'-'.$vTo;
+            return $fromSurah->name_arabic . ' ' . $vFrom . '-' . $vTo;
         }
 
         // Multiple surahs
@@ -79,11 +83,11 @@ class StudentPlanDay extends Model
         $isToFullEnd = ($vTo == $toSurah->verses_count);
 
         if ($isFromFullStart && $isToFullEnd) {
-            return $fromSurah->name_arabic.' - '.$toSurah->name_arabic;
+            return $fromSurah->name_arabic . ' - ' . $toSurah->name_arabic;
         }
 
         $fromEndVerse = $fromSurah->verses_count;
-        $firstPart = $fromSurah->name_arabic.' '.$vFrom.'-'.$fromEndVerse;
+        $firstPart = $fromSurah->name_arabic . ' ' . $vFrom . '-' . $fromEndVerse;
         if ($isFromFullStart) {
             $firstPart = $fromSurah->name_arabic;
         }
@@ -93,22 +97,22 @@ class StudentPlanDay extends Model
 
         if ($nextSurah) {
             if ($nextSurah->id === $toSurah->id) {
-                $endPart = 'و '.$toSurah->name_arabic.' 1-'.$vTo;
+                $endPart = 'و ' . $toSurah->name_arabic . ' 1-' . $vTo;
                 if ($isToFullEnd) {
-                    $endPart = 'و '.$toSurah->name_arabic;
+                    $endPart = 'و ' . $toSurah->name_arabic;
                 }
 
-                return $firstPart.' '.$endPart;
+                return $firstPart . ' ' . $endPart;
             } else {
-                $endPart = 'و من '.$nextSurah->name_arabic.' الى '.$toSurah->name_arabic;
-                if (! $isToFullEnd) {
-                    $endPart .= ' '.$vTo;
+                $endPart = 'و من ' . $nextSurah->name_arabic . ' الى ' . $toSurah->name_arabic;
+                if (!$isToFullEnd) {
+                    $endPart .= ' ' . $vTo;
                 }
 
-                return $firstPart.' '.$endPart;
+                return $firstPart . ' ' . $endPart;
             }
         }
 
-        return $fromSurah->name_arabic.' '.$vFrom.' الى '.$toSurah->name_arabic.' '.$vTo;
+        return $fromSurah->name_arabic . ' ' . $vFrom . ' الى ' . $toSurah->name_arabic . ' ' . $vTo;
     }
 }
