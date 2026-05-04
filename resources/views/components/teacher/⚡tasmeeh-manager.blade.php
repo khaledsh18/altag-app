@@ -23,6 +23,13 @@ new class extends Component {
     /** Persisted in DB — also @entangled to Alpine for instant visual feedback */
     public $hifzAchievement = null;
     public $reviewAchievement = null;
+    
+    public $gradedAtDate;
+
+    public function mount()
+    {
+        $this->gradedAtDate = now()->format('Y-m-d');
+    }
 
     public function with()
     {
@@ -282,10 +289,19 @@ new class extends Component {
                 'review_achievement' => $this->reviewAchievement,
             ];
             
+            $gradeTime = null;
+            if ($this->gradedAtDate) {
+                if ($this->gradedAtDate === now()->format('Y-m-d')) {
+                    $gradeTime = now();
+                } else {
+                    $gradeTime = \Carbon\Carbon::parse($this->gradedAtDate)->setHour(12)->setMinute(0);
+                }
+            }
+
             if ($type === 'hifz') {
-                $updateData['hifz_graded_at'] = $this->hifzAchievement !== null ? now() : null;
+                $updateData['hifz_graded_at'] = $this->hifzAchievement !== null ? $gradeTime : null;
             } elseif ($type === 'review') {
-                $updateData['review_graded_at'] = $this->reviewAchievement !== null ? now() : null;
+                $updateData['review_graded_at'] = $this->reviewAchievement !== null ? $gradeTime : null;
             }
 
             StudentPlanDay::where('id', $this->dayId)->update($updateData);
@@ -416,11 +432,11 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     }, 100);
                 }
              }"
-            class="lg:col-span-1 flex flex-col gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 h-fit max-h-[800px] overflow-y-auto">
+            class="lg:col-span-1 flex flex-col gap-4 bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 h-fit max-h-[calc(100vh-140px)] overflow-y-auto lg:sticky lg:top-24 scrollbar-thin">
 
             <!-- Section 1a: With Plans (Present / Late) -->
             <div
-                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-scroll shadow-sm">
                 <button @click="openSection = openSection === 1 ? 0 : 1"
                     class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                     <div class="flex items-center gap-2">
@@ -432,8 +448,8 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     <flux:icon icon="chevron-down" class="size-4 text-zinc-400 transition-transform"
                         x-bind:class="openSection === 1 ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="openSection === 1" x-collapse
-                    class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800">
+                <div x-show="openSection === 1"
+                    class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                     @forelse($studentsWithPlansPresent as $student)
                         <button @click="selectStudent({{ $student->id }})"
                             class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
@@ -460,7 +476,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
             <!-- Section 1b: With Plans (Absent / Excused) -->
             @if($studentsWithPlansAbsent->isNotEmpty())
                 <div
-                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm shrink-0">
                     <button @click="openSection = openSection === 2 ? 0 : 2"
                         class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                         <div class="flex items-center gap-2">
@@ -472,8 +488,8 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         <flux:icon icon="chevron-down" class="size-4 text-zinc-400 transition-transform"
                             x-bind:class="openSection === 2 ? 'rotate-180' : ''" />
                     </button>
-                    <div x-show="openSection === 2" x-collapse
-                        class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800">
+                    <div x-show="openSection === 2"
+                        class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithPlansAbsent as $student)
                             <button @click="selectStudent({{ $student->id }})"
                                 class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100' }}">
@@ -491,10 +507,10 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                 </div>
             @endif
 
-            <!-- Section 2: Without Plans -->
+            <!-- Section 1c: Without Plans -->
             @if($studentsWithoutPlans->isNotEmpty())
                 <div
-                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                    class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm shrink-0">
                     <button @click="openSection = openSection === 3 ? 0 : 3"
                         class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
                         <div class="flex items-center gap-2">
@@ -507,8 +523,8 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         <flux:icon icon="chevron-down" class="size-4 text-zinc-400 transition-transform"
                             x-bind:class="openSection === 3 ? 'rotate-180' : ''" />
                     </button>
-                    <div x-show="openSection === 3" x-collapse
-                        class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800">
+                    <div x-show="openSection === 3"
+                        class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithoutPlans as $student)
                             <div class="flex items-center gap-2">
                                 <button @click="selectStudent({{ $student->id }})"
@@ -534,22 +550,31 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
         <div id="grading-area" class="lg:col-span-3 space-y-6 scroll-mt-6">
             @if($studentId)
                 @if(count($plans) > 0)
-                    <div
-                        class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                        <flux:select wire:model.live="planId" label="{{ __('الخطة القرآنية') }}"
-                            placeholder="{{ __('اختر الخطة') }}">
-                            @foreach($plans as $plan)
-                                <flux:select.option value="{{ $plan->id }}">
-                                    @if($plan->plan_type === 'hifz')
-                                        {{ __('حفظ (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
-                                    @elseif($plan->plan_type === 'review')
-                                        {{ __('مراجعة (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
-                                    @else
-                                        {{ __('حفظ ومراجعة (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
-                                    @endif
-                                </flux:select.option>
-                            @endforeach
-                        </flux:select>
+                    <div class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                            <flux:select wire:model.live="planId" label="{{ __('الخطة القرآنية') }}"
+                                placeholder="{{ __('اختر الخطة') }}">
+                                @foreach($plans as $plan)
+                                    <flux:select.option value="{{ $plan->id }}">
+                                        @if($plan->plan_type === 'hifz')
+                                            {{ __('حفظ (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
+                                        @elseif($plan->plan_type === 'review')
+                                            {{ __('مراجعة (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
+                                        @else
+                                            {{ __('حفظ ومراجعة (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
+                                        @endif
+                                    </flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            
+                            <div>
+                                <div class="mb-2">
+                                    <flux:label>{{ __('تاريخ التقييم (الإنجاز الفعلي)') }}</flux:label>
+                                    <flux:description class="text-[11px] mt-0.5">{{ __('سيُستخدم هذا التاريخ لتسجيل إنجاز الطالب في المسابقات والتقارير.') }}</flux:description>
+                                </div>
+                                <livewire:teacher.hijri-datepicker wire:model.live="gradedAtDate" />
+                            </div>
+                        </div>
                     </div>
 
                     @if($currentDay)
