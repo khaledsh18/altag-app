@@ -41,7 +41,6 @@ new class extends Component {
         $todayStr = \Carbon\Carbon::today()->format('Y-m-d');
 
         $allPlans = StudentPlan::whereIn('student_id', $students->pluck('id'))
-            ->where('teacher_id', $teacher->id)
             ->where('status', 'active')
             ->where('is_approved', 1)
             ->get()
@@ -141,7 +140,6 @@ new class extends Component {
         $plans = [];
         if ($this->studentId) {
             $plans = StudentPlan::where('student_id', $this->studentId)
-                ->where('teacher_id', $teacher->id)
                 ->latest()
                 ->get();
         }
@@ -187,7 +185,6 @@ new class extends Component {
         if ($this->studentId) {
             $teacher = Auth::guard('teacher')->user();
             $firstPlan = StudentPlan::where('student_id', $this->studentId)
-                ->where('teacher_id', $teacher->id)
                 ->latest()
                 ->first();
 

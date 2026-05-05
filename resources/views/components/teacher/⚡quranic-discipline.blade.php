@@ -44,9 +44,10 @@ new class extends Component {
     {
         $teacher = Auth::guard('teacher')->user();
 
-        // احصل على جميع الطلاب الذين لديهم خطط مسجلة مع هذا المعلم
-        $studentIds = \App\Models\StudentPlan::where('teacher_id', $teacher->id)->pluck('student_id')->unique();
-        $students = Student::whereIn('id', $studentIds)->get();
+        // احصل على الطلاب المنسوبين للحلقات التي يدرسها المعلم
+        $circleIds = $teacher->circles()->pluck('id');
+        $students = Student::whereIn('circle_id', $circleIds)->get();
+        $studentIds = $students->pluck('id');
 
         $studentsStats = [];
 
@@ -59,8 +60,8 @@ new class extends Component {
         $earliest = min($startStr, $thirtyDaysAgo);
 
         $planDays = StudentPlanDay::with('plan')
-            ->whereHas('plan', function ($q) use ($teacher) {
-                $q->where('teacher_id', $teacher->id);
+            ->whereHas('plan', function ($q) use ($studentIds) {
+                $q->whereIn('student_id', $studentIds);
             })
             ->where('date', '>=', $earliest)
             ->where(function($query) use ($todayStr) {

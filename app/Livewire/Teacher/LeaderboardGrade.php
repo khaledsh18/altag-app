@@ -70,7 +70,7 @@ class LeaderboardGrade extends Component
         ]);
 
         $this->showExtraPointsModal = false;
-        \Flux::toast('تم حفظ النقاط الإضافية بنجاح', variant: 'success');
+        Flux::toast('تم حفظ النقاط الإضافية بنجاح', variant: 'success');
     }
 
     public function deleteExtraPoints($id)
@@ -82,7 +82,7 @@ class LeaderboardGrade extends Component
     {
         $leaderboard = Leaderboard::with('criteria')->findOrFail($this->leaderboardId);
         $students = Student::where('circle_id', $leaderboard->circle_id)->orderBy('name')->get();
-        
+
         $scores = LeaderboardScore::where('leaderboard_id', $this->leaderboardId)
             ->whereDate('date', \Carbon\Carbon::parse($this->date))
             ->get()

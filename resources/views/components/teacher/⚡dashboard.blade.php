@@ -31,10 +31,10 @@ new class extends Component {
         $topAttendance = $studentsLast30Days->where('present_count', '>', 0)->sortByDesc('present_count')->take(5)->values();
 
         // 2. Top Quranic Discipline (last 30 days)
-        $studentIds = \App\Models\StudentPlan::where('teacher_id', $teacher->id)->pluck('student_id')->unique();
+        $studentIds = Student::whereIn('circle_id', $circleIds)->pluck('id');
         $planDays = StudentPlanDay::with('plan.student')
-            ->whereHas('plan', function ($q) use ($teacher) {
-                $q->where('teacher_id', $teacher->id);
+            ->whereHas('plan', function ($q) use ($studentIds) {
+                $q->whereIn('student_id', $studentIds);
             })
             ->where('date', '>=', $last30Start)
             ->where(function($query) use ($last30End) {

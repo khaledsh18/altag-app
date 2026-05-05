@@ -96,7 +96,8 @@
                                     <h4 class="font-semibold text-neutral-900 dark:text-neutral-100">{{ $student->name }}
                                     </h4>
                                     <p class="text-xs text-neutral-500">
-                                        {{ $student->circle?->name ?? 'لم تُحدَّد حلقة بعد' }}</p>
+                                        {{ $student->circle?->name ?? 'لم تُحدَّد حلقة بعد' }}
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -184,7 +185,7 @@
                             <div class="flex items-center justify-between mb-1.5">
                                 <span class="text-xs text-neutral-500 flex items-center gap-1">
                                     <flux:icon icon="book-open" class="size-3.5" />
-                                    الكريم نسبة محفوظك من القرآن
+                                    نسبة المحفوظ من القرآن الكريم
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs text-neutral-500">{{ number_format($memorizedPages) }} صفحة</span>
