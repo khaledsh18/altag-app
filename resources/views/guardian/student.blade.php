@@ -100,7 +100,8 @@
                 <p class="text-xs text-neutral-500 mb-1">نسبة المحفوظ من القرآن الكريم</p>
                 <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ $percentage }}%</p>
                 <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
-                    {{ $student->memorizationText() }}</p>
+                    {{ $student->memorizationText() }}
+                </p>
                 <p class="text-xs text-neutral-400 mt-1">{{ number_format($memorizedPages) }} صفحة</p>
             </div>
             <div class="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">

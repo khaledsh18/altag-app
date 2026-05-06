@@ -11,10 +11,6 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
 
 class AttendanceReports extends Component
 {
-    public $tab = 'by_date'; // 'by_date' for Overall, 'by_tree' for Stage/Circle
-
-    public $viewType = 'days'; // 'days' or 'months'
-
     public $fromDate;
 
     public $toDate;
@@ -28,11 +24,11 @@ class AttendanceReports extends Component
 
     public function mount()
     {
-        // Default to last 30 days if needed, but here we'll leave empty for all history
-        // Or set default to start of current month
+        $this->fromDate = Carbon::now()->subDays(6)->toDateString();
+        $this->toDate = Carbon::now()->toDateString();
     }
 
-    public function formatHijriDate($gregorianDate)
+    public function formatHijriDayNum($gregorianDate): string
     {
         if (! $gregorianDate) {
             return '';
@@ -43,20 +39,16 @@ class AttendanceReports extends Component
             \IntlDateFormatter::NONE,
             'Asia/Riyadh',
             \IntlDateFormatter::TRADITIONAL,
-            'EEEE d MMMM yyyy'
+            'd'
         );
 
         return $formatter->format(is_string($gregorianDate) ? strtotime($gregorianDate) : $gregorianDate);
     }
 
-    public function formatHijriMonth($dateStr)
+    public function formatHijriDayName($gregorianDate): string
     {
-        if (! $dateStr) {
+        if (! $gregorianDate) {
             return '';
-        }
-        // If dateStr is YYYY-MM, append -01
-        if (strlen($dateStr) === 7) {
-            $dateStr .= '-01';
         }
         $formatter = new \IntlDateFormatter(
             'ar_SA@calendar=islamic-umalqura',
@@ -64,73 +56,85 @@ class AttendanceReports extends Component
             \IntlDateFormatter::NONE,
             'Asia/Riyadh',
             \IntlDateFormatter::TRADITIONAL,
-            'MMMM yyyy'
+            'E'
         );
 
-        return $formatter->format(strtotime($dateStr));
+        return $formatter->format(is_string($gregorianDate) ? strtotime($gregorianDate) : $gregorianDate);
+    }
+
+    public function formatHijriMonthYear($gregorianDate): string
+    {
+        if (! $gregorianDate) {
+            return '';
+        }
+        $formatter = new \IntlDateFormatter(
+            'ar_SA@calendar=islamic-umalqura',
+            \IntlDateFormatter::FULL,
+            \IntlDateFormatter::NONE,
+            'Asia/Riyadh',
+            \IntlDateFormatter::TRADITIONAL,
+            'MMM yyyy'
+        );
+
+        return $formatter->format(is_string($gregorianDate) ? strtotime($gregorianDate) : $gregorianDate);
     }
 
     public function clearFilters()
     {
-        $this->fromDate = null;
-        $this->toDate = null;
-        $this->viewType = 'days';
+        $this->fromDate = Carbon::now()->subDays(6)->toDateString();
+        $this->toDate = Carbon::now()->toDateString();
     }
 
     public function downloadPDF()
     {
-        $this->validate([
-            'printFrom' => 'required|date',
-            'printTo' => 'required|date|after_or_equal:printFrom',
-        ]);
+        if (! $this->fromDate || ! $this->toDate) {
+            return;
+        }
 
-        $startDate = Carbon::parse($this->printFrom)->format('Y-m-d');
-        $endDate = Carbon::parse($this->printTo)->format('Y-m-d');
-        
         $dates = [];
-        $d = Carbon::parse($startDate);
-        $end = Carbon::parse($endDate);
+        $d = Carbon::parse($this->fromDate);
+        $end = Carbon::parse($this->toDate);
         while ($d->lte($end)) {
             $dates[] = $d->format('Y-m-d');
             $d->addDay();
         }
 
-        $circles = Circle::with('stage')->get();
+        $circles = Circle::with('stage')->withCount('students')->orderBy('stage_id')->orderBy('name')->get();
+        $groupedCircles = $circles->groupBy(fn ($c) => $c->stage->name ?? 'بدون مرحلة');
 
-        $attendances = Attendance::whereDate('date', '>=', $startDate)
-            ->whereDate('date', '<=', $endDate)
+        $records = Attendance::query()
+            ->join('students', 'attendances.student_id', '=', 'students.id')
+            ->where(function ($q) {
+                $q->whereNull('students.joined_at')
+                    ->orWhereColumn('students.joined_at', '<=', 'attendances.date');
+            })
+            ->whereDate('attendances.date', '>=', $this->fromDate)
+            ->whereDate('attendances.date', '<=', $this->toDate)
             ->select(
-                'circle_id', 
-                DB::raw("DATE(date) as mapped_date"), 
-                DB::raw('COUNT(*) as total'), 
-                DB::raw("SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count")
+                'attendances.circle_id',
+                DB::raw('DATE(attendances.date) as day'),
+                DB::raw('COUNT(attendances.id) as total'),
+                DB::raw("SUM(CASE WHEN attendances.status IN ('present', 'late') THEN 1 ELSE 0 END) as present_count"),
+                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count")
             )
-            ->groupBy('circle_id', DB::raw('DATE(date)'))
+            ->groupBy('attendances.circle_id', DB::raw('DATE(attendances.date)'))
             ->get();
 
         $attendanceData = [];
-        foreach ($attendances as $att) {
-            $dateStr = $att->mapped_date;
-            $attendanceData[$att->circle_id][$dateStr] = [
-                'present' => $att->present_count,
-                'late' => $att->late_count,
-                'absent' => $att->absent_count,
-                'excused' => $att->excused_count,
-                'total' => $att->total,
+        foreach ($records as $row) {
+            $attendanceData[$row->circle_id][$row->day] = [
+                'total' => $row->total,
+                'present' => $row->present_count,
+                'absent' => $row->absent_count,
             ];
         }
-
-        $groupedCircles = $circles->groupBy('stage.name');
 
         $pdf = LaravelMpdf::loadView('pdf.attendance-report', [
             'dates' => $dates,
             'groupedCircles' => $groupedCircles,
             'attendanceData' => $attendanceData,
-            'printFrom' => $this->printFrom,
-            'printTo' => $this->printTo,
+            'fromDate' => $this->fromDate,
+            'toDate' => $this->toDate,
         ], [], [
             'format' => 'A4-L',
             'autoScriptToLang' => true,
@@ -139,8 +143,6 @@ class AttendanceReports extends Component
             'useAdobeCJK' => true,
         ]);
 
-        $this->showPrintModal = false;
-
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, 'attendance_report.pdf');
@@ -148,136 +150,55 @@ class AttendanceReports extends Component
 
     public function render()
     {
-        $query = Attendance::query()
-            ->join('students', 'attendances.student_id', '=', 'students.id')
-            ->where(function ($q) {
-                $q->whereNull('students.joined_at')
-                  ->orWhereColumn('students.joined_at', '<=', 'attendances.date');
-            });
-
-        if ($this->fromDate) {
-            $query->where('attendances.date', '>=', $this->fromDate);
-        }
-        if ($this->toDate) {
-            $query->where('attendances.date', '<=', $this->toDate);
+        // Build the list of dates in range
+        $dates = [];
+        if ($this->fromDate && $this->toDate) {
+            $d = Carbon::parse($this->fromDate);
+            $end = Carbon::parse($this->toDate);
+            while ($d->lte($end)) {
+                $dates[] = $d->format('Y-m-d');
+                $d->addDay();
+            }
         }
 
-        // --- 1. Overall Reports (By Date or By Month) ---
-        $overallQuery = clone $query;
+        // Fetch all circles grouped by stage (with student count)
+        $circles = Circle::with('stage')->withCount('students')->orderBy('stage_id')->orderBy('name')->get();
+        $groupedCircles = $circles->groupBy(fn ($c) => $c->stage->name ?? 'بدون مرحلة');
 
-        if ($this->viewType === 'months') {
-            // Group by month using SQLite strftime
-            $overallQuery->select(
-                DB::raw("strftime('%Y-%m', attendances.date) as period"),
-                DB::raw('COUNT(attendances.id) as total'),
-                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('period')->orderBy('period', 'desc');
-        } else {
-            $overallQuery->select(
-                'attendances.date as period',
-                DB::raw('COUNT(attendances.id) as total'),
-                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('attendances.date')->orderBy('attendances.date', 'desc');
-        }
+        // Fetch aggregated attendance per circle per day
+        $attendanceData = [];
+        if ($this->fromDate && $this->toDate) {
+            $records = Attendance::query()
+                ->join('students', 'attendances.student_id', '=', 'students.id')
+                ->where(function ($q) {
+                    $q->whereNull('students.joined_at')
+                        ->orWhereColumn('students.joined_at', '<=', 'attendances.date');
+                })
+                ->whereDate('attendances.date', '>=', $this->fromDate)
+                ->whereDate('attendances.date', '<=', $this->toDate)
+                ->select(
+                    'attendances.circle_id',
+                    DB::raw('DATE(attendances.date) as day'),
+                    DB::raw('COUNT(attendances.id) as total'),
+                    DB::raw("SUM(CASE WHEN attendances.status IN ('present', 'late') THEN 1 ELSE 0 END) as present_count"),
+                    DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count")
+                )
+                ->groupBy('attendances.circle_id', DB::raw('DATE(attendances.date)'))
+                ->get();
 
-        $reportsByPeriod = $overallQuery->get();
-
-        // --- 2. Tree Query (Stage -> Period -> Circle) ---
-        $treeQuery = clone $query;
-        $treeQuery->join('circles', 'attendances.circle_id', '=', 'circles.id')
-            ->join('stages', 'circles.stage_id', '=', 'stages.id');
-
-        if ($this->viewType === 'months') {
-            $treeQuery->select(
-                DB::raw("strftime('%Y-%m', attendances.date) as period"),
-                'stages.id as stage_id',
-                'stages.name as stage_name',
-                'circles.id as circle_id',
-                'circles.name as circle_name',
-                DB::raw('COUNT(attendances.id) as total'),
-                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('period', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
-                ->orderBy('stages.id')->orderBy('period', 'desc')->orderBy('circles.id');
-        } else {
-            $treeQuery->select(
-                'attendances.date as period',
-                'stages.id as stage_id',
-                'stages.name as stage_name',
-                'circles.id as circle_id',
-                'circles.name as circle_name',
-                DB::raw('COUNT(attendances.id) as total'),
-                DB::raw("SUM(CASE WHEN attendances.status = 'present' THEN 1 ELSE 0 END) as present_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'absent' THEN 1 ELSE 0 END) as absent_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'late' THEN 1 ELSE 0 END) as late_count"),
-                DB::raw("SUM(CASE WHEN attendances.status = 'excused' THEN 1 ELSE 0 END) as excused_count")
-            )->groupBy('attendances.date', 'stages.id', 'stages.name', 'circles.id', 'circles.name')
-                ->orderBy('stages.id')->orderBy('attendances.date', 'desc')->orderBy('circles.id');
-        }
-
-        $rawRecords = $treeQuery->get();
-
-        // Build the Tree
-        $tree = [];
-        foreach ($rawRecords as $row) {
-            $period = $row->period;
-
-            // Setup Stage
-            if (! isset($tree[$row->stage_id])) {
-                $tree[$row->stage_id] = [
-                    'id' => $row->stage_id,
-                    'name' => $row->stage_name,
-                    'stats' => ['total' => 0, 'present_count' => 0, 'absent_count' => 0, 'late_count' => 0, 'excused_count' => 0],
-                    'periods' => [],
+            foreach ($records as $row) {
+                $attendanceData[$row->circle_id][$row->day] = [
+                    'total' => $row->total,
+                    'present' => $row->present_count,
+                    'absent' => $row->absent_count,
                 ];
             }
-
-            // Accumulate Stage
-            $tree[$row->stage_id]['stats']['total'] += $row->total;
-            $tree[$row->stage_id]['stats']['present_count'] += $row->present_count;
-            $tree[$row->stage_id]['stats']['absent_count'] += $row->absent_count;
-            $tree[$row->stage_id]['stats']['late_count'] += $row->late_count;
-            $tree[$row->stage_id]['stats']['excused_count'] += $row->excused_count;
-
-            // Setup Period within Stage
-            if (! isset($tree[$row->stage_id]['periods'][$period])) {
-                $tree[$row->stage_id]['periods'][$period] = [
-                    'period' => $period,
-                    'stats' => ['total' => 0, 'present_count' => 0, 'absent_count' => 0, 'late_count' => 0, 'excused_count' => 0],
-                    'circles' => [],
-                ];
-            }
-
-            // Accumulate Period
-            $tree[$row->stage_id]['periods'][$period]['stats']['total'] += $row->total;
-            $tree[$row->stage_id]['periods'][$period]['stats']['present_count'] += $row->present_count;
-            $tree[$row->stage_id]['periods'][$period]['stats']['absent_count'] += $row->absent_count;
-            $tree[$row->stage_id]['periods'][$period]['stats']['late_count'] += $row->late_count;
-            $tree[$row->stage_id]['periods'][$period]['stats']['excused_count'] += $row->excused_count;
-
-            // Add Circle
-            $tree[$row->stage_id]['periods'][$period]['circles'][] = [
-                'circle_id' => $row->circle_id,
-                'circle_name' => $row->circle_name,
-                'total' => $row->total,
-                'present_count' => $row->present_count,
-                'absent_count' => $row->absent_count,
-                'late_count' => $row->late_count,
-                'excused_count' => $row->excused_count,
-            ];
         }
 
         return view('livewire.manager.attendance-reports', [
-            'reportsByPeriod' => $reportsByPeriod,
-            'reportsTree' => collect($tree),
+            'dates' => $dates,
+            'groupedCircles' => $groupedCircles,
+            'attendanceData' => $attendanceData,
         ]);
     }
 }

@@ -1,11 +1,11 @@
 <x-layouts.role-shell>
     <x-slot:title>
-        {{ __('الاختبارات') }}
+        {{ __('تقرير الإنجاز القرآني') }}
     </x-slot:title>
 
     <x-slot:sidebar>
         @include('manager.sidebar-nav')
     </x-slot:sidebar>
 
-    <livewire:manager.student-exams />
+    <livewire:manager.Quranic-achievement-report />
 </x-layouts.role-shell>

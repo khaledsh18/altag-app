@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
-Route::get('/pending-approval', fn() => view('pending-approval'))
+Route::get('/pending-approval', fn () => view('pending-approval'))
     ->middleware('auth:manager,supervisor,teacher,student,guardian')
     ->name('pending-approval');
 
@@ -68,6 +68,7 @@ Route::middleware(['auth:manager', 'approved'])->prefix('manager')->name('manage
     Route::view('/guardians', 'manager.guardians')->name('guardians');
     Route::view('/attendance-reports', 'manager.attendance-reports')->name('attendance-reports');
     Route::view('/yearly-attendance', 'manager.yearly-attendance')->name('yearly-attendance');
+    Route::view('/quranic-achievement', 'manager.quranic-achievement-report')->name('quranic-achievement');
     Route::view('/attendance/{circleId}/{date}', 'manager.student-attendance-list')->name('attendance-list');
     Route::view('/ai-analysis', 'manager.ai-analysis')->name('ai-analysis');
     Route::view('/quran-editor', 'manager.quran-editor')->name('quran-editor');
@@ -81,37 +82,37 @@ Route::middleware(['auth:manager', 'approved'])->prefix('manager')->name('manage
 // القاسم المشترك لمسارات الضيوف (Guest Routes) لكل دور
 Route::middleware('guest:manager')->prefix('manager')->name('manager.')->group(function () {
     Route::get('/login', Login::class)->name('login');
-    Route::get('/register', Register::class)->name('register');
+    // Route::get('/register', Register::class)->name('register');
 });
 
 Route::middleware('guest:supervisor')->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/login', App\Livewire\Auth\Supervisor\Login::class)->name('login');
-    Route::get('/register', App\Livewire\Auth\Supervisor\Register::class)->name('register');
+    // Route::get('/register', App\Livewire\Auth\Supervisor\Register::class)->name('register');
 });
 
 Route::middleware('guest:teacher')->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/login', App\Livewire\Auth\Teacher\Login::class)->name('login');
-    Route::get('/register', App\Livewire\Auth\Teacher\Register::class)->name('register');
+    // Route::get('/register', App\Livewire\Auth\Teacher\Register::class)->name('register');
 });
 
 Route::middleware('guest:student')->prefix('student')->name('student.')->group(function () {
     Route::get('/login', App\Livewire\Auth\Student\Login::class)->name('login');
-    Route::get('/register', App\Livewire\Auth\Student\Register::class)->name('register');
+    // Route::get('/register', App\Livewire\Auth\Student\Register::class)->name('register');
 });
 
 Route::middleware('guest:guardian')->prefix('parent')->name('parent.')->group(function () {
     Route::get('/login', App\Livewire\Auth\Guardian\Login::class)->name('login');
-    Route::get('/register', App\Livewire\Auth\Guardian\Register::class)->name('register');
+    // Route::get('/register', App\Livewire\Auth\Guardian\Register::class)->name('register');
 });
 
 // مسارات لوحة التحكم (Dashboard Routes) لكل دور
-Route::middleware(['auth:manager', 'approved'])->get('/manager/dashboard', fn() => view('manager.dashboard'))->name('manager.dashboard');
+Route::middleware(['auth:manager', 'approved'])->get('/manager/dashboard', fn () => view('manager.dashboard'))->name('manager.dashboard');
 Route::middleware(['auth:supervisor', 'approved'])->prefix('supervisor')->name('supervisor.')->group(function () {
-    Route::get('/dashboard', fn() => view('supervisor.dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn () => view('supervisor.dashboard'))->name('dashboard');
     Route::view('/exceeded-limits', 'supervisor.exceeded-limits')->name('exceeded-limits');
 });
 Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teacher.')->group(function () {
-    Route::get('/dashboard', fn() => view('teacher.dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn () => view('teacher.dashboard'))->name('dashboard');
     Route::view('/attendance', 'teacher.attendance')->name('attendance');
     Route::view('/discipline', 'teacher.discipline')->name('discipline');
     Route::view('/quranic-discipline', 'teacher.quranic-discipline')->name('quranic-discipline');
@@ -154,7 +155,7 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     })->name('print-plan');
 });
 Route::middleware(['auth:student', 'approved'])->prefix('student')->name('student.')->group(function () {
-    Route::get('/dashboard', fn() => view('student.dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn () => view('student.dashboard'))->name('dashboard');
     Route::view('/plan', 'student.my-plan')->name('plan');
     Route::view('/plan/create', 'student.plan-creator')->name('plan-creator');
     Route::view('/plan/show/{id}', 'student.show-plan')->name('show-plan');
@@ -173,11 +174,11 @@ Route::middleware(['auth:student', 'approved'])->prefix('student')->name('studen
 Route::view('/student/complete-profile', 'student.complete-profile')->middleware(['auth:student'])->name('student.complete-profile');
 Route::view('/teacher/complete-profile', 'teacher.complete-profile')->middleware(['auth:teacher'])->name('teacher.complete-profile');
 Route::middleware(['auth:guardian', 'approved'])->prefix('parent')->name('guardian.')->group(function () {
-    Route::get('/dashboard', fn() => view('guardian.dashboard'))->name('dashboard');
-    Route::get('/student/{id}', fn($id) => view('guardian.student', ['studentId' => $id]))->name('student');
-    Route::get('/student/{id}/attendance', fn($id) => view('guardian.student-attendance', ['studentId' => $id]))->name('student.attendance');
-    Route::get('/challenges', fn() => view('guardian.challenges'))->name('challenges');
-    Route::get('/student/{id}/challenge/create', fn($id) => view('guardian.create-challenge', ['studentId' => $id]))->name('student.challenge.create');
+    Route::get('/dashboard', fn () => view('guardian.dashboard'))->name('dashboard');
+    Route::get('/student/{id}', fn ($id) => view('guardian.student', ['studentId' => $id]))->name('student');
+    Route::get('/student/{id}/attendance', fn ($id) => view('guardian.student-attendance', ['studentId' => $id]))->name('student.attendance');
+    Route::get('/challenges', fn () => view('guardian.challenges'))->name('challenges');
+    Route::get('/student/{id}/challenge/create', fn ($id) => view('guardian.create-challenge', ['studentId' => $id]))->name('student.challenge.create');
 });
 
 // Magic Link Routes
@@ -186,7 +187,7 @@ Route::get('/magic/{token}', function ($token) {
 
     auth()->guard('student')->login($student);
 
-    if (!$student->is_data_completed) {
+    if (! $student->is_data_completed) {
         return redirect()->route('student.complete-profile');
     }
 
@@ -198,7 +199,7 @@ Route::get('/teacher-magic/{token}', function ($token) {
 
     auth()->guard('teacher')->login($teacher);
 
-    if (!$teacher->is_data_completed) {
+    if (! $teacher->is_data_completed) {
         return redirect()->route('teacher.complete-profile');
     }
 
@@ -215,7 +216,7 @@ Route::get('/guardian-magic/{token}', function ($token) {
 })->name('guardian.magic-link');
 
 Route::get('/magic/{token}/login-as', function ($token) {
-    if (!auth()->guard('teacher')->check()) {
+    if (! auth()->guard('teacher')->check()) {
         abort(403);
     }
 
@@ -229,5 +230,5 @@ Route::get('/quran-json', function () {
     return response()->json(Surah::with('ayahs')->get(), 200, [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 });
 
-Route::get('/test', function () { })->name('test');
-require __DIR__ . '/settings.php';
+Route::get('/test', function () {})->name('test');
+require __DIR__.'/settings.php';
