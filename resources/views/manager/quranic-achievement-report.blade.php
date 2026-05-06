@@ -7,5 +7,5 @@
         @include('manager.sidebar-nav')
     </x-slot:sidebar>
 
-    <livewire:manager.Quranic-achievement-report />
+    <livewire:manager.quranic-achievement-report />
 </x-layouts.role-shell>
