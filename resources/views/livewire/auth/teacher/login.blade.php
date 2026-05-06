@@ -27,8 +27,8 @@
         </div>
     </form>
 
-    <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
+    {{-- <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
         <span>{{ __('ليس لديك حساب؟') }}</span>
         <flux:link :href="route('teacher.register')" wire:navigate>{{ __('تسجيل حساب جديد') }}</flux:link>
-    </div>
+    </div> --}}
 </div>
