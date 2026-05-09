@@ -266,7 +266,9 @@ new class extends Component
         </div>
         
         <div class="flex items-center gap-2">
-            <flux:input type="date" wire:model="date" class="w-40" />
+            <div class="w-40">
+                <livewire:shared.hijri-datepicker wire:model.live="date" label="" />
+            </div>
             <flux:button wire:click="generatePairs" variant="primary" icon="sparkles">
                 {{ __('توليد الثنائيات') }}
             </flux:button>

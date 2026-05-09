@@ -1,0 +1,50 @@
+<div @if(!in_array($status, ['ready', 'error'])) wire:poll.5s="checkStatus" @endif class="space-y-6">
+    <flux:heading size="xl">إعدادات ربط الواتساب</flux:heading>
+    
+    <flux:card class="max-w-2xl">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="size-12 rounded-full flex items-center justify-center shrink-0
+                {{ $status === 'ready' ? 'bg-emerald-100 text-emerald-600' : ($status === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600') }}">
+                @if($status === 'ready')
+                    <flux:icon icon="check-circle" variant="solid" class="size-8" />
+                @elseif($status === 'error')
+                    <flux:icon icon="exclamation-circle" variant="solid" class="size-8" />
+                @else
+                    <flux:icon icon="arrow-path" class="size-6 animate-spin" />
+                @endif
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-bold">
+                    @if($status === 'ready') متصل بالواتساب
+                    @elseif($status === 'needs_scan') بانتظار مسح الرمز (QR Code)
+                    @elseif($status === 'loading') جاري مزامنة المحادثات...
+                    @elseif($status === 'starting') جاري التهيئة...
+                    @else خدمة الواتساب غير متصلة @endif
+                </h3>
+                <p class="text-sm text-zinc-500">{{ $message }}</p>
+            </div>
+        </div>
+
+        @if($status === 'needs_scan' && $qrCode)
+            <div class="flex flex-col items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <p class="mb-4 text-center text-zinc-600 dark:text-zinc-400 font-medium">افتح تطبيق واتساب على هاتفك، اذهب إلى "الأجهزة المرتبطة" وامسح الرمز أدناه:</p>
+                <div class="bg-white p-4 rounded-xl shadow-sm inline-block">
+                    <img src="{{ $qrCode }}" alt="WhatsApp QR Code" class="size-64">
+                </div>
+            </div>
+        @endif
+
+        @if($status === 'ready')
+            <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                الخدمة جاهزة الآن لاستقبال وإرسال المهام. يمكنك استخدام النظام لإرسال التنبيهات للمعلمين.
+            </div>
+        @endif
+        
+        @if($status === 'error')
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm">
+                يرجى التأكد من تشغيل أمر <code class="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded">node index.js</code> داخل مجلد <code class="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded">whatsapp-service</code>
+            </div>
+        @endif
+    </flux:card>
+</div>

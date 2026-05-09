@@ -182,11 +182,13 @@ new class extends Component {
     <!-- Filters Map -->
     <flux:card>
         <div class="flex flex-col md:flex-row items-end gap-4">
-            <div class="w-full md:w-1/3">
-                <flux:input type="date" wire:model.live="fromDate" label="{{ __('من تاريخ') }}" />
-            </div>
-            <div class="w-full md:w-1/3">
-                <flux:input type="date" wire:model.live="toDate" label="{{ __('إلى تاريخ') }}" />
+            <div class="flex flex-wrap items-end gap-3">
+                <div class="w-full sm:w-48">
+                    <livewire:shared.hijri-datepicker wire:model.live="fromDate" label="{{ __('من تاريخ') }}" />
+                </div>
+                <div class="w-full sm:w-48">
+                    <livewire:shared.hijri-datepicker wire:model.live="toDate" label="{{ __('إلى تاريخ') }}" />
+                </div>
             </div>
             <div class="w-full md:w-1/3 flex flex-wrap gap-2">
                 <flux:button wire:click="setLastWeek" size="sm" variant="subtle">{{ __('الأسبوع الماضي') }}

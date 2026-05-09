@@ -373,7 +373,7 @@ new class extends Component {
                             <flux:select.option value="left">غادر الحلقات</flux:select.option>
                         </flux:select>
                         
-                        <flux:input type="date" wire:model="editJoinedAt" label="{{ __('تاريخ الالتحاق') }}" />
+                        <livewire:shared.hijri-datepicker wire:model="editJoinedAt" label="{{ __('تاريخ الالتحاق') }}" />
                     </div>
 
                     <div class="flex justify-between pt-2">

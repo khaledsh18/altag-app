@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Jobs;
+
+use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use IntlDateFormatter;
+
+class SendWhatsappTasksJob implements ShouldQueue
+{
+    use Queueable;
+
+    public $teachersTasks;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(array $teachersTasks)
+    {
+        $this->teachersTasks = $teachersTasks;
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        foreach ($this->teachersTasks as $data) {
+            $assignee = array_key_exists('assignee', $data) ? $data['assignee'] : ($data['teacher'] ?? null);
+            $tasks = $data['tasks'] ?? [];
+
+            if (! $assignee || ! $assignee->phone) {
+                continue;
+            }
+
+            // معالجة رقم الهاتف (حذف الصفر وإضافة 966)
+            $phone = preg_replace('/[^0-9]/', '', $assignee->phone);
+
+            if (str_starts_with($phone, '0')) {
+                $phone = '966'.substr($phone, 1);
+            } elseif (str_starts_with($phone, '5')) {
+                $phone = '966'.$phone;
+            }
+
+            // بناء الرسالة: تجميع المهام حسب الحدث ثم التصنيف
+            $message = $this->buildMessage($assignee, $tasks);
+
+            // إرسال الطلب لخدمة الواتساب
+            try {
+                $response = Http::timeout(10)->post('http://localhost:3000/send', [
+                    'phone' => $phone,
+                    'message' => $message,
+                ]);
+
+                if (! $response->successful()) {
+                    Log::error("Failed to send WhatsApp tasks to assignee {$assignee->id}: ".$response->body());
+                }
+            } catch (\Exception $e) {
+                Log::error("Exception while sending WhatsApp tasks to assignee {$assignee->id}: ".$e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Build the WhatsApp message with the new format.
+     *
+     * Groups tasks by event > category, with numbered lists and Hijri due dates.
+     */
+    private function buildMessage(object $assignee, array $tasks): string
+    {
+        // تجميع المهام حسب الحدث ثم التصنيف
+        $grouped = [];
+
+        foreach ($tasks as $task) {
+            // نحصل على اسم الحدث (قد يكون للمهمة أكثر من حدث)
+            $eventName = null;
+            if ($task->events && $task->events->isNotEmpty()) {
+                $eventName = $task->events->first()->event_name;
+            }
+
+            $eventKey = $eventName ?? '__general__';
+            $categoryName = $task->category?->name ?? 'عام';
+
+            if (! isset($grouped[$eventKey])) {
+                $grouped[$eventKey] = [
+                    'name' => $eventName,
+                    'categories' => [],
+                ];
+            }
+
+            if (! isset($grouped[$eventKey]['categories'][$categoryName])) {
+                $grouped[$eventKey]['categories'][$categoryName] = [];
+            }
+
+            $grouped[$eventKey]['categories'][$categoryName][] = $task;
+        }
+
+        $messages = [];
+
+        foreach ($grouped as $eventData) {
+            $eventName = $eventData['name'];
+
+            $msg = 'السلام عليكم ورحمة الله وبركاته';
+            if ($eventName) {
+                $msg .= " اذكرك عندنا *{$eventName}* ان شاء الله";
+            }
+            $msg .= "\nو المهام الي عليك\n";
+
+            foreach ($eventData['categories'] as $categoryName => $categoryTasks) {
+                $msg .= "\n*{$categoryName}*\n";
+                foreach ($categoryTasks as $index => $task) {
+                    $num = $index + 1;
+                    $dueDateHijri = $task->due_date
+                        ? $this->toHijriDate($task->due_date)
+                        : 'بدون موعد';
+                    $msg .= "{$num}. {$task->title} - {$dueDateHijri}\n";
+                }
+            }
+
+            $msg .= "\nجوزيت خيرا 🌹";
+            $messages[] = $msg;
+        }
+
+        return implode("\n\n---\n\n", $messages);
+    }
+
+    /**
+     * Convert a date to Hijri format (Arabic).
+     */
+    private function toHijriDate(mixed $date): string
+    {
+        try {
+            $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
+            $formatter = new IntlDateFormatter(
+                'ar_SA@calendar=islamic-umalqura',
+                IntlDateFormatter::LONG,
+                IntlDateFormatter::NONE,
+                'Asia/Riyadh',
+                IntlDateFormatter::TRADITIONAL
+            );
+
+            return $formatter->format($carbon->timestamp);
+        } catch (\Exception $e) {
+            return $date instanceof Carbon ? $date->format('Y-m-d') : (string) $date;
+        }
+    }
+}

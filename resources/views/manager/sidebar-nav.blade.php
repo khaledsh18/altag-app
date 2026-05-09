@@ -12,7 +12,10 @@
 </flux:sidebar.item>
 <flux:sidebar.group heading="المستخدمين" class="grid">
 
-
+    <flux:sidebar.item icon="users" :href="route('manager.supervisors')"
+        :current="request()->routeIs('manager.supervisors')" wire:navigate>
+        المشرفون
+    </flux:sidebar.item>
     <flux:sidebar.item icon="users" :href="route('manager.teachers')" :current="request()->routeIs('manager.teachers')"
         wire:navigate>
         المعلمون
@@ -45,6 +48,14 @@
         :current="request()->routeIs('manager.yearly-attendance')" wire:navigate>
         متابعة الحلقات السنوي
     </flux:sidebar.item>
+    <flux:sidebar.item icon="calendar-days" :href="route('manager.academic-calendar')"
+        :current="request()->routeIs('manager.academic-calendar')" wire:navigate>
+        التقويم الأكاديمي
+    </flux:sidebar.item>
+    <flux:sidebar.item icon="clipboard-document-list" :href="route('manager.tasks')"
+        :current="request()->routeIs('manager.tasks')" wire:navigate>
+        المهام
+    </flux:sidebar.item>
     <flux:sidebar.item icon="document-chart-bar" :href="route('manager.quranic-achievement')"
         :current="request()->routeIs('manager.quranic-achievement')" wire:navigate>
         تقرير الإنجاز القرآني
@@ -72,5 +83,9 @@
     <flux:sidebar.item icon="cog" :href="route('manager.settings')" :current="request()->routeIs('manager.settings')"
         wire:navigate>
         إعدادات الانضباط
+    </flux:sidebar.item>
+    <flux:sidebar.item icon="chat-bubble-left-right" :href="route('manager.whatsapp-settings')" :current="request()->routeIs('manager.whatsapp-settings')"
+        wire:navigate>
+        إعدادات الواتساب
     </flux:sidebar.item>
 </flux:sidebar.group>

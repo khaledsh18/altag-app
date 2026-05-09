@@ -142,6 +142,27 @@ new class extends Component {
                 'startDate' => 'required|date',
                 'daysCount' => 'required|integer|min:1|max:365',
             ]);
+
+            // Auto-fill activeDays based on manager's attendance periods
+            $startDateObj = Carbon::parse($this->startDate);
+            $attendancePeriod = \App\Models\AcademicCalendarEvent::where('is_attendance_period', true)
+                ->where('start_date', '<=', $startDateObj->format('Y-m-d'))
+                ->where('end_date', '>=', $startDateObj->format('Y-m-d'))
+                ->first();
+
+            if ($attendancePeriod && !empty($attendancePeriod->weekdays)) {
+                $mapping = [
+                    1 => 'Sunday',
+                    2 => 'Monday',
+                    3 => 'Tuesday',
+                    4 => 'Wednesday',
+                    5 => 'Thursday',
+                    6 => 'Friday',
+                    7 => 'Saturday',
+                ];
+
+                $this->activeDays = array_map(fn($wd) => $mapping[$wd], $attendancePeriod->weekdays);
+            }
         } elseif ($this->step == 5) {
             $this->validate(['activeDays' => 'required|array|min:1'], ['activeDays.required' => 'يجب اختيار يوم واحد على الأقل.']);
         }

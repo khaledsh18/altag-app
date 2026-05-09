@@ -27,9 +27,12 @@ class Supervisor extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'is_approved',
         'approved_by',
+        'access_token',
+        'is_data_completed',
     ];
 
     /**

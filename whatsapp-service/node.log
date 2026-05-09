@@ -1,0 +1,43 @@
+خدمة الواتساب تعمل على المنفذ http://localhost:3000
+تم إنشاء QR Code جديد. يرجى مسحه لربط الحساب.
+تم إنشاء QR Code جديد. يرجى مسحه لربط الحساب.
+تم إنشاء QR Code جديد. يرجى مسحه لربط الحساب.
+جاري التحميل: 95% - WhatsApp
+جاري التحميل: 99% - WhatsApp
+تمت المصادقة بنجاح!
+تمت المصادقة بنجاح!
+تمت المصادقة بنجاح!
+تمت المصادقة بنجاح!
+تمت المصادقة بنجاح!
+واتساب جاهز الآن للعمل!
+جاري التحميل: 100% - WhatsApp
+تمت المصادقة بنجاح!
+واتساب جاهز الآن للعمل!
+خطأ أثناء إرسال الرسالة: Error: No LID for user
+s (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:79:180)
+    at #evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/ExecutionContext.js:391:56)
+    at async ExecutionContext.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/ExecutionContext.js:277:16)
+    at async IsolatedWorld.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/IsolatedWorld.js:100:16)
+    at async CdpFrame.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:362:20)
+    at async CdpPage.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:830:20)
+    at async Client.sendMessage (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/whatsapp-web.js/src/Client.js:1533:25)
+    at async /Users/aaa/Projects/altag-app/whatsapp-service/index.js:104:26
+    at i (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:108:348)
+    at l (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:108:124)
+    at <anonymous> (https://static.whatsapp.net/rsrc.php/v4iXCw4/yR/l/ar_AR-j/P1wT4eZVUMp.js:701:1844)
+    at h (https://static.whatsapp.net/rsrc.php/v4iDh_4/y8/l/ar_AR-j/7sAKtC67trWWl_HC4ZDPfu7U57-uZ8r-D0mtO6tNQKIL186wpIxpTAFGzqCIWqV4CpT7otkdk6FOGQRP4mWPis7nNzpIrum6e-TF5n-1pYtxHjpo4kSh_FG-sCrh0_Gk7FjUTJe-zlHYKL8nCif7c5C2jqs4KsFRWq4q0Bsep8xtWUEn-4JwhtKwyLPahCoULWngV7yn-FILiwSU_Va0veUrsIPxqLHCXmPk0ZW4Ou9ZMwG9u7CsviLnUnBmUPyvtBmuOzyKN8hMYow_KEoXwHN4rOuWGxTi43XeouGna3IP912AlSgUPMOULrXECuY8vAYiW6ahNF.js:249:1489)
+    at s (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:78:179)
+خطأ أثناء إرسال الرسالة: Error: No LID for user
+s (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:79:180)
+    at #evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/ExecutionContext.js:391:56)
+    at async ExecutionContext.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/ExecutionContext.js:277:16)
+    at async IsolatedWorld.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/IsolatedWorld.js:100:16)
+    at async CdpFrame.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Frame.js:362:20)
+    at async CdpPage.evaluate (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:830:20)
+    at async Client.sendMessage (/Users/aaa/Projects/altag-app/whatsapp-service/node_modules/whatsapp-web.js/src/Client.js:1533:25)
+    at async /Users/aaa/Projects/altag-app/whatsapp-service/index.js:104:26
+    at i (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:108:348)
+    at l (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:108:124)
+    at <anonymous> (https://static.whatsapp.net/rsrc.php/v4iXCw4/yR/l/ar_AR-j/P1wT4eZVUMp.js:701:1844)
+    at h (https://static.whatsapp.net/rsrc.php/v4iDh_4/y8/l/ar_AR-j/7sAKtC67trWWl_HC4ZDPfu7U57-uZ8r-D0mtO6tNQKIL186wpIxpTAFGzqCIWqV4CpT7otkdk6FOGQRP4mWPis7nNzpIrum6e-TF5n-1pYtxHjpo4kSh_FG-sCrh0_Gk7FjUTJe-zlHYKL8nCif7c5C2jqs4KsFRWq4q0Bsep8xtWUEn-4JwhtKwyLPahCoULWngV7yn-FILiwSU_Va0veUrsIPxqLHCXmPk0ZW4Ou9ZMwG9u7CsviLnUnBmUPyvtBmuOzyKN8hMYow_KEoXwHN4rOuWGxTi43XeouGna3IP912AlSgUPMOULrXECuY8vAYiW6ahNF.js:249:1489)
+    at s (https://static.whatsapp.net/rsrc.php/v4/yu/r/0U22eSxJx5O.js:78:179)

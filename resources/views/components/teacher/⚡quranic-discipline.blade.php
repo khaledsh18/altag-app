@@ -252,9 +252,13 @@ new class extends Component {
         <div
             class="p-4 border-b border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <flux:input type="date" wire:model.live="startDate" class="max-w-[150px]" />
+                <div class="w-36">
+                    <livewire:shared.hijri-datepicker wire:model.live="startDate" label="" placeholder="{{ __('من') }}" />
+                </div>
                 <span class="text-zinc-400">-</span>
-                <flux:input type="date" wire:model.live="endDate" class="max-w-[150px]" />
+                <div class="w-36">
+                    <livewire:shared.hijri-datepicker wire:model.live="endDate" label="" placeholder="{{ __('إلى') }}" />
+                </div>
             </div>
 
             <div class="flex items-center gap-2">

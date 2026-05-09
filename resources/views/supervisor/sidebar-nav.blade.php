@@ -11,6 +11,14 @@
     <flux:sidebar.item icon="users" href="#" wire:navigate>
         المعلمون
     </flux:sidebar.item>
+    <flux:sidebar.item icon="calendar" :href="route('supervisor.academic-calendar')"
+        :current="request()->routeIs('supervisor.academic-calendar')" wire:navigate>
+        التقويم الأكاديمي
+    </flux:sidebar.item>
+    <flux:sidebar.item icon="clipboard-document-list" :href="route('supervisor.tasks')"
+        :current="request()->routeIs('supervisor.tasks')" wire:navigate>
+        المهام
+    </flux:sidebar.item>
     <flux:sidebar.item icon="exclamation-triangle" :href="route('supervisor.exceeded-limits')"
         :current="request()->routeIs('supervisor.exceeded-limits')" wire:navigate>
         لائحة التجاوزات

@@ -128,10 +128,9 @@
                     <flux:input wire:model="title" label="{{ __('اسم المسابقة') }}"
                         placeholder="{{ __('مثال: نجوم التحفيظ لشهر شوال') }}" />
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:input type="date" wire:model="start_date" label="{{ __('تاريخ البداية') }}" />
-                        <flux:input type="date" wire:model="end_date" label="{{ __('تاريخ النهاية') }}"
-                            placeholder="{{ __('مفتوح (اختياري)') }}" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <livewire:shared.hijri-datepicker wire:model="start_date" label="{{ __('تاريخ البداية') }}" />
+                        <livewire:shared.hijri-datepicker wire:model="end_date" label="{{ __('تاريخ النهاية') }}" placeholder="{{ __('مفتوح (اختياري)') }}" />
                     </div>
 
                     <flux:switch wire:model="is_active" label="{{ __('حالة اللوحة') }}"

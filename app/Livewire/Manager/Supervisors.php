@@ -5,6 +5,8 @@ namespace App\Livewire\Manager;
 use App\Models\Stage;
 use App\Models\Supervisor;
 use Flux\Flux;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Supervisors extends Component
@@ -17,9 +19,17 @@ class Supervisors extends Component
 
     public string $email = '';
 
+    public string $phone = '';
+
     public array $selectedStages = [];
 
+    public string $password = '';
+
     public $editingSupervisorId = null;
+
+    public string $quickName = '';
+
+    public string $quickPhone = '';
 
     public string $search = '';
 
@@ -92,20 +102,69 @@ class Supervisors extends Component
         Flux::toast(__('تمت الموافقة على المشرف بنجاح'), variant: 'success');
     }
 
-    public function edit($id)
+    public function createQuickSupervisor()
+    {
+        $this->validate([
+            'quickName' => 'required|string|min:2|max:255',
+            'quickPhone' => 'nullable|string|max:20',
+        ]);
+
+        Supervisor::create([
+            'name' => $this->quickName,
+            'phone' => $this->quickPhone,
+            'email' => 'supervisor_'.Str::random(10).'@uncompleted.altag.app',
+            'password' => Hash::make(Str::random(10)),
+            'is_approved' => true,
+            'approved_by' => auth()->id(),
+            'access_token' => Str::random(32),
+            'is_data_completed' => false,
+        ]);
+
+        $this->reset(['quickName', 'quickPhone']);
+        $this->loadData();
+
+        Flux::toast(__('تم إنشاء حساب المشرف بنجاح'), variant: 'success');
+    }
+
+    public function resetToken($id)
     {
         $supervisor = Supervisor::find($id);
+        if ($supervisor) {
+            $supervisor->update([
+                'access_token' => Str::random(32),
+            ]);
+            $this->loadData();
+            if ($this->viewingSupervisor && $this->viewingSupervisor->id === $supervisor->id) {
+                $this->viewingSupervisor->access_token = $supervisor->access_token;
+            }
+            Flux::toast(__('تم إعادة إنشاء الرابط السحري بنجاح'), variant: 'success');
+        }
+    }
 
-        if (! $supervisor) {
+    public $viewingSupervisor = null;
+
+    public function edit($id)
+    {
+        $this->viewingSupervisor = Supervisor::with('stages')->find($id);
+
+        if (! $this->viewingSupervisor) {
             Flux::toast(__('المشرف غير موجود'), variant: 'danger');
 
             return;
         }
 
-        $this->editingSupervisorId = $supervisor->id;
-        $this->name = $supervisor->name;
-        $this->email = $supervisor->email;
-        $this->selectedStages = $supervisor->stages->pluck('id')->toArray();
+        $this->editingSupervisorId = $this->viewingSupervisor->id;
+        $this->name = $this->viewingSupervisor->name;
+        $this->email = $this->viewingSupervisor->email;
+        $this->phone = $this->viewingSupervisor->phone ?? '';
+        $this->selectedStages = $this->viewingSupervisor->stages->pluck('id')->toArray();
+        $this->password = '';
+        Flux::modal('supervisor-modal')->show();
+    }
+
+    public function add()
+    {
+        $this->reset(['name', 'email', 'phone', 'password', 'selectedStages', 'editingSupervisorId', 'viewingSupervisor']);
         Flux::modal('supervisor-modal')->show();
     }
 
@@ -114,18 +173,36 @@ class Supervisors extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:supervisors,email,'.$this->editingSupervisorId,
+            'phone' => 'nullable|string|max:20',
+            'password' => $this->editingSupervisorId ? 'nullable|min:8' : 'required|min:8',
         ]);
 
-        $supervisor = Supervisor::find($this->editingSupervisorId);
-        $supervisor->update([
-            'name' => $this->name,
-            'email' => $this->email,
-        ]);
+        if ($this->editingSupervisorId) {
+            $supervisor = Supervisor::find($this->editingSupervisorId);
+            $supervisor->update([
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone' => $this->phone,
+            ]);
+            if ($this->password) {
+                $supervisor->update(['password' => bcrypt($this->password)]);
+            }
+            Flux::toast(__('تم تحديث بيانات المشرف بنجاح'), variant: 'success');
+        } else {
+            $supervisor = Supervisor::create([
+                'name' => $this->name,
+                'email' => $this->email,
+                'phone' => $this->phone,
+                'password' => bcrypt($this->password),
+                'is_approved' => true,
+                'approved_by' => auth()->id(),
+            ]);
+            Flux::toast(__('تم إضافة المشرف بنجاح'), variant: 'success');
+        }
 
         $supervisor->stages()->sync($this->selectedStages);
 
-        Flux::toast(__('تم تحديث بيانات المشرف بنجاح'), variant: 'success');
-        $this->reset(['name', 'email', 'selectedStages', 'editingSupervisorId']);
+        $this->reset(['name', 'email', 'phone', 'password', 'selectedStages', 'editingSupervisorId', 'viewingSupervisor']);
         $this->loadData();
         Flux::modal('supervisor-modal')->close();
     }
@@ -144,7 +221,7 @@ class Supervisors extends Component
 
     public function cancel()
     {
-        $this->reset(['name', 'email', 'selectedStages', 'editingSupervisorId']);
+        $this->reset(['name', 'email', 'phone', 'password', 'selectedStages', 'editingSupervisorId', 'viewingSupervisor']);
     }
 
     public function render()

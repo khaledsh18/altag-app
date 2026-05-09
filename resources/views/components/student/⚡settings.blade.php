@@ -52,7 +52,7 @@ new class extends Component {
 
         <flux:input wire:model="phone" :label="__('رقم الهاتف')" type="text" autocomplete="tel" placeholder="05XXXXXXXX" />
 
-        <flux:input wire:model="birth_date" :label="__('تاريخ الميلاد')" type="date" />
+        <livewire:shared.hijri-datepicker wire:model="birth_date" :label="__('تاريخ الميلاد')" />
 
         <div class="flex items-center gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
             <div class="flex items-center justify-end">

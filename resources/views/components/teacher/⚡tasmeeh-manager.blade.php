@@ -857,9 +857,9 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
             </div>
 
             <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <flux:input type="date" wire:model="sessionStartDate" label="{{ __('تاريخ البداية') }}" />
-                    <flux:input type="date" wire:model="sessionEndDate" label="{{ __('تاريخ النهاية') }}" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <livewire:shared.hijri-datepicker wire:model="sessionStartDate" label="{{ __('تاريخ البداية') }}" />
+                    <livewire:shared.hijri-datepicker wire:model="sessionEndDate" label="{{ __('تاريخ النهاية') }}" />
                 </div>
 
                 <flux:field>
