@@ -1,0 +1,5 @@
+2026/05/10-01:59:30.552 ab48f5 Creating DB /Users/aaa/Projects/altag-app/whatsapp-service/.wwebjs_auth/session/Default/Local Storage/leveldb since it was missing.
+2026/05/10-01:59:30.556 ab48f5 Reusing MANIFEST /Users/aaa/Projects/altag-app/whatsapp-service/.wwebjs_auth/session/Default/Local Storage/leveldb/MANIFEST-000001
+2026/05/10-03:35:52.745 ab48f9 Level-0 table #5: started
+2026/05/10-03:35:52.747 ab48f9 Level-0 table #5: 18285 bytes OK
+2026/05/10-03:35:52.749 ab48f9 Delete type=0 #3

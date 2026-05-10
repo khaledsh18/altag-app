@@ -9,103 +9,143 @@ app.use(express.json());
 
 const port = 3000;
 
-let qrCodeData = null;
-let isReady = false;
-let isAuthenticated = false;
-let loadingPercent = 0;
+// تخزين جميع الجلسات: Map من clientId -> بيانات الجلسة
+const sessions = new Map();
 
-// تهيئة عميل واتساب مع حفظ الجلسة محلياً
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+/**
+ * إنشاء أو استرجاع جلسة واتساب لمستخدم معين
+ */
+function getOrCreateSession(clientId) {
+    if (sessions.has(clientId)) {
+        return sessions.get(clientId);
     }
-});
 
-// عند توليد QR Code
-client.on('qr', (qr) => {
-    console.log('تم إنشاء QR Code جديد. يرجى مسحه لربط الحساب.');
-    qrCodeData = qr;
-});
+    const sessionData = {
+        client: null,
+        status: 'starting',
+        qrCode: null,
+        loadingPercent: 0,
+    };
 
-// تتبع نسبة التحميل
-client.on('loading_screen', (percent, message) => {
-    console.log(`جاري التحميل: ${percent}% - ${message}`);
-    loadingPercent = percent;
-});
+    const client = new Client({
+        authStrategy: new LocalAuth({ clientId }),
+        puppeteer: {
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        },
+    });
 
-// عند المصادقة بنجاح
-client.on('authenticated', () => {
-    console.log('تمت المصادقة بنجاح!');
-    isAuthenticated = true;
-    qrCodeData = null; // مسح الرمز بعد المصادقة
-});
+    client.on('qr', (qr) => {
+        console.log(`[${clientId}] QR Code جديد.`);
+        sessionData.qrCode = qr;
+        sessionData.status = 'needs_scan';
+    });
 
-// عند جاهزية العميل
-client.on('ready', () => {
-    console.log('واتساب جاهز الآن للعمل!');
-    isReady = true;
-    isAuthenticated = true;
-    qrCodeData = null;
-});
+    client.on('loading_screen', (percent) => {
+        sessionData.loadingPercent = percent;
+        sessionData.status = 'loading';
+    });
 
-// عند قطع الاتصال
-client.on('disconnected', (reason) => {
-    console.log('تم قطع الاتصال بالواتساب:', reason);
-    isReady = false;
-    isAuthenticated = false;
-    qrCodeData = null;
-});
+    client.on('authenticated', () => {
+        console.log(`[${clientId}] تمت المصادقة.`);
+        sessionData.status = 'loading';
+        sessionData.qrCode = null;
+    });
 
-client.initialize();
+    client.on('ready', () => {
+        console.log(`[${clientId}] جاهز للإرسال.`);
+        sessionData.status = 'ready';
+        sessionData.qrCode = null;
+    });
 
-// مسار للحصول على حالة الاتصال ورمز QR (إن وجد)
-app.get('/status', async (req, res) => {
-    if (isReady) {
+    client.on('disconnected', (reason) => {
+        console.log(`[${clientId}] قُطع الاتصال: ${reason}`);
+        sessionData.status = 'disconnected';
+        sessionData.qrCode = null;
+        // إعادة التهيئة تلقائياً بعد 5 ثوانٍ
+        setTimeout(() => {
+            sessions.delete(clientId);
+        }, 5000);
+    });
+
+    client.initialize();
+    sessionData.client = client;
+    sessions.set(clientId, sessionData);
+
+    return sessionData;
+}
+
+// ── GET /status/:clientId ─────────────────────────────────────────────────────
+app.get('/status/:clientId', async (req, res) => {
+    const { clientId } = req.params;
+    const session = getOrCreateSession(clientId);
+
+    if (session.status === 'ready') {
         return res.json({ status: 'ready', message: 'واتساب متصل وجاهز.' });
     }
 
-    if (isAuthenticated) {
+    if (session.status === 'loading') {
         return res.json({
             status: 'loading',
-            message: `تمت المصادقة بنجاح. جاري تنزيل المحادثات والتهيئة... (${loadingPercent}%)`
+            message: `تمت المصادقة. جاري التهيئة... (${session.loadingPercent}%)`,
         });
     }
 
-    if (qrCodeData) {
+    if (session.status === 'needs_scan' && session.qrCode) {
         try {
-            // تحويل رمز QR إلى صورة Base64 لتسهيل عرضها في لارافل
-            const qrImage = await qrcode.toDataURL(qrCodeData);
+            const qrImage = await qrcode.toDataURL(session.qrCode);
             return res.json({ status: 'needs_scan', qr_image: qrImage });
         } catch (err) {
-            return res.status(500).json({ status: 'error', message: 'فشل في توليد صورة الـ QR.' });
+            return res.status(500).json({ status: 'error', message: 'فشل في توليد QR.' });
         }
+    }
+
+    if (session.status === 'disconnected') {
+        return res.json({ status: 'disconnected', message: 'انقطع الاتصال. جاري إعادة التهيئة...' });
     }
 
     return res.json({ status: 'starting', message: 'جاري تهيئة الواتساب...' });
 });
 
-// مسار لإرسال رسالة
+// ── POST /send ────────────────────────────────────────────────────────────────
 app.post('/send', async (req, res) => {
-    if (!isReady) {
-        return res.status(503).json({ success: false, message: 'واتساب غير جاهز بعد.' });
+    const { clientId, phone, message } = req.body;
+
+    if (!clientId || !phone || !message) {
+        return res.status(400).json({ success: false, message: 'يرجى توفير clientId ورقم الهاتف والرسالة.' });
     }
 
-    const { phone, message } = req.body;
+    const session = sessions.get(clientId);
 
-    if (!phone || !message) {
-        return res.status(400).json({ success: false, message: 'يرجى توفير رقم الهاتف ونص الرسالة.' });
+    if (!session || session.status !== 'ready') {
+        return res.status(503).json({ success: false, message: `الجلسة [${clientId}] غير جاهزة بعد.` });
     }
 
     try {
-        // تأكد من أن الرقم ينتهي بـ @c.us
         const chatId = `${phone}@c.us`;
-        const response = await client.sendMessage(chatId, message);
-        return res.json({ success: true, message: 'تم إرسال الرسالة بنجاح.', response });
+        await session.client.sendMessage(chatId, message);
+        return res.json({ success: true, message: 'تم الإرسال بنجاح.' });
     } catch (error) {
-        console.error('خطأ أثناء إرسال الرسالة:', error);
+        console.error(`[${clientId}] خطأ في الإرسال:`, error.message);
         return res.status(500).json({ success: false, message: 'حدث خطأ أثناء الإرسال.', error: error.message });
+    }
+});
+
+// ── POST /disconnect/:clientId ────────────────────────────────────────────────
+app.post('/disconnect/:clientId', async (req, res) => {
+    const { clientId } = req.params;
+    const session = sessions.get(clientId);
+
+    if (!session) {
+        return res.json({ success: true, message: 'الجلسة غير موجودة.' });
+    }
+
+    try {
+        await session.client.destroy();
+        sessions.delete(clientId);
+        return res.json({ success: true, message: 'تم قطع الاتصال.' });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 

@@ -586,7 +586,8 @@ new class extends Component {
             return;
         }
 
-        \App\Jobs\SendWhatsappTasksJob::dispatch(array_values($assigneesTasks));
+        $senderClientId = strtolower(class_basename(get_class($user))).'_'.$user->id;
+        \App\Jobs\SendWhatsappTasksJob::dispatch(array_values($assigneesTasks), $senderClientId);
         
         Flux::toast('تم جدولة إرسال رسائل الواتساب بنجاح!', variant: 'success');
     }

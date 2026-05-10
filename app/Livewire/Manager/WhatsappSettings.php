@@ -8,22 +8,30 @@ use Livewire\Component;
 class WhatsappSettings extends Component
 {
     public $status = 'loading';
+
     public $message = 'جاري التحقق من حالة الواتساب...';
+
     public $qrCode = null;
 
-    public function checkStatus()
+    public string $clientId = '';
+
+    public function mount(): void
+    {
+        $user = auth()->user();
+        $role = class_basename(get_class($user));
+        $this->clientId = strtolower($role).'_'.$user->id;
+        $this->checkStatus();
+    }
+
+    public function checkStatus(): void
     {
         try {
-            $response = Http::timeout(3)->get('http://localhost:3000/status');
+            $response = Http::timeout(5)->get("http://localhost:3000/status/{$this->clientId}");
             if ($response->successful()) {
                 $data = $response->json();
                 $this->status = $data['status'] ?? 'unknown';
                 $this->message = $data['message'] ?? '';
-                if (isset($data['qr_image'])) {
-                    $this->qrCode = $data['qr_image'];
-                } else {
-                    $this->qrCode = null;
-                }
+                $this->qrCode = $data['qr_image'] ?? null;
             } else {
                 $this->status = 'error';
                 $this->message = 'لا يمكن الاتصال بخدمة الواتساب.';
@@ -34,9 +42,16 @@ class WhatsappSettings extends Component
         }
     }
 
-    public function mount()
+    public function disconnect(): void
     {
-        $this->checkStatus();
+        try {
+            Http::timeout(5)->post("http://localhost:3000/disconnect/{$this->clientId}");
+            $this->status = 'starting';
+            $this->message = 'جاري إعادة التهيئة...';
+            $this->qrCode = null;
+        } catch (\Exception $e) {
+            // ignore
+        }
     }
 
     public function render()

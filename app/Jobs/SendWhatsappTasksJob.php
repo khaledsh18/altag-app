@@ -15,12 +15,15 @@ class SendWhatsappTasksJob implements ShouldQueue
 
     public $teachersTasks;
 
+    public string $senderClientId;
+
     /**
      * Create a new job instance.
      */
-    public function __construct(array $teachersTasks)
+    public function __construct(array $teachersTasks, string $senderClientId)
     {
         $this->teachersTasks = $teachersTasks;
+        $this->senderClientId = $senderClientId;
     }
 
     /**
@@ -32,7 +35,7 @@ class SendWhatsappTasksJob implements ShouldQueue
             $assignee = array_key_exists('assignee', $data) ? $data['assignee'] : ($data['teacher'] ?? null);
             $tasks = $data['tasks'] ?? [];
 
-            if (! $assignee || ! $assignee->phone) {
+            if (!$assignee || !$assignee->phone) {
                 continue;
             }
 
@@ -40,26 +43,27 @@ class SendWhatsappTasksJob implements ShouldQueue
             $phone = preg_replace('/[^0-9]/', '', $assignee->phone);
 
             if (str_starts_with($phone, '0')) {
-                $phone = '966'.substr($phone, 1);
+                $phone = '966' . substr($phone, 1);
             } elseif (str_starts_with($phone, '5')) {
-                $phone = '966'.$phone;
+                $phone = '966' . $phone;
             }
 
             // بناء الرسالة: تجميع المهام حسب الحدث ثم التصنيف
             $message = $this->buildMessage($assignee, $tasks);
 
-            // إرسال الطلب لخدمة الواتساب
+            // إرسال الطلب لخدمة الواتساب باستخدام جلسة المُرسِل
             try {
                 $response = Http::timeout(10)->post('http://localhost:3000/send', [
+                    'clientId' => $this->senderClientId,
                     'phone' => $phone,
                     'message' => $message,
                 ]);
 
-                if (! $response->successful()) {
-                    Log::error("Failed to send WhatsApp tasks to assignee {$assignee->id}: ".$response->body());
+                if (!$response->successful()) {
+                    Log::error("Failed to send WhatsApp tasks to assignee {$assignee->id}: " . $response->body());
                 }
             } catch (\Exception $e) {
-                Log::error("Exception while sending WhatsApp tasks to assignee {$assignee->id}: ".$e->getMessage());
+                Log::error("Exception while sending WhatsApp tasks to assignee {$assignee->id}: " . $e->getMessage());
             }
         }
     }
@@ -84,14 +88,14 @@ class SendWhatsappTasksJob implements ShouldQueue
             $eventKey = $eventName ?? '__general__';
             $categoryName = $task->category?->name ?? 'عام';
 
-            if (! isset($grouped[$eventKey])) {
+            if (!isset($grouped[$eventKey])) {
                 $grouped[$eventKey] = [
                     'name' => $eventName,
                     'categories' => [],
                 ];
             }
 
-            if (! isset($grouped[$eventKey]['categories'][$categoryName])) {
+            if (!isset($grouped[$eventKey]['categories'][$categoryName])) {
                 $grouped[$eventKey]['categories'][$categoryName] = [];
             }
 
@@ -116,11 +120,11 @@ class SendWhatsappTasksJob implements ShouldQueue
                     $dueDateHijri = $task->due_date
                         ? $this->toHijriDate($task->due_date)
                         : 'بدون موعد';
-                    $msg .= "{$num}. {$task->title} - {$dueDateHijri}\n";
+                    $msg .= "{$num}. {$task->title} اخر موعد لاتمام المهمة  {$dueDateHijri}\n";
                 }
             }
 
-            $msg .= "\nجوزيت خيرا 🌹";
+            $msg .= "\nجزيت خيرا 🌹";
             $messages[] = $msg;
         }
 
@@ -144,7 +148,7 @@ class SendWhatsappTasksJob implements ShouldQueue
 
             return $formatter->format($carbon->timestamp);
         } catch (\Exception $e) {
-            return $date instanceof Carbon ? $date->format('Y-m-d') : (string) $date;
+            return $date instanceof Carbon ? $date->format('m-d') : (string) $date;
         }
     }
 }
