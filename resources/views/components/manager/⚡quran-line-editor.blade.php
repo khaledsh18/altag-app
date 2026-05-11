@@ -3,7 +3,6 @@
 use Livewire\Component;
 use App\Models\Surah;
 use App\Models\Ayah;
-use Livewire\Volt\Component as VoltComponent;
 
 new class extends Component
 {

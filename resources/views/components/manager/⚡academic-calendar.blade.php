@@ -582,21 +582,22 @@ new class extends Component {
 ?>
 
 <div class="space-y-8 pb-10" dir="rtl">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-7">
         <div>
             <flux:heading size="xl" class="font-bold">التقويم الأكاديمي</flux:heading>
             <flux:subheading>جدول الإجازات والأحداث التعليمية للعام الهجري {{ $currentYear }}</flux:subheading>
         </div>
-        <div class="flex items-center gap-4">
-            <flux:button wire:click="createNewEvent" icon="plus" size="sm" variant="primary">إضافة حدث</flux:button>
-            <flux:button x-on:click="$flux.modal('attendance-period-modal').show()" icon="clock" size="sm" variant="outline">إضافة فترة دوام</flux:button>
+        
+        <div class="flex flex-col gap-7 sm:flex-row items-stretch sm:items-center">
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <flux:button wire:click="createNewEvent" icon="plus" size="sm" variant="primary" class="w-full sm:w-auto">إضافة حدث</flux:button>
+                <flux:button x-on:click="$flux.modal('attendance-period-modal').show()" icon="clock" size="sm" variant="outline" class="w-full mt-6 sm:w-auto">إضافة فترة دوام</flux:button>
+            </div>
             
-            <div class="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
-                <flux:button wire:click="$set('year', {{ $currentYear - 1 }})" icon="chevron-right" size="sm"
-                    variant="ghost" />
-                <span class="font-bold px-2">{{ $currentYear }}</span>
-                <flux:button wire:click="$set('year', {{ $currentYear + 1 }})" icon="chevron-left" size="sm"
-                    variant="ghost" />
+            <div class="flex items-center justify-between sm:justify-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-full sm:w-auto mt-6 sm:mt-0">
+                <flux:button wire:click="$set('year', {{ $currentYear - 1 }})" icon="chevron-right" size="sm" variant="ghost" />
+                <span class="font-bold px-2 sm:px-4 text-center grow sm:grow-0">{{ $currentYear }}</span>
+                <flux:button wire:click="$set('year', {{ $currentYear + 1 }})" icon="chevron-left" size="sm" variant="ghost" />
             </div>
         </div>
     </div>
@@ -862,7 +863,7 @@ new class extends Component {
                                 @else
                                     <flux:button variant="ghost" size="xs" icon="check-circle" wire:click="completeTask({{ $event['id'] }})" class="text-zinc-400 hover:text-emerald-500" />
                                 @endif
-                                <flux:button variant="ghost" size="xs" icon="arrow-top-right-on-square" href="{{ route(request()->route()->getPrefix().'tasks') }}" wire:navigate />
+                                <flux:button variant="ghost" size="xs" icon="arrow-top-right-on-square" href="{{ route(auth()->guard('manager')->check() ? 'manager.tasks' : 'supervisor.tasks') }}" wire:navigate />
                             </div>
                         @endif
                     </div>

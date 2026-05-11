@@ -23,4 +23,8 @@
         :current="request()->routeIs('supervisor.exceeded-limits')" wire:navigate>
         لائحة التجاوزات
     </flux:sidebar.item>
+    <flux:sidebar.item icon="chat-bubble-left-right" :href="route('supervisor.whatsapp-settings')"
+        :current="request()->routeIs('supervisor.whatsapp-settings')" wire:navigate>
+        إعدادات الواتساب
+    </flux:sidebar.item>
 </flux:sidebar.group>

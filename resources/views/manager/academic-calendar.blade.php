@@ -1,7 +1,7 @@
 <x-layouts.role-shell>
 
     <x-slot:title>
-        {{ __('التحليل الذكي') }}
+        {{ __('التقويم الأكاديمي') }}
     </x-slot:title>
 
     <x-slot:sidebar>
