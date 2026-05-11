@@ -7,6 +7,17 @@
 </head>
 
 <body class="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased">
+    <!-- Offline Indicator -->
+    <div x-data="{ online: navigator.onLine }" 
+         @online.window="online = true" 
+         @offline.window="online = false"
+         x-show="!online" 
+         x-transition.opacity.duration.500ms
+         style="display: none;"
+         class="fixed top-0 left-0 right-0 z-[100] bg-red-500 text-white text-center py-1.5 px-4 text-sm font-bold shadow-md flex items-center justify-center gap-2">
+         <flux:icon icon="exclamation-triangle" class="size-4" />
+         <span>أنت غير متصل بشبكة الإنترنت حالياً. يرجى التحقق من اتصالك.</span>
+    </div>
     <flux:sidebar sticky collapsible="mobile"
         class="border-e border-zinc-100 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <flux:sidebar.header>

@@ -643,13 +643,13 @@ new class extends Component {
 
 <div class="space-y-8 pb-20 text-zinc-800 dark:text-zinc-200" dir="rtl">
     {{-- Top Bar --}}
-    <div class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
         <h2 class="text-2xl font-bold">إدارة المهام</h2>
-        <div class="flex items-center gap-3">
-            <x-flux::button wire:click="sendReminderTasksToTeachers" icon="bell" class="!bg-amber-500 hover:!bg-amber-600 !text-white border-0" size="sm">
+        <div class="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-3 sm:gap-4">
+            <x-flux::button wire:click="sendReminderTasksToTeachers" icon="bell" class="!bg-amber-500 hover:!bg-amber-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0" size="sm">
                 تذكير بالمهام (WhatsApp)
             </x-flux::button>
-            <x-flux::button wire:click="sendTasksToTeachers" icon="chat-bubble-left-right" class="!bg-emerald-500 hover:!bg-emerald-600 !text-white border-0" size="sm">
+            <x-flux::button wire:click="sendTasksToTeachers" icon="chat-bubble-left-right" class="!bg-emerald-500 hover:!bg-emerald-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0" size="sm">
                 إرسال المهام (WhatsApp)
             </x-flux::button>
         </div>

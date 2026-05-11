@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -147,6 +149,32 @@ app.post('/disconnect/:clientId', async (req, res) => {
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// ── POST /reset/:clientId ────────────────────────────────────────────────
+app.post('/reset/:clientId', async (req, res) => {
+    const { clientId } = req.params;
+    const session = sessions.get(clientId);
+
+    if (session) {
+        try {
+            await session.client.destroy();
+        } catch (e) {
+            console.error('Error destroying client:', e);
+        }
+        sessions.delete(clientId);
+    }
+
+    const sessionDir = path.join(__dirname, '.wwebjs_auth', `session-${clientId}`);
+    if (fs.existsSync(sessionDir)) {
+        try {
+            fs.rmSync(sessionDir, { recursive: true, force: true });
+        } catch (e) {
+            console.error('Error deleting session directory:', e);
+        }
+    }
+
+    return res.json({ success: true, message: 'تم إعادة تعيين الجلسة بنجاح.' });
 });
 
 app.listen(port, () => {

@@ -91,12 +91,12 @@ class LeaderboardService
                     foreach ($days as $day) {
                         $gradedAt = $day->hifz_graded_at ?? $day->date;
                         if ($gradedAt >= $startDate && $gradedAt <= $endDate && $day->hifz_achievement !== null) {
-                            $hifz = (int) $day->hifz_achievement;
-                            if ($hifz === 3) {
+                            $hifz = $day->hifz_achievement;
+                            if ($hifz === 3 || $hifz === '3' || $hifz === 'excellent') {
                                 $hifzScore += ($settings['hifz_excellent'] ?? 10);
-                            } elseif ($hifz === 2) {
+                            } elseif ($hifz === 2 || $hifz === '2' || $hifz === 'good') {
                                 $hifzScore += ($settings['hifz_good'] ?? 7);
-                            } elseif ($hifz === 1) {
+                            } elseif ($hifz === 1 || $hifz === '1' || $hifz === 'acceptable') {
                                 $hifzScore += ($settings['hifz_acceptable'] ?? 4);
                             }
                         }
@@ -107,10 +107,10 @@ class LeaderboardService
                     foreach ($days as $day) {
                         $gradedAt = $day->review_graded_at ?? $day->date;
                         if ($gradedAt >= $startDate && $gradedAt <= $endDate && $day->review_achievement !== null) {
-                            $review = (int) $day->review_achievement;
-                            if ($review === 3) {
+                            $review = $day->review_achievement;
+                            if ($review === 3 || $review === '3' || $review === 'excellent') {
                                 $reviewScore += ($settings['review_excellent'] ?? 5);
-                            } elseif ($review === 2 || $review === 1) {
+                            } elseif ($review === 2 || $review === '2' || $review === '1' || $review === 1 || $review === 'good' || $review === 'acceptable') {
                                 $reviewScore += ($settings['review_good'] ?? 3);
                             }
                         }

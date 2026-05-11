@@ -27,11 +27,16 @@
                 <p class="text-xs text-zinc-400 mt-1">معرف الجلسة: <code class="font-mono">{{ $clientId }}</code></p>
             </div>
 
-            @if($status === 'ready')
-                <flux:button wire:click="disconnect" size="sm" variant="ghost" class="text-red-500 shrink-0">
-                    قطع الاتصال
+            <div class="flex flex-col gap-2 shrink-0">
+                @if($status === 'ready')
+                    <flux:button wire:click="disconnect" size="sm" variant="ghost" class="text-zinc-500 hover:text-zinc-700 w-full text-right">
+                        إيقاف الاتصال
+                    </flux:button>
+                @endif
+                <flux:button wire:click="resetSession" wire:confirm="هل أنت متأكد؟ سيتم حذف الجلسة بالكامل وستحتاج إلى مسح رمز QR من جديد." size="sm" variant="danger" class="w-full">
+                    إعادة تعيين الجلسة (إصلاح التعليق)
                 </flux:button>
-            @endif
+            </div>
         </div>
 
         @if($status === 'needs_scan' && $qrCode)
@@ -50,8 +55,11 @@
         @endif
 
         @if($status === 'error')
-            <div class="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm">
-                يرجى التأكد من تشغيل أمر <code class="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded">node index.js</code> داخل مجلد <code class="font-mono bg-red-100 dark:bg-red-900/40 px-1 py-0.5 rounded">whatsapp-service</code>
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-800 text-sm flex flex-col gap-3">
+                <p>يرجى التأكد من تشغيل خادم الواتساب (Node.js).</p>
+                <flux:button wire:click="startNodeServer" size="sm" variant="danger" class="w-fit" icon="play">
+                    محاولة تشغيل الخادم الآن
+                </flux:button>
             </div>
         @endif
     </flux:card>
