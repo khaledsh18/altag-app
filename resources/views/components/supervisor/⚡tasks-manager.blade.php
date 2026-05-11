@@ -591,6 +591,53 @@ new class extends Component {
         $user = auth()->user();
         return $task->assigned_to_id === $user->id && $task->assigned_to_type === get_class($user);
     }
+    public function sendReminderTasksToTeachers()
+    {
+        $user = auth()->user();
+        $today = \Carbon\Carbon::today()->format('Y-m-d');
+        
+        $pendingTasks = Task::with(['assignedTo'])
+            ->where(function ($q) use ($user) {
+                $q->where('created_by_id', $user->id)
+                    ->where('created_by_type', get_class($user));
+            })
+            ->where('status', 'pending')
+            ->whereIn('assigned_to_type', ['App\Models\Teacher', 'App\Models\Supervisor'])
+            ->whereNotNull('assigned_to_id')
+            ->whereDate('due_date', '>=', $today)
+            ->get();
+            
+        if ($pendingTasks->isEmpty()) {
+            Flux::toast('لا توجد مهام قيد الانتظار لم يحن موعدها لإرسال رسالة تذكير.', variant: 'warning');
+            return;
+        }
+        
+        $assigneesTasks = [];
+        foreach ($pendingTasks as $task) {
+            $assignee = $task->assignedTo;
+            if (!$assignee || empty($assignee->phone)) continue;
+            
+            $key = class_basename($assignee) . '_' . $assignee->id;
+            
+            if (!isset($assigneesTasks[$key])) {
+                $assigneesTasks[$key] = [
+                    'assignee' => $assignee,
+                    'tasks' => []
+                ];
+            }
+            $assigneesTasks[$key]['tasks'][] = $task;
+        }
+        
+        if (empty($assigneesTasks)) {
+            Flux::toast('لا يوجد مستخدمين لديهم أرقام هواتف مسجلة لإرسال التذكير إليهم.', variant: 'warning');
+            return;
+        }
+
+        $senderClientId = strtolower(class_basename(get_class($user))).'_'.$user->id;
+        \App\Jobs\SendWhatsappTasksJob::dispatch(array_values($assigneesTasks), $senderClientId, 'reminder');
+        
+        Flux::toast('تم جدولة إرسال رسائل التذكير عبر الواتساب بنجاح!', variant: 'success');
+    }
 };
 ?>
 
@@ -599,6 +646,9 @@ new class extends Component {
     <div class="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
         <h2 class="text-2xl font-bold">إدارة المهام</h2>
         <div class="flex items-center gap-3">
+            <x-flux::button wire:click="sendReminderTasksToTeachers" icon="bell" class="!bg-amber-500 hover:!bg-amber-600 !text-white border-0" size="sm">
+                تذكير بالمهام (WhatsApp)
+            </x-flux::button>
             <x-flux::button wire:click="sendTasksToTeachers" icon="chat-bubble-left-right" class="!bg-emerald-500 hover:!bg-emerald-600 !text-white border-0" size="sm">
                 إرسال المهام (WhatsApp)
             </x-flux::button>

@@ -427,6 +427,7 @@ new class extends Component {
             ]);
             $taskEvent->is_task = true;
             $taskEvent->task_id = $task->id;
+            $taskEvent->status = $task->status;
             $allEvents->push($taskEvent);
         }
 
@@ -534,24 +535,43 @@ new class extends Component {
             });
 
             $colorClass = 'bg-white hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700';
-            $dayLabels = [];
-            $dayColors = array_fill(0, 8, null); // Initialize 8 empty slots
+            $dayEventsData = [];
+            $fullEventsData = [];
 
             if ($currentDayEvents->isNotEmpty()) {
                 foreach ($currentDayEvents as $event) {
                     $color = $event->color ?: 'indigo';
-                    $dayColors[$event->slot_index] = $colorMap[$color] ?? $colorMap['indigo'];
+                    $isLabeling = ($gregDate === $event->start_date->format('Y-m-d') || 
+                                   $gregDate === $event->end_date->format('Y-m-d'));
+                    
+                    $dayEventsData[] = [
+                        'id' => $event->id,
+                        'colorClass' => $colorMap[$color] ?? $colorMap['indigo'],
+                        'colorName' => $color,
+                        'label' => $isLabeling ? $event->event_name : null,
+                        'slot_index' => $event->slot_index,
+                    ];
+                    
+                    $fullEventsData[] = [
+                        'id' => $event->is_task ? $event->task_id : $event->id,
+                        'event_name' => $event->event_name,
+                        'start_date' => $event->start_date->format('Y-m-d'),
+                        'end_date' => $event->end_date->format('Y-m-d'),
+                        'formatted_start' => $event->start_date->format('Y/m/d'),
+                        'formatted_end' => $event->end_date->format('Y/m/d'),
+                        'color' => $color,
+                        'is_task' => $event->is_task ?? false,
+                        'status' => $event->status ?? null,
+                        'created_by_id' => $event->created_by_id ?? null,
+                        'created_by_type' => $event->created_by_type ?? null,
+                        'can_edit' => ($event->created_by_id == auth()->id() && $event->created_by_type == get_class(auth()->user())),
+                        'slot_index' => $event->slot_index,
+                    ];
                 }
                 
-                // Find labeling events (up to 8)
-                $labelingEvents = $currentDayEvents->filter(fn($e) => 
-                    $gregDate === $e->start_date->format('Y-m-d') || 
-                    $gregDate === $e->end_date->format('Y-m-d')
-                );
-                
-                foreach ($labelingEvents as $event) {
-                    $dayLabels[$event->slot_index] = $event->event_name;
-                }
+                // Sort by slot index to keep relative order consistent
+                usort($dayEventsData, fn($a, $b) => $a['slot_index'] <=> $b['slot_index']);
+                usort($fullEventsData, fn($a, $b) => $a['slot_index'] <=> $b['slot_index']);
                 
                 $colorClass = 'bg-white dark:bg-zinc-800';
             }
@@ -560,8 +580,8 @@ new class extends Component {
                 'hijriDay' => $i,
                 'gregorianDate' => $gregDate,
                 'colorClass' => $colorClass,
-                'dayColors' => $dayColors,
-                'dayLabels' => $dayLabels, // Array of index => label
+                'events' => $dayEventsData,
+                'fullEvents' => $fullEventsData,
                 'hasMultipleEvents' => $currentDayEvents->count() > 1,
                 'isToday' => $gregDate === date('Y-m-d'),
             ];
@@ -581,22 +601,23 @@ new class extends Component {
 };
 ?>
 
-<div class="space-y-8 pb-10" dir="rtl">
-    <div class="flex items-center justify-between">
+<div x-data="calendarEvents" class="space-y-8 pb-10" dir="rtl">
+    <div class="flex flex-col gap-7">
         <div>
             <flux:heading size="xl" class="font-bold">التقويم الأكاديمي</flux:heading>
             <flux:subheading>جدول الإجازات والأحداث التعليمية للعام الهجري {{ $currentYear }}</flux:subheading>
         </div>
-        <div class="flex items-center gap-4">
-            <flux:button wire:click="createNewEvent" icon="plus" size="sm" variant="primary">إضافة حدث</flux:button>
-            <flux:button x-on:click="$flux.modal('attendance-period-modal').show()" icon="clock" size="sm" variant="outline">إضافة فترة دوام</flux:button>
+        
+        <div class="flex flex-col gap-7 sm:flex-row items-stretch sm:items-center">
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <flux:button wire:click="createNewEvent" icon="plus" size="sm" variant="primary" class="w-full sm:w-auto">إضافة حدث</flux:button>
+                <flux:button x-on:click="$flux.modal('attendance-period-modal').show()" icon="clock" size="sm" variant="outline" class="w-full mt-6 sm:w-auto">إضافة فترة دوام</flux:button>
+            </div>
             
-            <div class="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
-                <flux:button wire:click="$set('year', {{ $currentYear - 1 }})" icon="chevron-right" size="sm"
-                    variant="ghost" />
-                <span class="font-bold px-2">{{ $currentYear }}</span>
-                <flux:button wire:click="$set('year', {{ $currentYear + 1 }})" icon="chevron-left" size="sm"
-                    variant="ghost" />
+            <div class="flex items-center justify-between sm:justify-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-full sm:w-auto mt-6 sm:mt-0">
+                <flux:button wire:click="$set('year', {{ $currentYear - 1 }})" icon="chevron-right" size="sm" variant="ghost" />
+                <span class="font-bold px-2 sm:px-4 text-center grow sm:grow-0">{{ $currentYear }}</span>
+                <flux:button wire:click="$set('year', {{ $currentYear + 1 }})" icon="chevron-left" size="sm" variant="ghost" />
             </div>
         </div>
     </div>
@@ -633,7 +654,7 @@ new class extends Component {
                                             <div class="size-2 rounded-full bg-emerald-500"></div>
                                             <span class="font-bold text-sm text-emerald-900 dark:text-emerald-100">{{ $period->event_name }}</span>
                                         </div>
-                                        <flux:button variant="ghost" size="xs" icon="x-mark" class="text-emerald-600 hover:text-red-500" wire:click="deletePeriod({{ $period->id }})" />
+                                        <flux:button variant="ghost" size="xs" icon="x-mark" class="text-emerald-600 hover:text-red-500" wire:click="deletePeriod({{ $period->id }})" wire:confirm="هل أنت متأكد من حذف فترة الدوام هذه؟" />
                                     </div>
                                     
                                     @if($period->description)
@@ -774,31 +795,16 @@ new class extends Component {
                             <div class="h-20 w-full bg-white dark:bg-zinc-900/50"></div>
                         @else
                             <button
-                                wire:click="selectDate('{{ $day['gregorianDate'] }}', {{ $day['hijriDay'] }}, '{{ $month['monthName'] }}')"
+                                x-on:click="openDay('{{ $day['gregorianDate'] }}', {{ $day['hijriDay'] }}, '{{ $month['monthName'] }}', @js($day['fullEvents']))"
                                 type="button" class="group relative flex flex-col justify-start p-1 h-20 w-full transition-all duration-200 text-right overflow-hidden
                                             {{ $day['colorClass'] }}
                                             {{ $day['isToday'] ? 'ring-2 ring-inset ring-indigo-500 z-10 shadow-sm' : '' }}
                                             ">
 
-                                {{-- Event Background Slices --}}
-                                @if(count($day['dayColors']) > 0)
-                                    <div class="absolute inset-0 flex flex-col -z-0 opacity-60">
-                                        @for($idx = 0; $idx <= $month['maxMonthSlot']; $idx++)
-                                            <div class="flex-1 {{ $day['dayColors'][$idx] ?? 'bg-transparent' }} flex items-center justify-center overflow-hidden px-1 {{ isset($day['dayColors'][$idx]) ? 'border-b border-white/5 last:border-b-0' : '' }}">
-                                                @if(isset($day['dayLabels'][$idx]))
-                                                    <span class="text-[0.55rem] leading-tight font-bold text-white text-center line-clamp-2 drop-shadow-sm">
-                                                        {{ $day['dayLabels'][$idx] }}
-                                                    </span>
-                                                @endif
-                                            </div>
-                                        @endfor
-                                    </div>
-                                @endif
-
                                 {{-- Hijri Day Number --}}
                                 <div class="relative z-10 flex justify-between items-start w-full leading-none mb-1">
                                     <span
-                                        class="text-[0.7rem] font-bold {{ count($day['dayColors']) > 0 ? 'text-white' : ($day['isToday'] ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400') }}">
+                                        class="text-[0.7rem] font-bold {{ $day['isToday'] ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-600 dark:text-zinc-300' }}">
                                         {{ $day['hijriDay'] }}
                                     </span>
 
@@ -807,10 +813,48 @@ new class extends Component {
                                     @endif
                                 </div>
 
-                                {{-- More Events Indicator --}}
-                                @if($day['hasMultipleEvents'] && !empty($day['dayLabels']))
-                                    <div class="absolute bottom-1 left-1 z-10">
-                                        <div class="size-1.5 rounded-full bg-white/50 animate-pulse"></div>
+                                {{-- Events --}}
+                                @if(count($day['events']) > 0)
+                                    <div class="relative z-10 flex flex-col gap-0.5 w-full">
+                                        @php
+                                            $evCount = count($day['events']);
+                                        @endphp
+                                        @if($evCount <= 3)
+                                            @foreach($day['events'] as $ev)
+                                                <div class="{{ $ev['colorClass'] }} rounded px-1 py-px flex items-center overflow-hidden min-h-[14px]">
+                                                    @if($ev['label'])
+                                                        <span class="text-[0.55rem] leading-none font-bold text-white line-clamp-1 drop-shadow-sm truncate w-full text-right">
+                                                            {{ $ev['label'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            {{-- More than 3 events --}}
+                                            <div class="{{ $day['events'][0]['colorClass'] }} rounded px-1 py-px flex items-center overflow-hidden min-h-[14px]">
+                                                @if($day['events'][0]['label'])
+                                                    <span class="text-[0.55rem] leading-none font-bold text-white line-clamp-1 drop-shadow-sm truncate w-full text-right">
+                                                        {{ $day['events'][0]['label'] }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="{{ $day['events'][1]['colorClass'] }} rounded px-1 py-px flex items-center overflow-hidden min-h-[14px]">
+                                                @if($day['events'][1]['label'])
+                                                    <span class="text-[0.55rem] leading-none font-bold text-white line-clamp-1 drop-shadow-sm truncate w-full text-right">
+                                                        {{ $day['events'][1]['label'] }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="flex items-center gap-1 mt-0.5 px-1">
+                                                <div class="size-1.5 rounded-full bg-{{ $day['events'][2]['colorName'] }}-500"></div>
+                                                <div class="size-1.5 rounded-full bg-{{ $day['events'][3]['colorName'] }}-500"></div>
+                                                @if($evCount == 5)
+                                                    <div class="size-1.5 rounded-full bg-{{ $day['events'][4]['colorName'] }}-500"></div>
+                                                @elseif($evCount > 5)
+                                                    <span class="text-[1rem] leading-none font-bold text-zinc-400 mr-0.5">+</span>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             </button>
@@ -827,46 +871,49 @@ new class extends Component {
             <div class="flex justify-between items-start">
                 <div>
                     <flux:heading size="lg">أحداث اليوم</flux:heading>
-                    <flux:subheading>{{ $selectedDateHijri }} هـ</flux:subheading>
-                    <div class="text-xs text-zinc-400 mt-1">{{ $selectedDate }} م</div>
+                    <flux:subheading><span x-text="selectedDateHijri"></span> هـ</flux:subheading>
+                    <div class="text-xs text-zinc-400 mt-1"><span x-text="selectedDate"></span> م</div>
                 </div>
-                <flux:button variant="ghost" size="sm" icon="plus" wire:click="createNewEvent('{{ $selectedDate }}')">إضافة حدث</flux:button>
+                <flux:button variant="ghost" size="sm" icon="plus" x-on:click="$wire.createNewEvent(selectedDate)">إضافة حدث</flux:button>
             </div>
 
             <div class="space-y-3">
-                @foreach($dayEvents as $event)
-                    <div
-                        class="group relative flex items-start gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                        <div class="size-3 rounded-full mt-1.5 shrink-0 bg-{{ $event['color'] ?? 'indigo' }}-500"></div>
+                <template x-for="event in dayEvents" :key="event.id">
+                    <div class="group relative flex items-start gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                        <div class="size-3 rounded-full mt-1.5 shrink-0" :class="'bg-' + (event.color || 'indigo') + '-500'"></div>
                         <div class="flex-1">
-                            <div class="font-bold text-zinc-900 dark:text-white {{ isset($event['is_task']) && $event['status'] === 'completed' ? 'line-through text-zinc-500' : '' }}">{{ $event['event_name'] }}</div>
+                            <div class="font-bold text-zinc-900 dark:text-white" :class="event.is_task && event.status === 'completed' ? 'line-through text-zinc-500' : ''" x-text="event.event_name"></div>
                             <div class="text-xs text-zinc-500 mt-1">
-                                {{ Carbon::parse($event['start_date'])->format('Y/m/d') }}
-                                @if($event['start_date'] != $event['end_date'])
-                                    - {{ Carbon::parse($event['end_date'])->format('Y/m/d') }}
-                                @endif
+                                <span x-text="event.formatted_start"></span>
+                                <template x-if="event.formatted_start !== event.formatted_end">
+                                    <span> - <span x-text="event.formatted_end"></span></span>
+                                </template>
                             </div>
                         </div>
                         
-                        @if(!isset($event['is_task']))
+                        <template x-if="!event.is_task">
                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                @if($event['created_by_id'] == auth()->id() && $event['created_by_type'] == get_class(auth()->user()))
-                                    <flux:button variant="ghost" size="xs" icon="pencil" wire:click="editEvent({{ $event['id'] }})" />
-                                    <flux:button variant="ghost" size="xs" icon="trash" wire:click="deleteEvent({{ $event['id'] }})" class="text-red-500" />
-                                @endif
+                                <template x-if="event.can_edit">
+                                    <flux:button variant="ghost" size="xs" icon="pencil" x-on:click="$wire.editEvent(event.id)" />
+                                </template>
+                                <template x-if="event.can_edit">
+                                    <flux:button variant="ghost" size="xs" icon="trash" x-on:click="$wire.deleteEvent(event.id)" class="text-red-500" />
+                                </template>
                             </div>
-                        @else
+                        </template>
+                        <template x-if="event.is_task">
                             <div class="flex items-center gap-1 shrink-0">
-                                @if($event['status'] === 'completed')
+                                <template x-if="event.status === 'completed'">
                                     <span class="text-[0.65rem] text-emerald-600 font-bold bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">مكتملة</span>
-                                @else
-                                    <flux:button variant="ghost" size="xs" icon="check-circle" wire:click="completeTask({{ $event['id'] }})" class="text-zinc-400 hover:text-emerald-500" />
-                                @endif
-                                <flux:button variant="ghost" size="xs" icon="arrow-top-right-on-square" href="{{ route(request()->route()->getPrefix().'tasks') }}" wire:navigate />
+                                </template>
+                                <template x-if="event.status !== 'completed'">
+                                    <flux:button variant="ghost" size="xs" icon="check-circle" x-on:click="$wire.completeTask(event.id)" class="text-zinc-400 hover:text-emerald-500" />
+                                </template>
+                                <flux:button variant="ghost" size="xs" icon="arrow-top-right-on-square" href="{{ route(auth()->guard('manager')->check() ? 'manager.tasks' : 'supervisor.tasks') }}" wire:navigate />
                             </div>
-                        @endif
+                        </template>
                     </div>
-                @endforeach
+                </template>
             </div>
 
             <div class="flex justify-end pt-2">
@@ -1025,4 +1072,26 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
+
+    @script
+    <script>
+        Alpine.data('calendarEvents', () => ({
+            selectedDate: '',
+            selectedDateHijri: '',
+            dayEvents: [],
+            
+            openDay(date, hijriDay, monthName, events) {
+                this.selectedDate = date;
+                this.selectedDateHijri = `${hijriDay} ${monthName} ${$wire.year}`;
+                this.dayEvents = events;
+                
+                if (this.dayEvents.length > 0) {
+                    Flux.modal('day-events-modal').show();
+                } else {
+                    $wire.createNewEvent(date);
+                }
+            }
+        }));
+    </script>
+    @endscript
 </div>
