@@ -58,8 +58,8 @@ class LeaderboardService
             // 2. Attendance Points
             if ($settings['attendance_enabled'] ?? false) {
                 $attendances = Attendance::where('student_id', $student->id)
-                    ->where('date', '>=', $startDate)
-                    ->where('date', '<=', $endDate)
+                    ->where('date', '>=', $startDate->format('Y-m-d'))
+                    ->where('date', '<=', $endDate->format('Y-m-d'))
                     ->get();
 
                 $attendanceScore += $attendances->where('status', 'present')->count() * ($settings['attendance_present'] ?? 4);
@@ -79,7 +79,7 @@ class LeaderboardService
                       ->orWhere(function($sub) use ($startDate, $endDate) {
                           $sub->whereNull('hifz_graded_at')
                               ->whereNull('review_graded_at')
-                              ->whereBetween('date', [$startDate, $endDate])
+                              ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                               ->where(function($s) {
                                   $s->whereNotNull('hifz_achievement')
                                     ->orWhereNotNull('review_achievement');

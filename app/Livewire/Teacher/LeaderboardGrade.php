@@ -7,6 +7,8 @@ use App\Models\LeaderboardScore;
 use App\Models\Student;
 use Livewire\Component;
 use Illuminate\Support\Carbon;
+use Flux\Flux;
+
 
 class LeaderboardGrade extends Component
 {
