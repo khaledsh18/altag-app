@@ -188,7 +188,8 @@
                                                             deleting = true;
                                                             $wire.deleteExtraPoints({{ $ep->id }}).catch(() => { deleting = false; });
                                                         "
-                                                        class="text-red-400 hover:text-red-600 hidden group-hover:flex absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5"
+                                                        class="text-red-400 hover:text-red-600 flex md:hidden md:group-hover:flex absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5"
+                                                        title="{{ __('حذف') }}"
                                                     >
                                                         <flux:icon icon="x-mark" variant="micro" class="size-3" />
                                                     </button>
