@@ -146,27 +146,103 @@
                                     </td>
                                 @endforeach
 
-                                <!-- Extra Points Cell -->
+                                <!-- Extra Points Cell (Alpine.js inline form) -->
                                 @if(!empty($leaderboard->settings['extra_points_enabled']))
                                     <td class="p-2 text-center border-x border-zinc-100 dark:border-zinc-800 bg-amber-50/30 dark:bg-amber-900/5">
-                                        <div class="flex flex-col gap-2 items-center">
+                                        <div
+                                            x-data="{
+                                                open: false,
+                                                amount: 1,
+                                                notes: '',
+                                                saving: false,
+                                                async save() {
+                                                    if (this.saving || !this.amount || !this.notes.trim()) return;
+                                                    this.saving = true;
+                                                    try {
+                                                        await $wire.saveExtraPoints({{ $student->id }}, this.amount, this.notes);
+                                                        this.amount = 1;
+                                                        this.notes = '';
+                                                        this.open = false;
+                                                    } finally {
+                                                        this.saving = false;
+                                                    }
+                                                }
+                                            }"
+                                            class="flex flex-col gap-2 items-center"
+                                        >
+                                            {{-- Existing extra points list --}}
                                             @foreach($studentExtraPoints as $ep)
-                                                <div class="group relative flex items-center justify-between w-full max-w-[120px] bg-white dark:bg-zinc-800 rounded-lg p-1.5 border border-amber-200 dark:border-amber-700 shadow-sm text-xs" title="{{ $ep->notes }}">
+                                                <div
+                                                    x-data="{ deleting: false }"
+                                                    class="group relative flex items-center justify-between w-full max-w-[120px] rounded-lg p-1.5 border shadow-sm text-xs transition-all duration-300"
+                                                    :class="deleting
+                                                        ? 'opacity-40 scale-95 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
+                                                        : 'bg-white dark:bg-zinc-800 border-amber-200 dark:border-amber-700'"
+                                                    title="{{ $ep->notes }}"
+                                                >
                                                     <span class="font-bold text-amber-600 dark:text-amber-400 px-1">+{{ $ep->points }}</span>
                                                     <span class="truncate max-w-[60px] text-zinc-500">{{ $ep->notes }}</span>
-                                                    <button wire:click="deleteExtraPoints({{ $ep->id }})" wire:confirm="{{ __('هل أنت متأكد من حذف هذه النقاط الإضافية؟') }}" class="text-red-400 hover:text-red-600 hidden group-hover:block absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5">
+                                                    <button
+                                                        @click="
+                                                            if (deleting) return;
+                                                            deleting = true;
+                                                            $wire.deleteExtraPoints({{ $ep->id }}).catch(() => { deleting = false; });
+                                                        "
+                                                        class="text-red-400 hover:text-red-600 hidden group-hover:flex absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5"
+                                                    >
                                                         <flux:icon icon="x-mark" variant="micro" class="size-3" />
                                                     </button>
                                                 </div>
                                             @endforeach
-                                            
-                                            <button 
-                                                wire:click="openExtraPointsModal({{ $student->id }})"
-                                                class="inline-flex w-8 h-8 items-center justify-center rounded-lg border border-dashed border-amber-300 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-600 dark:hover:bg-amber-900/30 transition-colors"
+
+                                            {{-- Inline form toggle --}}
+                                            <button
+                                                @click="open = !open"
+                                                :class="open ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-400 text-amber-600' : 'border-dashed border-amber-300 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-600 dark:hover:bg-amber-900/30'"
+                                                class="inline-flex w-8 h-8 items-center justify-center rounded-lg border transition-colors"
                                                 title="{{ __('إضافة نقاط إضافية') }}"
                                             >
-                                                <flux:icon icon="plus" variant="micro" class="size-4" />
+                                                <flux:icon x-show="!open" icon="plus" variant="micro" class="size-4" />
+                                                <flux:icon x-show="open" icon="x-mark" variant="micro" class="size-4" />
                                             </button>
+
+                                            {{-- Inline form --}}
+                                            <div
+                                                x-show="open"
+                                                x-transition:enter="transition ease-out duration-200"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-150"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                style="display:none;"
+                                                class="w-full max-w-[150px] bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 rounded-xl p-2 shadow-lg space-y-1.5"
+                                                @keydown.escape.window="open = false"
+                                            >
+                                                <input
+                                                    x-model="amount"
+                                                    type="number"
+                                                    min="1"
+                                                    placeholder="{{ __('النقاط') }}"
+                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300"
+                                                />
+                                                <input
+                                                    x-model="notes"
+                                                    type="text"
+                                                    placeholder="{{ __('السبب...') }}"
+                                                    @keydown.enter="save()"
+                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300"
+                                                />
+                                                <button
+                                                    @click="save()"
+                                                    :disabled="saving || !amount || !notes.trim()"
+                                                    :class="saving ? 'opacity-50 cursor-wait' : 'hover:bg-amber-600'"
+                                                    class="w-full text-xs bg-amber-500 text-white rounded-lg py-1 font-bold transition-colors"
+                                                >
+                                                    <span x-show="!saving">{{ __('حفظ') }}</span>
+                                                    <span x-show="saving">...</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </td>
                                 @endif
@@ -207,25 +283,4 @@
         </flux:card>
     @endif
 
-    <!-- Extra Points Modal -->
-    <flux:modal wire:model="showExtraPointsModal" class="md:w-[400px]">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg" class="text-amber-600">{{ __('منح نقاط إضافية') }}</flux:heading>
-                <flux:subheading>{{ __('أضف نقاط إضافية للطالب مع كتابة ملاحظة تبرر ذلك.') }}</flux:subheading>
-            </div>
-
-            <div class="space-y-4">
-                <flux:input type="number" wire:model="extraPointsAmount" label="{{ __('عدد النقاط') }}" placeholder="مثال: 5" required />
-                <flux:textarea wire:model="extraPointsNotes" label="{{ __('ملاحظة / السبب') }}" placeholder="مثال: مشاركة مميزة، مساعدة زميل..." rows="3" required />
-            </div>
-
-            <div class="flex justify-end gap-2 mt-4">
-                <flux:button wire:click="$set('showExtraPointsModal', false)" variant="ghost">{{ __('إلغاء') }}</flux:button>
-                <flux:button wire:click="saveExtraPoints" variant="primary" class="bg-amber-500 hover:bg-amber-600 border-none text-white">
-                    {{ __('حفظ النقاط') }}
-                </flux:button>
-            </div>
-        </div>
-    </flux:modal>
 </div>

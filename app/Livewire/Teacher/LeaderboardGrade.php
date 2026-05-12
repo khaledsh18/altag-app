@@ -5,20 +5,20 @@ namespace App\Livewire\Teacher;
 use App\Models\Leaderboard;
 use App\Models\LeaderboardScore;
 use App\Models\Student;
-use Livewire\Component;
-use Illuminate\Support\Carbon;
+use App\Services\LeaderboardService;
 use Flux\Flux;
-
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class LeaderboardGrade extends Component
 {
     public $leaderboardId;
+
     public $date;
 
+    // Modal state kept for backward-compat but not used in inline flow
     public $showExtraPointsModal = false;
-    public $extraPointsStudentId = null;
-    public $extraPointsAmount = 1;
-    public $extraPointsNotes = '';
 
     public function mount($leaderboardId)
     {
@@ -46,38 +46,32 @@ class LeaderboardGrade extends Component
         }
     }
 
-    public function openExtraPointsModal($studentId)
-    {
-        $this->extraPointsStudentId = $studentId;
-        $this->extraPointsAmount = 1;
-        $this->extraPointsNotes = '';
-        $this->showExtraPointsModal = true;
-    }
-
-    public function saveExtraPoints()
+    public function saveExtraPoints(int $studentId, int|float $amount, string $notes): void
     {
         $this->validate([
-            'extraPointsAmount' => 'required|numeric|not_in:0',
-            'extraPointsNotes' => 'required|string|max:255',
+            'date' => 'required|date',
         ]);
 
-        \Illuminate\Support\Facades\DB::table('leaderboard_extra_points')->insert([
+        if (! $amount || ! $notes) {
+            return;
+        }
+
+        DB::table('leaderboard_extra_points')->insert([
             'leaderboard_id' => $this->leaderboardId,
-            'student_id' => $this->extraPointsStudentId,
+            'student_id' => $studentId,
             'date' => $this->date,
-            'points' => $this->extraPointsAmount,
-            'notes' => $this->extraPointsNotes,
+            'points' => $amount,
+            'notes' => $notes,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $this->showExtraPointsModal = false;
         Flux::toast('تم حفظ النقاط الإضافية بنجاح', variant: 'success');
     }
 
     public function deleteExtraPoints($id)
     {
-        \Illuminate\Support\Facades\DB::table('leaderboard_extra_points')->where('id', $id)->delete();
+        DB::table('leaderboard_extra_points')->where('id', $id)->delete();
     }
 
     public function render()
@@ -93,13 +87,13 @@ class LeaderboardGrade extends Component
                 return $studentScores->pluck('leaderboard_criterion_id')->toArray();
             });
 
-        $extraPointsMap = \Illuminate\Support\Facades\DB::table('leaderboard_extra_points')
+        $extraPointsMap = DB::table('leaderboard_extra_points')
             ->where('leaderboard_id', $this->leaderboardId)
             ->whereDate('date', \Carbon\Carbon::parse($this->date))
             ->get()
             ->groupBy('student_id');
 
-        $service = new \App\Services\LeaderboardService();
+        $service = new LeaderboardService;
         $dailyScores = $service->getDailyScores($leaderboard, \Carbon\Carbon::parse($this->date)->format('Y-m-d'));
 
         return view('livewire.teacher.leaderboard-grade', [
