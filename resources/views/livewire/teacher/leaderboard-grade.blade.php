@@ -102,19 +102,47 @@
                                     </div>
                                 </td>
                                 
-                                <!-- Manual Criteria Cells -->
                                 @foreach($leaderboard->criteria as $criterion)
                                     @php
                                         $hasScore = in_array($criterion->id, $studentScoreIds);
                                     @endphp
                                     <td class="p-4 text-center border-l border-zinc-50 dark:border-zinc-800/50">
-                                        <button 
-                                            wire:click="toggleScore({{ $student->id }}, {{ $criterion->id }}, {{ $criterion->points }})"
-                                            class="inline-flex w-10 h-10 items-center justify-center rounded-xl border-2 transition-all duration-200 {{ $hasScore ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110' : 'bg-white border-zinc-200 text-zinc-300 hover:border-emerald-200 hover:text-emerald-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-700 dark:hover:border-emerald-800 dark:hover:text-emerald-700' }}"
-                                            title="{{ $hasScore ? __('إزالة النقطة') : __('منح النقطة') }}"
+                                        {{-- 
+                                            Alpine.js Optimistic UI:
+                                            - 'confirmed' = true  → backend has saved it → green
+                                            - 'pending'   = true  → clicked, waiting for backend → purple
+                                            - neither              → not scored → default grey
+                                        --}}
+                                        <div
+                                            x-data="{
+                                                confirmed: {{ $hasScore ? 'true' : 'false' }},
+                                                pending: false,
+                                                async toggle() {
+                                                    if (this.pending) return;
+                                                    this.pending = true;
+                                                    try {
+                                                        await $wire.toggleScore({{ $student->id }}, {{ $criterion->id }}, {{ $criterion->points }});
+                                                        this.confirmed = !this.confirmed;
+                                                    } finally {
+                                                        this.pending = false;
+                                                    }
+                                                }
+                                            }"
+                                            x-on:livewire:updated.window="confirmed = {{ $hasScore ? 'true' : 'false' }}"
                                         >
-                                            <flux:icon icon="check" variant="micro" class="size-6" />
-                                        </button>
+                                            <button
+                                                @click="toggle()"
+                                                :title="confirmed ? '{{ __('إزالة النقطة') }}' : '{{ __('منح النقطة') }}'"
+                                                :class="{
+                                                    'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110': confirmed && !pending,
+                                                    'bg-violet-500 border-violet-500 text-white shadow-md shadow-violet-500/30 scale-105 animate-pulse': pending,
+                                                    'bg-white border-zinc-200 text-zinc-300 hover:border-emerald-200 hover:text-emerald-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-700 dark:hover:border-emerald-800 dark:hover:text-emerald-700': !confirmed && !pending
+                                                }"
+                                                class="inline-flex w-10 h-10 items-center justify-center rounded-xl border-2 transition-all duration-200"
+                                            >
+                                                <flux:icon icon="check" variant="micro" class="size-6" />
+                                            </button>
+                                        </div>
                                     </td>
                                 @endforeach
 
