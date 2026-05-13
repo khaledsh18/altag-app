@@ -194,10 +194,6 @@ Route::get('/magic/{token}', function ($token) {
 
     auth()->guard('student')->login($student);
 
-    if (! $student->is_data_completed) {
-        return redirect()->route('student.complete-profile');
-    }
-
     return redirect()->route('student.dashboard');
 })->name('magic-link');
 

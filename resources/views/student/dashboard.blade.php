@@ -8,6 +8,7 @@
     </x-slot:sidebar>
 
     <div class="md:p-8">
+        <livewire:student.guardian-notice />
         <livewire:student.dashboard />
     </div>
 </x-layouts.role-shell>

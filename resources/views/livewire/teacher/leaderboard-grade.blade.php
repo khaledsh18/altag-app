@@ -108,12 +108,11 @@
                                     @endphp
                                     <td class="p-4 text-center border-l border-zinc-50 dark:border-zinc-800/50">
                                         {{-- 
-                                            Alpine.js Optimistic UI:
-                                            - 'confirmed' = true  → backend has saved it → green
-                                            - 'pending'   = true  → clicked, waiting for backend → purple
-                                            - neither              → not scored → default grey
+                                            wire:key includes the date so Alpine fully re-initializes
+                                            when the date changes, picking up the correct 'confirmed' value.
                                         --}}
                                         <div
+                                            wire:key="score-{{ $student->id }}-{{ $criterion->id }}-{{ $date }}"
                                             x-data="{
                                                 confirmed: {{ $hasScore ? 'true' : 'false' }},
                                                 pending: false,
@@ -128,7 +127,6 @@
                                                     }
                                                 }
                                             }"
-                                            x-on:livewire:updated.window="confirmed = {{ $hasScore ? 'true' : 'false' }}"
                                         >
                                             <button
                                                 @click="toggle()"

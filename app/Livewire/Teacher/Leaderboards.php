@@ -48,7 +48,7 @@ class Leaderboards extends Component
         return [
             'title' => 'required|string|max:255',
             'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'is_active' => 'boolean',
             'hifz_excellent' => 'numeric|min:0',
             'hifz_good' => 'numeric|min:0',
