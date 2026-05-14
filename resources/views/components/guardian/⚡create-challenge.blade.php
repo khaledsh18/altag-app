@@ -173,8 +173,8 @@ new class extends Component {
         {{-- Progress Bar --}}
         <div class="relative">
             <div class="overflow-hidden h-2 mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800">
-                <div :style="`width: ${(step / 4) * 100}%`"
-                    class="h-full rounded-full bg-indigo-500 transition-all duration-500"></div>
+                <div :style="`width: ${(step / 4) * 100}%`" class="h-full rounded-full bg-indigo-500   duration-500">
+                </div>
             </div>
             <div class="flex justify-between text-xs font-medium text-zinc-400">
                 <span :class="{ 'text-indigo-600 dark:text-indigo-400 font-bold': step >= 1 }">البداية</span>
@@ -185,7 +185,7 @@ new class extends Component {
         </div>
 
         {{-- STEP 1: Tip + Student --}}
-        <div x-show="step === 1" x-transition:enter="transition ease-out duration-300"
+        <div x-show="step === 1" x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
             class="space-y-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
@@ -198,7 +198,7 @@ new class extends Component {
                 <div>
                     <flux:heading size="sm" class="text-indigo-900 dark:text-indigo-300 mb-1">نصيحة هامة</flux:heading>
                     <p class="text-sm text-indigo-800 dark:text-indigo-400">
-                        كي تضمن النتيجة الأفضل، اجعل شروط المكافأة متدرجة وواقعية، 
+                        كي تضمن النتيجة الأفضل، اجعل شروط المكافأة متدرجة وواقعية،
                         واحرص على أن تكون المكافأة محفّزة للاستمرار في مسيرته.
                     </p>
                 </div>
@@ -217,13 +217,14 @@ new class extends Component {
         </div>
 
         {{-- STEP 2: Challenge Type --}}
-        <div x-show="step === 2" style="display: none;" x-transition:enter="transition ease-out duration-300"
+        <div x-show="step === 2" style="display: none;" x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
             class="space-y-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
             <flux:heading size="lg">اختر نوع المكافأة</flux:heading>
 
-            <flux:radio.group x-model="formData.rewardType" variant="cards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <flux:radio.group x-model="formData.rewardType" variant="cards"
+                class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <flux:radio value="attendance" label="الحضور والانضباط" icon="calendar" />
                 <flux:radio value="recitation" label="الإنجاز القرآني" icon="book-open" />
                 <flux:radio value="exam" label="اختبار مستوى الجمعية" icon="academic-cap" />
@@ -231,7 +232,7 @@ new class extends Component {
         </div>
 
         {{-- STEP 3: Setup Target --}}
-        <div x-show="step === 3" style="display: none;" x-transition:enter="transition ease-out duration-300"
+        <div x-show="step === 3" style="display: none;" x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
             class="space-y-5 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
 
@@ -254,9 +255,8 @@ new class extends Component {
                         @forelse($studentPlans as $plan)
                             <label class="flex items-center gap-3 cursor-pointer group">
                                 <input type="radio" x-model="formData.recitationPlanId" value="{{ $plan->id }}"
-                                    @change="$wire.loadPlanDays({{ $plan->id }})"
-                                    class="rounded-full accent-indigo-600" />
-                                <span class="text-sm font-medium group-hover:text-indigo-600 transition-colors">
+                                    @change="$wire.loadPlanDays({{ $plan->id }})" class="rounded-full accent-indigo-600" />
+                                <span class="text-sm font-medium group-hover:text-indigo-600   s">
                                     @if($plan->plan_type === 'hifz_review') حفظ ومراجعة
                                     @elseif($plan->plan_type === 'hifz') حفظ
                                     @else مراجعة @endif
@@ -282,25 +282,24 @@ new class extends Component {
                             x-data="{ rangeStart: null }" @click.away="rangeStart = null">
                             @foreach($planDays as $idx => $day)
                                 <button type="button" x-on:click="
-                                                        if (rangeStart === null) {
-                                                            rangeStart = {{ $idx }};
-                                                        } else {
-                                                            $wire.selectDayRange(rangeStart, {{ $idx }});
-                                                            rangeStart = null;
-                                                        }
-                                                    "
-                                    class="w-full text-right px-3 py-2 rounded-lg text-sm border transition-all"
+                                                                if (rangeStart === null) {
+                                                                    rangeStart = {{ $idx }};
+                                                                } else {
+                                                                    $wire.selectDayRange(rangeStart, {{ $idx }});
+                                                                    rangeStart = null;
+                                                                }
+                                                            " class="w-full text-right px-3 py-2 rounded-lg text-sm border  "
                                     :class="$wire.selectedDayIds.includes({{ $day['id'] }})
-                                                        ? 'bg-indigo-500 text-white border-indigo-500'
-                                                        : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-indigo-300'">
+                                                                ? 'bg-indigo-500 text-white border-indigo-500'
+                                                                : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-indigo-300'">
                                     <span class="font-medium">{{ $day['day_name'] }}</span>
                                     <span class="text-xs opacity-75 mr-2">{{ $day['hijri'] }}</span>
                                 </button>
                             @endforeach
                         </div>
                         <p class="text-xs text-zinc-500 mt-1">
-                            تم تحديد <span class="font-bold text-indigo-600"
-                                x-text="$wire.selectedDayIds.length"></span> يوم
+                            تم تحديد <span class="font-bold text-indigo-600" x-text="$wire.selectedDayIds.length"></span>
+                            يوم
                         </p>
                     </div>
                 @elseif(count($planDays) === 0 && !empty($studentPlans))
@@ -327,8 +326,10 @@ new class extends Component {
             {{-- Exam passing --}}
             <div x-show="formData.rewardType === 'exam'" class="space-y-4">
                 @if(count($candidateExams) > 0)
-                    <div class="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
-                        <flux:heading size="sm" class="mb-2 text-indigo-900 dark:text-indigo-300">الاختبار المستهدف (بناءً على مسار الطالب):</flux:heading>
+                    <div
+                        class="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+                        <flux:heading size="sm" class="mb-2 text-indigo-900 dark:text-indigo-300">الاختبار المستهدف (بناءً
+                            على مسار الطالب):</flux:heading>
                         @if(count($candidateExams) === 1)
                             <div class="font-bold text-lg text-indigo-700 dark:text-indigo-400">
                                 {{ $candidateExams[0]['name'] }}
@@ -342,7 +343,8 @@ new class extends Component {
                         @endif
                     </div>
                 @else
-                    <div class="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-100 dark:border-amber-500/20 text-amber-800 dark:text-amber-400 text-sm font-medium">
+                    <div
+                        class="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-100 dark:border-amber-500/20 text-amber-800 dark:text-amber-400 text-sm font-medium">
                         لقد أتم الطالب جميع الاختبارات المتاحة أو لا توجد اختبارات مسجلة!
                     </div>
                 @endif
@@ -350,8 +352,8 @@ new class extends Component {
                 <flux:field>
                     <flux:label>النسبة المطلوبة لتجاوز الاختبار</flux:label>
                     <div class="flex items-center gap-2 mt-1">
-                        <flux:input type="number" min="1" max="100" x-model="formData.examPercentage" placeholder="مثال: 90"
-                            class="flex-1" />
+                        <flux:input type="number" min="1" max="100" x-model="formData.examPercentage"
+                            placeholder="مثال: 90" class="flex-1" />
                         <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-400 whitespace-nowrap">%</span>
                     </div>
                 </flux:field>
@@ -359,7 +361,7 @@ new class extends Component {
         </div>
 
         {{-- STEP 4: Prize --}}
-        <div x-show="step === 4" style="display: none;" x-transition:enter="transition ease-out duration-300"
+        <div x-show="step === 4" style="display: none;" x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
             class="space-y-6 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
 

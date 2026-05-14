@@ -4,50 +4,28 @@
 
         @php
             $navItems = [
-                [
-                    'name' => 'التحضير',
-                    'route' => 'teacher.attendance',
-                    'icon' => 'calendar'
-                ],
-                [
-                    'name' => 'التسميع',
-                    'route' => 'teacher.tasmeeh',
-                    'icon' => 'book-open'
-                ],
-                [
-                    'name' => 'البنود',
-                    'route' => 'teacher.leaderboards',
-                    'icon' => 'star'
-                ],
-                [
-                    'name' => 'الخطط',
-                    'route' => 'teacher.plan-creator',
-                    'icon' => 'pencil-square'
-                ],
-                [
-                    'name' => 'الطلاب',
-                    'route' => 'teacher.students',
-                    'icon' => 'users'
-                ],
+                ['name' => 'التحضير', 'route' => 'teacher.attendance', 'icon' => 'calendar', 'tab' => 'attendance'],
+                ['name' => 'التسميع', 'route' => 'teacher.tasmeeh', 'icon' => 'book-open', 'tab' => 'tasmeeh'],
+                ['name' => 'البنود', 'route' => 'teacher.leaderboards', 'icon' => 'star', 'tab' => 'leaderboards'],
+                ['name' => 'الخطط', 'route' => 'teacher.plan-creator', 'icon' => 'pencil-square', 'tab' => 'plan-creator'],
+                ['name' => 'الطلاب', 'route' => 'teacher.students', 'icon' => 'users', 'tab' => 'students'],
             ];
         @endphp
 
         @foreach($navItems as $item)
-            @php
-                $isActive = request()->routeIs($item['route'] . '*');
-            @endphp
-            <a href="{{ route($item['route']) }}" wire:navigate
-                class="relative  flex flex-col items-center justify-center transition-all duration-300 ease-out h-full {{ $isActive ? 'text-white' : 'text-white/60 hover:text-white' }} flex-1">
+            <a href="{{ route($item['route']) }}" 
+                x-data="{ isActive: '{{ $initialTab ?? '' }}' === '{{ $item['tab'] }}' || {{ request()->routeIs($item['route'] . '*') ? 'true' : 'false' }} }"
+                x-on:click="if(document.getElementById('teacher-app-shell')) { $event.preventDefault(); $dispatch('switch-tab', { tab: '{{ $item['tab'] }}', url: '{{ route($item['route']) }}' }); }"
+                x-on:switch-tab.window="isActive = ($event.detail.tab === '{{ $item['tab'] }}')"
+                :class="isActive ? 'text-white' : 'text-white/60 hover:text-white'"
+                class="relative flex flex-col items-center justify-center duration-300 ease-out h-full flex-1">
 
-                <div
-                    class="relative flex items-center justify-center min-h-15 rounded-full transition-all duration-300 {{ $isActive ? 'bg-white/15 px-6 py-2' : 'p-2' }}">
+                <div :class="isActive ? 'bg-white/15 px-6 py-2' : 'p-2'"
+                    class="relative flex items-center justify-center min-h-15 rounded-full duration-300">
                     <flux:icon icon="{{ $item['icon'] }}" class="size-7 shrink-0"
-                        variant="{{ $isActive ? 'solid' : 'outline' }}" />
-                    @if($isActive)
-                        <span class="ms-2  font-bold text-sm truncate block">{{ $item['name'] }}</span>
-                    @endif
+                        x-bind:variant="isActive ? 'solid' : 'outline'" />
+                    <span x-show="isActive" x-cloak class="ms-2 font-bold text-sm truncate block">{{ $item['name'] }}</span>
                 </div>
-
             </a>
         @endforeach
     </div>

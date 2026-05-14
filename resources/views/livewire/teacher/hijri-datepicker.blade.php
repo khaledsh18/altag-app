@@ -21,14 +21,14 @@
         <div
             class="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
             <button wire:click="previousMonth" type="button"
-                class="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 transition-colors">
+                class="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500   s">
                 <flux:icon icon="chevron-right" class="size-5" />
             </button>
             <div class="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
                 {{ $monthName }}
             </div>
             <button wire:click="nextMonth" type="button"
-                class="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 transition-colors">
+                class="p-1.5 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500   s">
                 <flux:icon icon="chevron-left" class="size-5" />
             </button>
         </div>
@@ -46,11 +46,11 @@
                 @if($day === null)
                     <div class="h-16 w-full"></div>
                 @else
-                    <button wire:click="selectDate('{{ $day['gregorianDate'] }}')" type="button" class="relative flex flex-col justify-between p-1.5 rounded-md border h-16 w-full transition-all duration-200 
-                                    {{ $day['colorClass'] }}
-                                    {{ $day['isSelected'] ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-zinc-900 border-transparent shadow-sm' : 'border-zinc-100 dark:border-zinc-700/50' }}
-                                    {{ $day['isToday'] && !$day['isSelected'] ? 'border-blue-300 dark:border-blue-600' : '' }}
-                                    ">
+                    <button wire:click="selectDate('{{ $day['gregorianDate'] }}')" type="button" class="relative flex flex-col justify-between p-1.5 rounded-md border h-16 w-full   duration-200 
+                                                    {{ $day['colorClass'] }}
+                                                    {{ $day['isSelected'] ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-zinc-900 border-transparent shadow-sm' : 'border-zinc-100 dark:border-zinc-700/50' }}
+                                                    {{ $day['isToday'] && !$day['isSelected'] ? 'border-blue-300 dark:border-blue-600' : '' }}
+                                                    ">
 
                         {{-- Hijri Day Number --}}
                         <div class="flex justify-between items-start w-full leading-none">

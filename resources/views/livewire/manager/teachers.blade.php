@@ -35,16 +35,19 @@
     <flux:card>
         <form wire:submit="createQuickTeacher" class="flex flex-col md:flex-row items-end gap-4">
             <div class="w-full md:w-2/5">
-                <flux:input wire:model="quickName" label="{{ __('اسم المعلم') }}" placeholder="{{ __('مثال: محمد أحمد') }}" required />
+                <flux:input wire:model="quickName" label="{{ __('اسم المعلم') }}"
+                    placeholder="{{ __('مثال: محمد أحمد') }}" required />
             </div>
             <div class="w-full md:w-2/5">
                 <flux:input wire:model="quickPhone" label="{{ __('رقم الهاتف') }}" placeholder="{{ __('اختياري') }}" />
             </div>
-            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء سريع') }}</flux:button>
+            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء سريع') }}
+            </flux:button>
         </form>
     </flux:card>
 
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
+    <div
+        class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
         <flux:table class="w-full">
             <flux:table.columns>
                 <flux:table.column>{{ __('المعلم') }}</flux:table.column>
@@ -55,7 +58,9 @@
 
             <flux:table.rows>
                 @foreach ($teachers as $teacher)
-                    <flux:table.row :key="$teacher->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})">
+                    <flux:table.row :key="$teacher->id"
+                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s"
+                        x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})">
                         <flux:table.cell>
                             <div class="flex flex-col">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ $teacher->name }}</span>
@@ -86,14 +91,19 @@
                         <flux:table.cell>
                             <div class="flex items-center justify-end gap-2" @click.stop>
                                 @if (!$teacher->is_approved)
-                                    <flux:button size="sm" variant="primary" class="bg-emerald-600 hover:bg-emerald-700" wire:click="approve({{ $teacher->id }})">موافقة</flux:button>
+                                    <flux:button size="sm" variant="primary" class="bg-emerald-600 hover:bg-emerald-700"
+                                        wire:click="approve({{ $teacher->id }})">موافقة</flux:button>
                                 @endif
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:menu.item
+                                            x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})"
+                                            icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
-                                        <flux:menu.item wire:click="delete({{ $teacher->id }})" wire:confirm="هل أنت متأكد من حذف هذا المعلم؟" variant="danger" icon="trash">{{ __('حذف المعلم') }}</flux:menu.item>
+                                        <flux:menu.item wire:click="delete({{ $teacher->id }})"
+                                            wire:confirm="هل أنت متأكد من حذف هذا المعلم؟" variant="danger" icon="trash">
+                                            {{ __('حذف المعلم') }}</flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>
                             </div>
@@ -106,7 +116,8 @@
 
     <!-- Teacher Details Modal -->
     <flux:modal name="teacher-modal" variant="flyout" class="md:w-[500px]">
-        <div wire:loading wire:target="edit" class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
+        <div wire:loading wire:target="edit"
+            class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
             <flux:icon icon="arrow-path" class="size-8 animate-spin mb-4" />
             <p>{{ __('جاري تحميل بيانات المعلم...') }}</p>
         </div>
@@ -115,72 +126,81 @@
             @if ($viewingTeacher)
                 <div class="space-y-8">
                     <div>
-                    <flux:heading size="xl">{{ __('ملف المعلم') }}</flux:heading>
-                    <flux:subheading>{{ __('عرض وتعديل بيانات المعلم الأساسية') }}</flux:subheading>
-                </div>
-
-                <form wire:submit="save" class="space-y-4">
-                    <flux:input label="الاسم" wire:model="name" required />
-                    <flux:input label="البريد الإلكتروني" wire:model="email" type="email" required />
-                    <flux:input label="رقم الجوال" wire:model="phone" placeholder="9665xxxxxxx" dir="ltr" class="text-right" />
-
-                    <div class="space-y-2">
-                        <flux:heading size="sm">{{ __('تعيين الحلقات') }}</flux:heading>
-                        <div class="flex flex-col gap-2 max-h-48 overflow-y-auto p-3 border border-zinc-100 rounded-xl dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                            @foreach ($circles as $circle)
-                                <div class="flex items-center gap-2">
-                                    <flux:checkbox wire:model="selectedCircles" :value="$circle->id" :id="'circle-'.$circle->id" />
-                                    <flux:label :for="'circle-'.$circle->id" class="cursor-pointer">{{ $circle->name }} <span class="text-xs text-zinc-400">({{ $circle->stage->name }})</span></flux:label>
-                                </div>
-                            @endforeach
-                        </div>
+                        <flux:heading size="xl">{{ __('ملف المعلم') }}</flux:heading>
+                        <flux:subheading>{{ __('عرض وتعديل بيانات المعلم الأساسية') }}</flux:subheading>
                     </div>
 
-                    <div class="flex justify-between pt-2">
-                        <flux:button type="submit" variant="primary" size="sm" icon="check">
-                            {{ __('حفظ التعديلات') }}
-                        </flux:button>
-                    </div>
-                </form>
+                    <form wire:submit="save" class="space-y-4">
+                        <flux:input label="الاسم" wire:model="name" required />
+                        <flux:input label="البريد الإلكتروني" wire:model="email" type="email" required />
+                        <flux:input label="رقم الجوال" wire:model="phone" placeholder="9665xxxxxxx" dir="ltr"
+                            class="text-right" />
 
-                <flux:separator />
-
-                <!-- Additional Info -->
-                <div class="space-y-4">
-                    <flux:heading size="sm">{{ __('معلومات إضافية') }}</flux:heading>
-                    <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
-                        <div>
-                            <div class="font-medium text-sm">{{ __('حالة الاعتماد') }}</div>
-                            <div class="text-xs mt-1">
-                                @if ($viewingTeacher->is_approved)
-                                    <span class="text-green-600 dark:text-green-400">{{ __('معتمد') }}</span>
-                                @else
-                                    <span class="text-amber-600 dark:text-amber-400">{{ __('قيد الانتظار') }}</span>
-                                @endif
+                        <div class="space-y-2">
+                            <flux:heading size="sm">{{ __('تعيين الحلقات') }}</flux:heading>
+                            <div
+                                class="flex flex-col gap-2 max-h-48 overflow-y-auto p-3 border border-zinc-100 rounded-xl dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                                @foreach ($circles as $circle)
+                                    <div class="flex items-center gap-2">
+                                        <flux:checkbox wire:model="selectedCircles" :value="$circle->id"
+                                            :id="'circle-'.$circle->id" />
+                                        <flux:label :for="'circle-'.$circle->id" class="cursor-pointer">{{ $circle->name }}
+                                            <span class="text-xs text-zinc-400">({{ $circle->stage->name }})</span></flux:label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                        <div class="text-right">
-                            <div class="font-medium text-sm">{{ __('تاريخ الإضافة') }}</div>
-                            <div class="text-xs text-zinc-500 mt-1">{{ $viewingTeacher->created_at?->format('Y-m-d') }}</div>
-                        </div>
-                    </div>
 
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-medium text-sm">{{ __('رابط الدخول السحري') }}</div>
-                            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="resetToken({{ $viewingTeacher->id }})" wire:confirm="هل أنت متأكد من إنشاء رابط جديد؟ سيتم إبطال الرابط القديم.">
-                                {{ $viewingTeacher->access_token ? __('إعادة إنشاء') : __('إنشاء رابط') }}
+                        <div class="flex justify-between pt-2">
+                            <flux:button type="submit" variant="primary" size="sm" icon="check">
+                                {{ __('حفظ التعديلات') }}
                             </flux:button>
                         </div>
-                        @if($viewingTeacher->access_token)
-                            <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('teacher.magic-link', ['token' => $viewingTeacher->access_token]) }}' }">
-                                <flux:input readonly copyable class="w-full text-xs" :value="route('teacher.magic-link', ['token' => $viewingTeacher->access_token])" />
+                    </form>
+
+                    <flux:separator />
+
+                    <!-- Additional Info -->
+                    <div class="space-y-4">
+                        <flux:heading size="sm">{{ __('معلومات إضافية') }}</flux:heading>
+                        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                            <div>
+                                <div class="font-medium text-sm">{{ __('حالة الاعتماد') }}</div>
+                                <div class="text-xs mt-1">
+                                    @if ($viewingTeacher->is_approved)
+                                        <span class="text-green-600 dark:text-green-400">{{ __('معتمد') }}</span>
+                                    @else
+                                        <span class="text-amber-600 dark:text-amber-400">{{ __('قيد الانتظار') }}</span>
+                                    @endif
+                                </div>
                             </div>
-                        @else
-                            <div class="text-xs text-zinc-500">{{ __('لم يتم إنشاء رابط دخول لهذا المعلم بعد.') }}</div>
-                        @endif
+                            <div class="text-right">
+                                <div class="font-medium text-sm">{{ __('تاريخ الإضافة') }}</div>
+                                <div class="text-xs text-zinc-500 mt-1">{{ $viewingTeacher->created_at?->format('Y-m-d') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-sm">{{ __('رابط الدخول السحري') }}</div>
+                                <flux:button size="sm" variant="ghost" icon="arrow-path"
+                                    wire:click="resetToken({{ $viewingTeacher->id }})"
+                                    wire:confirm="هل أنت متأكد من إنشاء رابط جديد؟ سيتم إبطال الرابط القديم.">
+                                    {{ $viewingTeacher->access_token ? __('إعادة إنشاء') : __('إنشاء رابط') }}
+                                </flux:button>
+                            </div>
+                            @if($viewingTeacher->access_token)
+                                <div class="flex items-center gap-2"
+                                    x-data="{ copied: false, link: '{{ route('teacher.magic-link', ['token' => $viewingTeacher->access_token]) }}' }">
+                                    <flux:input readonly copyable class="w-full text-xs"
+                                        :value="route('teacher.magic-link', ['token' => $viewingTeacher->access_token])" />
+                                </div>
+                            @else
+                                <div class="text-xs text-zinc-500">{{ __('لم يتم إنشاء رابط دخول لهذا المعلم بعد.') }}</div>
+                            @endif
+                        </div>
                     </div>
-                </div>
                 </div>
             @endif
         </div>

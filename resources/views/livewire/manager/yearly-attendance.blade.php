@@ -22,9 +22,11 @@
 
     <div class="max-w-3xl mx-auto grid grid-cols-1 gap-8">
         @foreach($months as $month)
-            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
+            <div
+                class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col">
                 {{-- Month Header --}}
-                <div class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-center">
+                <div
+                    class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-center">
                     <div class="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
                         {{ $month['monthName'] }}
                     </div>
@@ -45,11 +47,10 @@
                         @else
                             <button
                                 wire:click="selectDate('{{ $day['gregorianDate'] }}', {{ $day['hijriDay'] }}, '{{ $month['monthName'] }}')"
-                                type="button"
-                                class="relative flex flex-col justify-between p-1.5 rounded-md border h-16 w-full transition-all duration-200 
-                                {{ $day['colorClass'] }}
-                                {{ $day['isToday'] ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-zinc-900 border-transparent shadow-sm' : 'border-zinc-100 dark:border-zinc-700/50' }}
-                                ">
+                                type="button" class="relative flex flex-col justify-between p-1.5 rounded-md border h-16 w-full   duration-200 
+                                            {{ $day['colorClass'] }}
+                                            {{ $day['isToday'] ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-zinc-900 border-transparent shadow-sm' : 'border-zinc-100 dark:border-zinc-700/50' }}
+                                            ">
 
                                 {{-- Hijri Day Number --}}
                                 <div class="flex justify-between items-start w-full leading-none">
@@ -70,8 +71,7 @@
                                             <span
                                                 class="text-indigo-700 dark:text-indigo-400 font-bold">{{ $day['completedCount'] }}</span>
                                             <span class="mx-0.5 text-zinc-400">/</span>
-                                            <span
-                                                class="text-zinc-500 dark:text-zinc-500 font-semibold">{{ $totalCirclesCount }}</span>
+                                            <span class="text-zinc-500 dark:text-zinc-500 font-semibold">{{ $totalCirclesCount }}</span>
                                         </div>
                                         <div class="w-full bg-black/5 dark:bg-white/10 rounded-full h-1 overflow-hidden">
                                             <div class="h-full rounded-full {{ $day['completionRate'] == 100 ? 'bg-green-500 dark:bg-green-400' : 'bg-indigo-400 dark:bg-indigo-500' }}"
@@ -95,23 +95,28 @@
                 <flux:subheading>يوم {{ $selectedDateHijri }}</flux:subheading>
             </div>
 
-            <div class="divide-y divide-zinc-100 dark:divide-zinc-800 -mx-6 border-t border-zinc-100 dark:border-zinc-800">
+            <div
+                class="divide-y divide-zinc-100 dark:divide-zinc-800 -mx-6 border-t border-zinc-100 dark:border-zinc-800">
                 @foreach ($circlesAttendance as $circle)
                     <div
-                        class="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors group">
-                        
+                        class="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/40   s group">
+
                         <div class="flex items-center gap-4">
                             {{-- Minimalist status indicator --}}
-                            <div class="h-8 w-1 rounded-full {{ $circle['is_completed'] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' }}"></div>
-                            
+                            <div
+                                class="h-8 w-1 rounded-full {{ $circle['is_completed'] ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' }}">
+                            </div>
+
                             <div>
-                                <div class="font-bold text-zinc-900 dark:text-white leading-tight">{{ $circle['name'] }}</div>
-                                <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">المعلم: {{ $circle['teacher_name'] }}</div>
+                                <div class="font-bold text-zinc-900 dark:text-white leading-tight">{{ $circle['name'] }}
+                                </div>
+                                <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">المعلم:
+                                    {{ $circle['teacher_name'] }}</div>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-2">
-                             <flux:button.group>
+                            <flux:button.group>
                                 @if ($circle['teacher_phone'])
                                     @php
                                         $msg = urlencode(
@@ -119,15 +124,14 @@
                                         );
                                     @endphp
                                     <flux:button size="sm" variant="ghost" square
-                                        href="https://wa.me/{{ $circle['teacher_phone'] }}?text={{ $msg }}"
-                                        target="_blank">
+                                        href="https://wa.me/{{ $circle['teacher_phone'] }}?text={{ $msg }}" target="_blank">
                                         <flux:icon icon="chat-bubble-left-right" class="size-4 text-green-500" />
                                     </flux:button>
                                 @endif
                                 <flux:button size="sm" variant="ghost" icon="list-bullet" square
                                     href="{{ route('manager.attendance-list', ['circleId' => $circle['id'], 'date' => $selectedDate]) }}"
                                     wire:navigate />
-                             </flux:button.group>
+                            </flux:button.group>
                         </div>
                     </div>
                 @endforeach

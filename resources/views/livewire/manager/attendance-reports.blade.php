@@ -21,7 +21,7 @@
                     <label class="text-xs font-medium text-zinc-500">إلى تاريخ</label>
                     <livewire:manager.hijri-datepicker wire:model.live="toDate" label="إلى تاريخ" />
                 </div>
-                <button wire:click="clearFilters" class="p-2 text-zinc-400 hover:text-red-500 transition-colors" title="مسح الفلاتر">
+                <button wire:click="clearFilters" class="p-2 text-zinc-400 hover:text-red-500   s" title="مسح الفلاتر">
                     <flux:icon icon="x-mark" class="size-5" />
                 </button>
             </div>
@@ -99,7 +99,7 @@
                                     $circleGlobalTotal  = 0;
                                     $daysWithData       = 0;
                                 @endphp
-                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
+                                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40   s">
                                     <td class="sticky right-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3 py-2 font-medium text-zinc-700 dark:text-zinc-300">
                                         {{ $circle->name }}
                                     </td>

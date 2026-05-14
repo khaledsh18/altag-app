@@ -64,10 +64,10 @@ new class extends Component {
                 $q->whereIn('student_id', $studentIds);
             })
             ->where('date', '>=', $earliest)
-            ->where(function($query) use ($todayStr) {
+            ->where(function ($query) use ($todayStr) {
                 $query->where('date', '<=', $todayStr)
-                      ->orWhereNotNull('hifz_achievement')
-                      ->orWhereNotNull('review_achievement');
+                    ->orWhereNotNull('hifz_achievement')
+                    ->orWhereNotNull('review_achievement');
             })
             ->get();
 
@@ -106,7 +106,7 @@ new class extends Component {
             }
 
             $dateStr = \Carbon\Carbon::parse($day->date)->format('Y-m-d');
-            
+
             // إذا كان اليوم في المستقبل ولكن تم تسميعه بالفعل (تسميع مبكر)، عامله كأنه سُمّع اليوم
             $effectiveDateStr = $dateStr > $todayStr ? $todayStr : $dateStr;
 
@@ -253,11 +253,13 @@ new class extends Component {
             class="p-4 border-b border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
                 <div class="w-36">
-                    <livewire:shared.hijri-datepicker wire:model.live="startDate" label="" placeholder="{{ __('من') }}" />
+                    <livewire:shared.hijri-datepicker wire:model.live="startDate" label=""
+                        placeholder="{{ __('من') }}" />
                 </div>
                 <span class="text-zinc-400">-</span>
                 <div class="w-36">
-                    <livewire:shared.hijri-datepicker wire:model.live="endDate" label="" placeholder="{{ __('إلى') }}" />
+                    <livewire:shared.hijri-datepicker wire:model.live="endDate" label=""
+                        placeholder="{{ __('إلى') }}" />
                 </div>
             </div>
 
@@ -274,7 +276,7 @@ new class extends Component {
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column>{{ __('اسم الطالب') }}</flux:table.column>
-                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 "
                         wire:click="sortBy('unrecited')">
                         <div class="flex items-center gap-1">
                             <flux:icon icon="x-circle" class="w-4 h-4 text-red-500" />
@@ -285,7 +287,7 @@ new class extends Component {
                             @endif
                         </div>
                     </flux:table.column>
-                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 "
                         wire:click="sortBy('acceptable')">
                         <div class="flex items-center gap-1">
                             <flux:icon icon="exclamation-circle" class="w-4 h-4 text-amber-500" />
@@ -296,7 +298,7 @@ new class extends Component {
                             @endif
                         </div>
                     </flux:table.column>
-                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 "
                         wire:click="sortBy('good')">
                         <div class="flex items-center gap-1">
                             <flux:icon icon="check-circle" class="w-4 h-4 text-blue-500" />
@@ -307,7 +309,7 @@ new class extends Component {
                             @endif
                         </div>
                     </flux:table.column>
-                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+                    <flux:table.column class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 "
                         wire:click="sortBy('excellent')">
                         <div class="flex items-center gap-1">
                             <flux:icon icon="star" class="w-4 h-4 text-green-500" />

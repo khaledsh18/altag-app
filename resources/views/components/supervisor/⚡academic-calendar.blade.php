@@ -625,7 +625,7 @@ new class extends Component {
     <div x-data="{ showAttendance: true, showOtherEvents: false }" class="space-y-4">
         {{-- Attendance Periods Collapsible --}}
         <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-            <button @click="showAttendance = !showAttendance" class="w-full flex items-center justify-between p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-right">
+            <button @click="showAttendance = !showAttendance" class="w-full flex items-center justify-between p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s text-right">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                         <flux:icon icon="clock" class="text-emerald-600 dark:text-emerald-400 size-5" />
@@ -714,7 +714,7 @@ new class extends Component {
                         </div>
                     @endif
                     
-                    <button @click="showOtherEvents = !showOtherEvents" class="hover:bg-zinc-100 dark:hover:bg-zinc-800 p-2 rounded-lg transition-colors">
+                    <button @click="showOtherEvents = !showOtherEvents" class="hover:bg-zinc-100 dark:hover:bg-zinc-800 p-2 rounded-lg   s">
                         <flux:icon icon="chevron-down" class="size-4 text-zinc-400 transition-transform" x-bind:class="showOtherEvents ? 'rotate-180' : ''" />
                     </button>
                 </div>
@@ -730,7 +730,7 @@ new class extends Component {
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             @foreach($otherEventsList as $event)
-                        <div class="relative flex flex-col p-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl group transition-all hover:shadow-md">
+                        <div class="relative flex flex-col p-3 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-xl group   hover:shadow-md">
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-2">
                                             <flux:checkbox wire:model.live="selectedEvents" value="{{ $event->id }}" />
@@ -796,7 +796,7 @@ new class extends Component {
                         @else
                             <button
                                 x-on:click="openDay('{{ $day['gregorianDate'] }}', {{ $day['hijriDay'] }}, '{{ $month['monthName'] }}', @js($day['fullEvents']))"
-                                type="button" class="group relative flex flex-col justify-start p-1 h-20 w-full transition-all duration-200 text-right overflow-hidden
+                                type="button" class="group relative flex flex-col justify-start p-1 h-20 w-full   duration-200 text-right overflow-hidden
                                             {{ $day['colorClass'] }}
                                             {{ $day['isToday'] ? 'ring-2 ring-inset ring-indigo-500 z-10 shadow-sm' : '' }}
                                             ">
@@ -947,7 +947,7 @@ new class extends Component {
                             <button 
                                 type="button" 
                                 wire:click="$set('color', '{{ $c }}')"
-                                class="size-8 rounded-full bg-{{ $c }}-500 border-4 {{ $color === $c ? 'border-zinc-200 dark:border-zinc-700 shadow-md scale-110' : 'border-transparent hover:scale-105' }} transition-all flex items-center justify-center group"
+                                class="size-8 rounded-full bg-{{ $c }}-500 border-4 {{ $color === $c ? 'border-zinc-200 dark:border-zinc-700 shadow-md scale-110' : 'border-transparent hover:scale-105' }}   flex items-center justify-center group"
                             >
                                 @if($color === $c)
                                     <flux:icon icon="check" variant="micro" class="text-white" />
@@ -1046,7 +1046,7 @@ new class extends Component {
                             6 => 'الجمعة',
                             7 => 'السبت'
                         ] as $value => $label)
-                            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800   s">
                                 <input type="checkbox" wire:model="selectedWeekdays" value="{{ $value }}" class="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500">
                                 <span class="text-sm">{{ $label }}</span>
                             </label>

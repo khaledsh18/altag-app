@@ -107,7 +107,7 @@ new class extends Component {
     public function sendTasksToTeachers()
     {
         $user = auth()->user();
-        
+
         $pendingTasks = Task::with(['category', 'assignedTo'])
             ->where(function ($q) use ($user) {
                 $q->where('created_by_id', $user->id)
@@ -117,19 +117,20 @@ new class extends Component {
             ->whereIn('assigned_to_type', ['App\Models\Teacher', 'App\Models\Supervisor'])
             ->whereNotNull('assigned_to_id')
             ->get();
-            
+
         if ($pendingTasks->isEmpty()) {
             Flux::toast('لا توجد مهام قيد الانتظار لمعلمين أو مشرفين لإرسالها.', variant: 'warning');
             return;
         }
-        
+
         $assigneesTasks = [];
         foreach ($pendingTasks as $task) {
             $assignee = $task->assignedTo;
-            if (!$assignee || empty($assignee->phone)) continue;
-            
+            if (!$assignee || empty($assignee->phone))
+                continue;
+
             $key = class_basename($assignee) . '_' . $assignee->id;
-            
+
             if (!isset($assigneesTasks[$key])) {
                 $assigneesTasks[$key] = [
                     'assignee' => $assignee,
@@ -138,15 +139,15 @@ new class extends Component {
             }
             $assigneesTasks[$key]['tasks'][] = $task;
         }
-        
+
         if (empty($assigneesTasks)) {
             Flux::toast('لا يوجد مستخدمين لديهم أرقام هواتف مسجلة لإرسال المهام إليهم.', variant: 'warning');
             return;
         }
 
-        $senderClientId = strtolower(class_basename(get_class($user))).'_'.$user->id;
+        $senderClientId = strtolower(class_basename(get_class($user))) . '_' . $user->id;
         \App\Jobs\SendWhatsappTasksJob::dispatch(array_values($assigneesTasks), $senderClientId);
-        
+
         Flux::toast('تم جدولة إرسال رسائل الواتساب بنجاح!', variant: 'success');
     }
 
@@ -595,7 +596,7 @@ new class extends Component {
     {
         $user = auth()->user();
         $today = \Carbon\Carbon::today()->format('Y-m-d');
-        
+
         $pendingTasks = Task::with(['assignedTo'])
             ->where(function ($q) use ($user) {
                 $q->where('created_by_id', $user->id)
@@ -606,19 +607,20 @@ new class extends Component {
             ->whereNotNull('assigned_to_id')
             ->whereDate('due_date', '>=', $today)
             ->get();
-            
+
         if ($pendingTasks->isEmpty()) {
             Flux::toast('لا توجد مهام قيد الانتظار لم يحن موعدها لإرسال رسالة تذكير.', variant: 'warning');
             return;
         }
-        
+
         $assigneesTasks = [];
         foreach ($pendingTasks as $task) {
             $assignee = $task->assignedTo;
-            if (!$assignee || empty($assignee->phone)) continue;
-            
+            if (!$assignee || empty($assignee->phone))
+                continue;
+
             $key = class_basename($assignee) . '_' . $assignee->id;
-            
+
             if (!isset($assigneesTasks[$key])) {
                 $assigneesTasks[$key] = [
                     'assignee' => $assignee,
@@ -627,15 +629,15 @@ new class extends Component {
             }
             $assigneesTasks[$key]['tasks'][] = $task;
         }
-        
+
         if (empty($assigneesTasks)) {
             Flux::toast('لا يوجد مستخدمين لديهم أرقام هواتف مسجلة لإرسال التذكير إليهم.', variant: 'warning');
             return;
         }
 
-        $senderClientId = strtolower(class_basename(get_class($user))).'_'.$user->id;
+        $senderClientId = strtolower(class_basename(get_class($user))) . '_' . $user->id;
         \App\Jobs\SendWhatsappTasksJob::dispatch(array_values($assigneesTasks), $senderClientId, 'reminder');
-        
+
         Flux::toast('تم جدولة إرسال رسائل التذكير عبر الواتساب بنجاح!', variant: 'success');
     }
 };
@@ -643,13 +645,18 @@ new class extends Component {
 
 <div class="space-y-8 pb-20 text-zinc-800 dark:text-zinc-200" dir="rtl">
     {{-- Top Bar --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
+    <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
         <h2 class="text-2xl font-bold">إدارة المهام</h2>
         <div class="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-3 sm:gap-4">
-            <x-flux::button wire:click="sendReminderTasksToTeachers" icon="bell" class="!bg-amber-500 hover:!bg-amber-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0" size="sm">
+            <x-flux::button wire:click="sendReminderTasksToTeachers" icon="bell"
+                class="!bg-amber-500 hover:!bg-amber-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0"
+                size="sm">
                 تذكير بالمهام (WhatsApp)
             </x-flux::button>
-            <x-flux::button wire:click="sendTasksToTeachers" icon="chat-bubble-left-right" class="!bg-emerald-500 hover:!bg-emerald-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0" size="sm">
+            <x-flux::button wire:click="sendTasksToTeachers" icon="chat-bubble-left-right"
+                class="!bg-emerald-500 hover:!bg-emerald-600 !text-white border-0 w-full sm:w-auto min-h-[44px] sm:min-h-0"
+                size="sm">
                 إرسال المهام (WhatsApp)
             </x-flux::button>
         </div>
@@ -710,7 +717,7 @@ new class extends Component {
                                         <button @click="newCatColor = '{{ $color }}'" type="button"
                                             class="size-6 sm:size-7 rounded-full bg-{{ $color }}-500 border-2 transition-transform shadow-sm"
                                             :class="newCatColor === '{{ $color }}' ?
-                                                                                                                                'border-zinc-800 dark:border-white scale-110' : 'border-transparent'">
+                                                                                                                                        'border-zinc-800 dark:border-white scale-110' : 'border-transparent'">
                                         </button>
                                     @endforeach
                                 </div>
@@ -721,10 +728,10 @@ new class extends Component {
                                 <div class="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-48 overflow-y-auto pr-1">
                                     @foreach (['tag', 'star', 'bookmark', 'folder', 'briefcase', 'academic-cap', 'sparkles', 'bolt', 'bell', 'calendar', 'clipboard-document-check', 'clock', 'cloud', 'cpu-chip', 'document-text', 'exclamation-circle', 'fire', 'flag', 'globe-alt', 'heart', 'key', 'light-bulb', 'map-pin', 'paper-clip', 'pencil', 'rocket-launch', 'shield-check', 'trophy', 'users', 'check-badge'] as $icon)
                                         <button @click="newCatIcon = '{{ $icon }}'" type="button"
-                                            class="p-2 flex items-center justify-center rounded-lg transition-colors border"
+                                            class="p-2 flex items-center justify-center rounded-lg   s border"
                                             :class="newCatIcon === '{{ $icon }}' ?
-                                                                                                                                'bg-indigo-50 dark:bg-indigo-900/50 border-indigo-500 text-indigo-600 dark:text-indigo-400' :
-                                                                                                                                'border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'">
+                                                                                                                                        'bg-indigo-50 dark:bg-indigo-900/50 border-indigo-500 text-indigo-600 dark:text-indigo-400' :
+                                                                                                                                        'border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'">
                                             <flux:icon icon="{{ $icon }}" class="size-5" />
                                         </button>
                                     @endforeach
@@ -755,18 +762,18 @@ new class extends Component {
                             class="space-y-1 {{ $catId !== 'uncategorized' ? 'pr-3 border-r-2 border-' . ($category->color ?? 'zinc') . '-200 dark:border-' . ($category->color ?? 'zinc') . '-800/50' : '' }}">
                             @if ($catId !== 'uncategorized')
                                 <div x-data="{
-                                                                                                                                                            isHovered: false,
-                                                                                                                                                            isEditingCat: false,
-                                                                                                                                                            catName: '{{ addslashes($category->name) }}',
-                                                                                                                                                            save() {
-                                                                                                                                                                if (this.catName.trim() !== '' && this.catName.trim() !== '{{ addslashes($category->name) }}') {
-                                                                                                                                                                    $wire.updateCategoryName({{ $category->id }}, this.catName);
-                                                                                                                                                                } else {
-                                                                                                                                                                    this.catName = '{{ addslashes($category->name) }}';
-                                                                                                                                                                }
-                                                                                                                                                                this.isEditingCat = false;
-                                                                                                                                                            }
-                                                                                                                                                        }"
+                                                                                                                                                                        isHovered: false,
+                                                                                                                                                                        isEditingCat: false,
+                                                                                                                                                                        catName: '{{ addslashes($category->name) }}',
+                                                                                                                                                                        save() {
+                                                                                                                                                                            if (this.catName.trim() !== '' && this.catName.trim() !== '{{ addslashes($category->name) }}') {
+                                                                                                                                                                                $wire.updateCategoryName({{ $category->id }}, this.catName);
+                                                                                                                                                                            } else {
+                                                                                                                                                                                this.catName = '{{ addslashes($category->name) }}';
+                                                                                                                                                                            }
+                                                                                                                                                                            this.isEditingCat = false;
+                                                                                                                                                                        }
+                                                                                                                                                                    }"
                                     @mouseenter="isHovered = true" @mouseleave="isHovered = false"
                                     class="group flex items-center justify-between text-sm font-bold text-{{ $category->color ?? 'zinc' }}-600 dark:text-{{ $category->color ?? 'zinc' }}-400 mb-2">
 
@@ -776,7 +783,7 @@ new class extends Component {
                                         <div class="flex-1 cursor-pointer min-w-0" @click="isEditingCat = true"
                                             x-show="!isEditingCat">
                                             <span
-                                                class="truncate flex items-center text-[15px] border-b border-transparent hover:border-{{ $category->color ?? 'zinc' }}-400 transition-colors pb-0.5">
+                                                class="truncate flex items-center text-[15px] border-b border-transparent hover:border-{{ $category->color ?? 'zinc' }}-400   s pb-0.5">
                                                 {{ $category->name }}
                                             </span>
                                         </div>
@@ -805,24 +812,24 @@ new class extends Component {
                             <div class="space-y-1">
                                 @foreach ($tasks as $task)
                                     <div x-data="{
-                                                                                                                                                                isHovered: false,
-                                                                                                                                                                isEditing: false,
-                                                                                                                                                                title: '{{ addslashes($task->title) }}',
-                                                                                                                                                                save() {
-                                                                                                                                                                    if (this.title.trim() !== '{{ addslashes($task->title) }}') {
-                                                                                                                                                                        $wire.updateTaskTitle({{ $task->id }}, this.title);
-                                                                                                                                                                    }
-                                                                                                                                                                    this.isEditing = false;
-                                                                                                                                                                }
-                                                                                                                                                            }"
+                                                                                                                                                                            isHovered: false,
+                                                                                                                                                                            isEditing: false,
+                                                                                                                                                                            title: '{{ addslashes($task->title) }}',
+                                                                                                                                                                            save() {
+                                                                                                                                                                                if (this.title.trim() !== '{{ addslashes($task->title) }}') {
+                                                                                                                                                                                    $wire.updateTaskTitle({{ $task->id }}, this.title);
+                                                                                                                                                                                }
+                                                                                                                                                                                this.isEditing = false;
+                                                                                                                                                                            }
+                                                                                                                                                                        }"
                                         @mouseenter="isHovered = true" @mouseleave="isHovered = false"
                                         wire:key="task-{{ $task->id }}-group-{{ $group['event']->id ?? 'general' }}"
-                                        class="group flex items-center justify-between py-2 border-b border-transparent hover:border-zinc-100 dark:hover:border-zinc-800 transition-colors">
+                                        class="group flex items-center justify-between py-2 border-b border-transparent hover:border-zinc-100 dark:hover:border-zinc-800   s">
                                         {{-- Right side: Status and Title --}}
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
                                             <button
                                                 wire:click="updateTaskStatus({{ $task->id }}, '{{ $task->status === 'completed' ? 'pending' : 'completed' }}')"
-                                                class="shrink-0 flex items-center justify-center size-5 rounded-full border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 {{ $task->status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-300 dark:border-zinc-600 text-transparent hover:border-emerald-400' }}">
+                                                class="shrink-0 flex items-center justify-center size-5 rounded-full border-2   s focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-zinc-900 {{ $task->status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-300 dark:border-zinc-600 text-transparent hover:border-emerald-400' }}">
                                                 <flux:icon icon="check" class="size-3" />
                                             </button>
 
@@ -913,7 +920,7 @@ new class extends Component {
                                                         class="px-4 py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-300 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                                                         <span>اختر الأحداث</span>
                                                         <button @click="open = false" type="button"
-                                                            class="p-1 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                                                            class="p-1 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800   s">
                                                             <flux:icon icon="x-mark" class="size-5" />
                                                         </button>
                                                     </div>
@@ -928,14 +935,14 @@ new class extends Component {
                                                                 <div class="border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
                                                                     <button type="button"
                                                                         @click="expandedYear = {{ $year }}; expandedMonth = expandedMonth === {{ $monthNum }} ? null : {{ $monthNum }}"
-                                                                        class="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                                                        class="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s">
                                                                         <span
                                                                             class="text-sm font-bold text-zinc-800 dark:text-zinc-200">{{ $monthData['name'] }}</span>
                                                                         <flux:icon icon="chevron-down"
                                                                             class="size-4 text-zinc-400 transition-transform"
                                                                             x-bind:class="expandedYear === {{ $year }} &&
-                                                                                                                                                                                                                                                                                        expandedMonth === {{ $monthNum }} ?
-                                                                                                                                                                                                                                                                                        'rotate-180' : ''" />
+                                                                                                                                                                                                                                                                                                            expandedMonth === {{ $monthNum }} ?
+                                                                                                                                                                                                                                                                                                            'rotate-180' : ''" />
                                                                     </button>
 
                                                                     <div
@@ -943,11 +950,11 @@ new class extends Component {
                                                                         <div
                                                                             class="pl-4 pr-3 py-2 bg-zinc-50/50 dark:bg-zinc-800/20 space-y-1">
                                                                             @foreach ($monthData['events'] as $e)
-                                                                                <div class="flex items-center gap-3 px-3 py-2.5 hover:bg-white dark:hover:bg-zinc-800 cursor-pointer rounded-lg border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm transition-all"
+                                                                                <div class="flex items-center gap-3 px-3 py-2.5 hover:bg-white dark:hover:bg-zinc-800 cursor-pointer rounded-lg border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm  "
                                                                                     @click="selected = (selected === {{ $e->id }}) ? null : {{ $e->id }}; $wire.syncTaskEvents({{ $task->id }}, selected ? [selected] : []);">
                                                                                     <input type="radio"
                                                                                         :checked="selected ===
-                                                                                                                                                                                                                                                                                                                                            {{ $e->id }}"
+                                                                                                                                                                                                                                                                                                                                                                    {{ $e->id }}"
                                                                                         class="rounded-full size-4 border-zinc-300 text-indigo-600 focus:ring-indigo-600 pointer-events-none">
                                                                                     <div
                                                                                         class="size-3 rounded-full {{ ['indigo' => 'bg-indigo-500', 'blue' => 'bg-blue-500', 'green' => 'bg-green-500', 'emerald' => 'bg-emerald-500', 'zinc' => 'bg-zinc-500', 'orange' => 'bg-orange-500', 'sky' => 'bg-sky-500', 'rose' => 'bg-rose-500', 'amber' => 'bg-amber-500', 'teal' => 'bg-teal-500', 'red' => 'bg-red-500', 'lime' => 'bg-lime-500'][$e->color ?? 'indigo'] ?? 'bg-indigo-500' }}">
@@ -999,7 +1006,7 @@ new class extends Component {
                                                         <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                                                             <button type="button"
                                                                 @click="$wire.updateTaskDetails({{ $task->id }}, '{{ addslashes($task->description) }}', null); openMore = false"
-                                                                class="flex items-center gap-2 p-2 rounded-lg border {{ $task->task_category_id === null ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800' }} transition-colors text-right">
+                                                                class="flex items-center gap-2 p-2 rounded-lg border {{ $task->task_category_id === null ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800' }}   s text-right">
                                                                 <div
                                                                     class="flex items-center justify-center size-6 shrink-0 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
                                                                     <flux:icon icon="no-symbol" class="size-3" />
@@ -1013,7 +1020,7 @@ new class extends Component {
                                                                     @php $c = $dropdownCatData['category']; @endphp
                                                                     <button type="button"
                                                                         @click="$wire.updateTaskDetails({{ $task->id }}, '{{ addslashes($task->description) }}', {{ $c->id }}); openMore = false"
-                                                                        class="flex items-center gap-2 p-2 rounded-lg border {{ $task->task_category_id === $c->id ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800' }} transition-colors text-right">
+                                                                        class="flex items-center gap-2 p-2 rounded-lg border {{ $task->task_category_id === $c->id ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800' }}   s text-right">
                                                                         <div
                                                                             class="flex items-center justify-center size-6 shrink-0 rounded-full bg-{{ $c->color ?? 'zinc' }}-100 dark:bg-{{ $c->color ?? 'zinc' }}-900/30 text-{{ $c->color ?? 'zinc' }}-600 dark:text-{{ $c->color ?? 'zinc' }}-400">
                                                                             <flux:icon icon="{{ $c->icon ?? 'tag' }}" class="size-3" />
@@ -1049,27 +1056,27 @@ new class extends Component {
                             </div>
 
                             <div wire:key="add-task-{{ $group['event']->id ?? 'general' }}-{{ $catId }}" x-data="{
-                                                                                                                    isAdding: false,
-                                                                                                                    newTaskTitle: '',
-                                                                                                                    submit(fromBlur = false) {
-                                                                                                                        if (this.newTaskTitle.trim() === '') {
-                                                                                                                            this.isAdding = false;
-                                                                                                                            return;
-                                                                                                                        }
-                                                                                                                        $wire.addTaskInline(this.newTaskTitle, {{ $isGeneral ? 'null' : $group['event']->id }}, {{ $catId === 'uncategorized' ? 'null' : $category->id }});
-                                                                                                                        this.newTaskTitle = '';
-                                                                                                                        if (!fromBlur) {
-                                                                                                                            this.isAdding = true; // Keep open to add another
-                                                                                                                            setTimeout(() => { $refs.input.focus(); }, 50);
-                                                                                                                        } else {
-                                                                                                                            this.isAdding = false;
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }"
+                                                                                                                            isAdding: false,
+                                                                                                                            newTaskTitle: '',
+                                                                                                                            submit(fromBlur = false) {
+                                                                                                                                if (this.newTaskTitle.trim() === '') {
+                                                                                                                                    this.isAdding = false;
+                                                                                                                                    return;
+                                                                                                                                }
+                                                                                                                                $wire.addTaskInline(this.newTaskTitle, {{ $isGeneral ? 'null' : $group['event']->id }}, {{ $catId === 'uncategorized' ? 'null' : $category->id }});
+                                                                                                                                this.newTaskTitle = '';
+                                                                                                                                if (!fromBlur) {
+                                                                                                                                    this.isAdding = true; // Keep open to add another
+                                                                                                                                    setTimeout(() => { $refs.input.focus(); }, 50);
+                                                                                                                                } else {
+                                                                                                                                    this.isAdding = false;
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }"
                                 x-init="$watch('isAdding', val => { if (val) setTimeout(() => { $refs.input.focus(); }, 50) })"
                                 class="mt-2">
                                 <button type="button" @click="isAdding = true" x-show="!isAdding"
-                                    class="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-indigo-600 transition-colors w-full py-2 {{ $catId !== 'uncategorized' ? 'pr-2' : '' }}">
+                                    class="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-indigo-600   s w-full py-2 {{ $catId !== 'uncategorized' ? 'pr-2' : '' }}">
                                     <flux:icon icon="plus" class="size-4" />
                                     إضافة مهمة...
                                 </button>
@@ -1094,7 +1101,7 @@ new class extends Component {
                             x-data="{ open: false, expandedYear: {{ $hijriYear }}, expandedMonth: {{ $hijriMonth }} }"
                             @click.away="open = false">
                             <x-flux::button @click="open = !open" variant="outline" icon="plus"
-                                class="w-full justify-center border-dashed text-zinc-500 hover:text-indigo-600 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/80 transition-colors">
+                                class="w-full justify-center border-dashed text-zinc-500 hover:text-indigo-600 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/80   s">
                                 إضافة مجموعة مهام مرتبطة بحدث...
                             </x-flux::button>
 
@@ -1105,7 +1112,7 @@ new class extends Component {
                                     class="px-4 py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-300 sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                                     <span>اختر الحدث لربط المهام به</span>
                                     <button @click="open = false" type="button"
-                                        class="p-1 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                                        class="p-1 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800   s">
                                         <flux:icon icon="x-mark" class="size-5" />
                                     </button>
                                 </div>
@@ -1120,19 +1127,19 @@ new class extends Component {
                                             <div class="border-b border-zinc-100 dark:border-zinc-800/50 last:border-0">
                                                 <button type="button"
                                                     @click="expandedYear = {{ $year }}; expandedMonth = expandedMonth === {{ $monthNum }} ? null : {{ $monthNum }}"
-                                                    class="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                                    class="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s">
                                                     <span
                                                         class="text-sm font-bold text-zinc-800 dark:text-zinc-200">{{ $monthData['name'] }}</span>
                                                     <flux:icon icon="chevron-down" class="size-4 text-zinc-400 transition-transform"
                                                         x-bind:class="expandedYear === {{ $year }} && expandedMonth ===
-                                                                                                                                                                                                                            {{ $monthNum }} ? 'rotate-180' : ''" />
+                                                                                                                                                                                                                                            {{ $monthNum }} ? 'rotate-180' : ''" />
                                                 </button>
 
                                                 <div x-show="expandedYear === {{ $year }} && expandedMonth === {{ $monthNum }}">
                                                     <div class="pl-4 pr-3 py-2 bg-zinc-50/50 dark:bg-zinc-800/20 space-y-1">
                                                         @foreach ($monthData['events'] as $event)
                                                             <button type="button" wire:click="addGroupForEvent({{ $event->id }})"
-                                                                class="w-full text-right flex items-center gap-3 px-3 py-2.5 hover:bg-white dark:hover:bg-zinc-800 rounded-lg border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm transition-all">
+                                                                class="w-full text-right flex items-center gap-3 px-3 py-2.5 hover:bg-white dark:hover:bg-zinc-800 rounded-lg border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm  ">
                                                                 <div
                                                                     class="size-3 rounded-full {{ ['indigo' => 'bg-indigo-500', 'blue' => 'bg-blue-500', 'green' => 'bg-green-500', 'emerald' => 'bg-emerald-500', 'zinc' => 'bg-zinc-500', 'orange' => 'bg-orange-500', 'sky' => 'bg-sky-500', 'rose' => 'bg-rose-500', 'amber' => 'bg-amber-500', 'teal' => 'bg-teal-500', 'red' => 'bg-red-500', 'lime' => 'bg-lime-500'][$event->color ?? 'indigo'] ?? 'bg-indigo-500' }}">
                                                                 </div>
@@ -1193,7 +1200,7 @@ new class extends Component {
                                 <div class="h-20 sm:h-24 md:h-28 w-full bg-white dark:bg-zinc-900/50"></div>
                             @else
                                 <button wire:click="selectDueDate('{{ $day['gregorianDate'] }}')" type="button"
-                                    class="group relative flex flex-col justify-start p-1 h-20 sm:h-24 md:h-28 w-full transition-all duration-200 text-right overflow-hidden bg-white hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 {{ $day['isToday'] ? 'ring-2 ring-inset ring-indigo-500 z-10 shadow-sm' : '' }}">
+                                    class="group relative flex flex-col justify-start p-1 h-20 sm:h-24 md:h-28 w-full   duration-200 text-right overflow-hidden bg-white hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 {{ $day['isToday'] ? 'ring-2 ring-inset ring-indigo-500 z-10 shadow-sm' : '' }}">
 
                                     {{-- Event Background Slices --}}
                                     @if (count(array_filter($day['dayColors'])) > 0)

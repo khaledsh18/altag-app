@@ -40,15 +40,15 @@
             <div
                 class="inline-flex items-center px-3 py-1 rounded-full bg-maroon/10 text-maroon dark:bg-red-secondary/20 dark:text-red-secondary text-sm font-medium mb-2">
                 {{ __('جمعية خيركم لتحفيظ القرآن بجدة') }}
-                
+
             </div>
         </div>
 
         <div class="w-full max-w-lg mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a href="{{ route('teacher.login') }}"
-                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-maroon dark:hover:border-red-secondary transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-maroon dark:hover:border-red-secondary   shadow-sm hover:shadow-xl hover:-translate-y-1">
                 <div
-                    class="absolute top-0 right-0 w-16 h-16 bg-maroon/5 group-hover:bg-maroon/10 transition-colors rounded-bl-full -mr-8 -mt-8">
+                    class="absolute top-0 right-0 w-16 h-16 bg-maroon/5 group-hover:bg-maroon/10   s rounded-bl-full -mr-8 -mt-8">
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -61,9 +61,9 @@
             </a>
 
             <a href="{{ route('supervisor.login') }}"
-                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-600 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-600   shadow-sm hover:shadow-xl hover:-translate-y-1">
                 <div
-                    class="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors rounded-bl-full -mr-8 -mt-8">
+                    class="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 group-hover:bg-blue-500/10   s rounded-bl-full -mr-8 -mt-8">
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -76,9 +76,9 @@
             </a>
 
             <a href="{{ route('student.login') }}"
-                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-orange-500 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-orange-500   shadow-sm hover:shadow-xl hover:-translate-y-1">
                 <div
-                    class="absolute top-0 right-0 w-16 h-16 bg-orange-500/5 group-hover:bg-orange-500/10 transition-colors rounded-bl-full -mr-8 -mt-8">
+                    class="absolute top-0 right-0 w-16 h-16 bg-orange-500/5 group-hover:bg-orange-500/10   s rounded-bl-full -mr-8 -mt-8">
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
@@ -91,9 +91,9 @@
             </a>
 
             <a href="{{ route('parent.login') }}"
-                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-purple-600 transition-all shadow-sm hover:shadow-xl hover:-translate-y-1">
+                class="group relative overflow-hidden flex flex-col items-center justify-center p-6 border-2 rounded-2xl bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-purple-600   shadow-sm hover:shadow-xl hover:-translate-y-1">
                 <div
-                    class="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors rounded-bl-full -mr-8 -mt-8">
+                    class="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 group-hover:bg-purple-500/10   s rounded-bl-full -mr-8 -mt-8">
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"

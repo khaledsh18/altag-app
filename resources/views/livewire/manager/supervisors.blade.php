@@ -36,27 +36,33 @@
     <flux:card>
         <form wire:submit="createQuickSupervisor" class="flex flex-col md:flex-row items-end gap-4">
             <div class="w-full md:w-2/5">
-                <flux:input wire:model="quickName" label="{{ __('اسم المشرف') }}" placeholder="{{ __('مثال: أحمد محمود') }}" required />
+                <flux:input wire:model="quickName" label="{{ __('اسم المشرف') }}"
+                    placeholder="{{ __('مثال: أحمد محمود') }}" required />
             </div>
             <div class="w-full md:w-2/5">
                 <flux:input wire:model="quickPhone" label="{{ __('رقم الهاتف') }}" placeholder="{{ __('اختياري') }}" />
             </div>
-            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء سريع') }}</flux:button>
+            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء سريع') }}
+            </flux:button>
         </form>
     </flux:card>
 
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
+    <div
+        class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs overflow-hidden">
         <flux:table class="w-full">
             <flux:table.columns>
                 <flux:table.column>{{ __('المشرف') }}</flux:table.column>
                 <flux:table.column class="hidden md:table-cell">{{ __('المراحل') }}</flux:table.column>
-                <flux:table.column class="hidden md:table-cell text-center">{{ __('حالة البيانات') }}</flux:table.column>
+                <flux:table.column class="hidden md:table-cell text-center">{{ __('حالة البيانات') }}
+                </flux:table.column>
                 <flux:table.column class="w-10"></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @foreach ($supervisors as $supervisor)
-                    <flux:table.row :key="$supervisor->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})">
+                    <flux:table.row :key="$supervisor->id"
+                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s"
+                        x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})">
                         <flux:table.cell>
                             <div class="flex flex-col">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ $supervisor->name }}</span>
@@ -87,14 +93,19 @@
                         <flux:table.cell>
                             <div class="flex items-center justify-end gap-2" @click.stop>
                                 @if (!$supervisor->is_approved)
-                                    <flux:button size="sm" variant="primary" class="bg-emerald-600 hover:bg-emerald-700" wire:click="approve({{ $supervisor->id }})">موافقة</flux:button>
+                                    <flux:button size="sm" variant="primary" class="bg-emerald-600 hover:bg-emerald-700"
+                                        wire:click="approve({{ $supervisor->id }})">موافقة</flux:button>
                                 @endif
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:menu.item
+                                            x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})"
+                                            icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
-                                        <flux:menu.item wire:click="delete({{ $supervisor->id }})" wire:confirm="هل أنت متأكد من حذف هذا المشرف؟" variant="danger" icon="trash">{{ __('حذف المشرف') }}</flux:menu.item>
+                                        <flux:menu.item wire:click="delete({{ $supervisor->id }})"
+                                            wire:confirm="هل أنت متأكد من حذف هذا المشرف؟" variant="danger" icon="trash">
+                                            {{ __('حذف المشرف') }}</flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>
                             </div>
@@ -107,7 +118,8 @@
 
     <!-- Supervisor Details Modal -->
     <flux:modal name="supervisor-modal" variant="flyout" class="md:w-[500px]">
-        <div wire:loading wire:target="edit" class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
+        <div wire:loading wire:target="edit"
+            class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
             <flux:icon icon="arrow-path" class="size-8 animate-spin mb-4" />
             <p>{{ __('جاري تحميل بيانات المشرف...') }}</p>
         </div>
@@ -116,79 +128,89 @@
             @if ($viewingSupervisor)
                 <div class="space-y-8">
                     <div>
-                    <flux:heading size="xl">{{ __('ملف المشرف') }}</flux:heading>
-                    <flux:subheading>{{ __('عرض وتعديل بيانات المشرف الأساسية') }}</flux:subheading>
-                </div>
-
-                <form wire:submit="save" class="space-y-4">
-                    <flux:input label="الاسم" wire:model="name" required />
-                    <flux:input label="البريد الإلكتروني" wire:model="email" type="email" required />
-                    <flux:input label="رقم الجوال" wire:model="phone" placeholder="9665xxxxxxx" dir="ltr" class="text-right" />
-                    
-                    <div class="grid grid-cols-1 gap-4">
-                        <flux:input label="كلمة المرور" wire:model="password" type="password" :required="!$editingSupervisorId" viewable />
-                        @if($editingSupervisorId)
-                            <p class="text-xs text-zinc-500 mt-1">اتركه فارغاً إذا كنت لا ترغب في تغيير كلمة المرور.</p>
-                        @endif
+                        <flux:heading size="xl">{{ __('ملف المشرف') }}</flux:heading>
+                        <flux:subheading>{{ __('عرض وتعديل بيانات المشرف الأساسية') }}</flux:subheading>
                     </div>
 
-                    <div class="space-y-2">
-                        <flux:heading size="sm">{{ __('تعيين المراحل') }}</flux:heading>
-                        <div class="flex flex-col gap-2 max-h-48 overflow-y-auto p-3 border border-zinc-100 rounded-xl dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                            @foreach ($stages as $stage)
-                                <div class="flex items-center gap-2">
-                                    <flux:checkbox wire:model="selectedStages" :value="$stage->id" :id="'stage-'.$stage->id" />
-                                    <flux:label :for="'stage-'.$stage->id" class="cursor-pointer">{{ $stage->name }}</flux:label>
-                                </div>
-                            @endforeach
+                    <form wire:submit="save" class="space-y-4">
+                        <flux:input label="الاسم" wire:model="name" required />
+                        <flux:input label="البريد الإلكتروني" wire:model="email" type="email" required />
+                        <flux:input label="رقم الجوال" wire:model="phone" placeholder="9665xxxxxxx" dir="ltr"
+                            class="text-right" />
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <flux:input label="كلمة المرور" wire:model="password" type="password"
+                                :required="!$editingSupervisorId" viewable />
+                            @if($editingSupervisorId)
+                                <p class="text-xs text-zinc-500 mt-1">اتركه فارغاً إذا كنت لا ترغب في تغيير كلمة المرور.</p>
+                            @endif
                         </div>
-                    </div>
 
-                    <div class="flex justify-between pt-2">
-                        <flux:button type="submit" variant="primary" size="sm" icon="check">
-                            {{ __('حفظ التعديلات') }}
-                        </flux:button>
-                    </div>
-                </form>
-
-                <flux:separator />
-
-                <!-- Additional Info -->
-                <div class="space-y-4">
-                    <flux:heading size="sm">{{ __('معلومات إضافية') }}</flux:heading>
-                    <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
-                        <div>
-                            <div class="font-medium text-sm">{{ __('حالة الاعتماد') }}</div>
-                            <div class="text-xs mt-1">
-                                @if ($viewingSupervisor->is_approved)
-                                    <span class="text-green-600 dark:text-green-400">{{ __('معتمد') }}</span>
-                                @else
-                                    <span class="text-amber-600 dark:text-amber-400">{{ __('قيد الانتظار') }}</span>
-                                @endif
+                        <div class="space-y-2">
+                            <flux:heading size="sm">{{ __('تعيين المراحل') }}</flux:heading>
+                            <div
+                                class="flex flex-col gap-2 max-h-48 overflow-y-auto p-3 border border-zinc-100 rounded-xl dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                                @foreach ($stages as $stage)
+                                    <div class="flex items-center gap-2">
+                                        <flux:checkbox wire:model="selectedStages" :value="$stage->id"
+                                            :id="'stage-'.$stage->id" />
+                                        <flux:label :for="'stage-'.$stage->id" class="cursor-pointer">{{ $stage->name }}
+                                        </flux:label>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                        <div class="text-right">
-                            <div class="font-medium text-sm">{{ __('تاريخ الإضافة') }}</div>
-                            <div class="text-xs text-zinc-500 mt-1">{{ $viewingSupervisor->created_at?->format('Y-m-d') }}</div>
-                        </div>
-                    </div>
 
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-medium text-sm">{{ __('رابط الدخول السحري') }}</div>
-                            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="resetToken({{ $viewingSupervisor->id }})" wire:confirm="هل أنت متأكد من إنشاء رابط جديد؟ سيتم إبطال الرابط القديم.">
-                                {{ $viewingSupervisor->access_token ? __('إعادة إنشاء') : __('إنشاء رابط') }}
+                        <div class="flex justify-between pt-2">
+                            <flux:button type="submit" variant="primary" size="sm" icon="check">
+                                {{ __('حفظ التعديلات') }}
                             </flux:button>
                         </div>
-                        @if($viewingSupervisor->access_token)
-                            <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('supervisor.magic-link', ['token' => $viewingSupervisor->access_token]) }}' }">
-                                <flux:input readonly copyable class="w-full text-xs" :value="route('supervisor.magic-link', ['token' => $viewingSupervisor->access_token])" />
+                    </form>
+
+                    <flux:separator />
+
+                    <!-- Additional Info -->
+                    <div class="space-y-4">
+                        <flux:heading size="sm">{{ __('معلومات إضافية') }}</flux:heading>
+                        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                            <div>
+                                <div class="font-medium text-sm">{{ __('حالة الاعتماد') }}</div>
+                                <div class="text-xs mt-1">
+                                    @if ($viewingSupervisor->is_approved)
+                                        <span class="text-green-600 dark:text-green-400">{{ __('معتمد') }}</span>
+                                    @else
+                                        <span class="text-amber-600 dark:text-amber-400">{{ __('قيد الانتظار') }}</span>
+                                    @endif
+                                </div>
                             </div>
-                        @else
-                            <div class="text-xs text-zinc-500">{{ __('لم يتم إنشاء رابط دخول لهذا المشرف بعد.') }}</div>
-                        @endif
+                            <div class="text-right">
+                                <div class="font-medium text-sm">{{ __('تاريخ الإضافة') }}</div>
+                                <div class="text-xs text-zinc-500 mt-1">
+                                    {{ $viewingSupervisor->created_at?->format('Y-m-d') }}</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="font-medium text-sm">{{ __('رابط الدخول السحري') }}</div>
+                                <flux:button size="sm" variant="ghost" icon="arrow-path"
+                                    wire:click="resetToken({{ $viewingSupervisor->id }})"
+                                    wire:confirm="هل أنت متأكد من إنشاء رابط جديد؟ سيتم إبطال الرابط القديم.">
+                                    {{ $viewingSupervisor->access_token ? __('إعادة إنشاء') : __('إنشاء رابط') }}
+                                </flux:button>
+                            </div>
+                            @if($viewingSupervisor->access_token)
+                                <div class="flex items-center gap-2"
+                                    x-data="{ copied: false, link: '{{ route('supervisor.magic-link', ['token' => $viewingSupervisor->access_token]) }}' }">
+                                    <flux:input readonly copyable class="w-full text-xs"
+                                        :value="route('supervisor.magic-link', ['token' => $viewingSupervisor->access_token])" />
+                                </div>
+                            @else
+                                <div class="text-xs text-zinc-500">{{ __('لم يتم إنشاء رابط دخول لهذا المشرف بعد.') }}</div>
+                            @endif
+                        </div>
                     </div>
-                </div>
                 </div>
             @endif
         </div>

@@ -2,22 +2,29 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <flux:button href="{{ route('teacher.leaderboards') }}" wire:navigate variant="ghost" size="sm" icon="arrow-right" class="rtl:rotate-180" />
-                <flux:heading size="xl">{{ __('الرصد اليدوي: ') }} <span class="text-indigo-600 dark:text-indigo-400">{{ $leaderboard->title }}</span></flux:heading>
+                <flux:button href="{{ route('teacher.leaderboards') }}" wire:navigate variant="ghost" size="sm"
+                    icon="arrow-right" class="rtl:rotate-180" />
+                <flux:heading size="xl">{{ __('الرصد اليدوي: ') }} <span
+                        class="text-indigo-600 dark:text-indigo-400">{{ $leaderboard->title }}</span></flux:heading>
             </div>
-            <flux:subheading class="ms-10">{{ __('قم بمنح النقاط للطلاب في البنود المخصصة بشكل يومي.') }}</flux:subheading>
+            <flux:subheading class="ms-10">{{ __('قم بمنح النقاط للطلاب في البنود المخصصة بشكل يومي.') }}
+            </flux:subheading>
         </div>
 
-        <div class="w-full md:w-64 bg-white dark:bg-zinc-900 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+        <div
+            class="w-full md:w-64 bg-white dark:bg-zinc-900 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
             <livewire:teacher.hijri-datepicker wire:model.live="date" />
         </div>
     </div>
 
     @if($leaderboard->criteria->isEmpty() && empty($leaderboard->settings['extra_points_enabled']))
-        <div class="text-center py-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+        <div
+            class="text-center py-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
             <flux:icon icon="clipboard-document" class="size-10 mx-auto text-zinc-400 mb-3" />
             <flux:heading size="md" class="mb-2">{{ __('لا توجد بنود مخصصة') }}</flux:heading>
-            <p class="text-zinc-500">{{ __('لم تقم بإضافة بنود التقييم أو تفعيل النقاط الإضافية لهذه المسابقة. يمكنك إضافتها من إعدادات اللوحة.') }}</p>
+            <p class="text-zinc-500">
+                {{ __('لم تقم بإضافة بنود التقييم أو تفعيل النقاط الإضافية لهذه المسابقة. يمكنك إضافتها من إعدادات اللوحة.') }}
+            </p>
         </div>
     @else
         <flux:card class="p-0 overflow-hidden">
@@ -26,20 +33,22 @@
                     <thead class="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                         <tr>
                             <th class="p-4 font-semibold text-zinc-800 dark:text-zinc-200 w-1/4">{{ __('اسم الطالب') }}</th>
-                            
+
                             <!-- Manual Criteria Headers -->
                             @foreach($leaderboard->criteria as $criterion)
                                 <th class="p-4 font-semibold text-zinc-800 dark:text-zinc-200 text-center">
                                     <div class="flex flex-col items-center">
                                         <span>{{ $criterion->name }}</span>
-                                        <flux:badge color="emerald" size="sm" class="mt-1">{{ $criterion->points }} {{ __('نقاط') }}</flux:badge>
+                                        <flux:badge color="emerald" size="sm" class="mt-1">{{ $criterion->points }}
+                                            {{ __('نقاط') }}</flux:badge>
                                     </div>
                                 </th>
                             @endforeach
 
                             <!-- Extra Points Header -->
                             @if(!empty($leaderboard->settings['extra_points_enabled']))
-                                <th class="p-4 font-semibold text-amber-600 dark:text-amber-500 text-center border-r border-zinc-200 dark:border-zinc-700 bg-amber-50/50 dark:bg-amber-900/10">
+                                <th
+                                    class="p-4 font-semibold text-amber-600 dark:text-amber-500 text-center border-r border-zinc-200 dark:border-zinc-700 bg-amber-50/50 dark:bg-amber-900/10">
                                     <div class="flex flex-col items-center">
                                         <flux:icon icon="star" class="size-5 mb-1" />
                                         <span>{{ __('نقاط إضافية') }}</span>
@@ -48,19 +57,22 @@
                             @endif
 
                             <!-- Automated Points Headers -->
-                            <th class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 border-r border-zinc-200 dark:border-zinc-700 w-16">
+                            <th
+                                class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 border-r border-zinc-200 dark:border-zinc-700 w-16">
                                 <div class="flex flex-col items-center gap-1">
                                     <flux:icon icon="book-open" variant="micro" class="size-4" />
                                     <span class="text-[10px]">{{ __('حفظ') }}</span>
                                 </div>
                             </th>
-                            <th class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 w-16">
+                            <th
+                                class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 w-16">
                                 <div class="flex flex-col items-center gap-1">
                                     <flux:icon icon="arrow-path" variant="micro" class="size-4" />
                                     <span class="text-[10px]">{{ __('مراجعة') }}</span>
                                 </div>
                             </th>
-                            <th class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 w-16">
+                            <th
+                                class="p-2 font-semibold text-zinc-500 dark:text-zinc-400 text-center bg-zinc-100/50 dark:bg-zinc-800/30 w-16">
                                 <div class="flex flex-col items-center gap-1">
                                     <flux:icon icon="clock" variant="micro" class="size-4" />
                                     <span class="text-[10px]">{{ __('حضور') }}</span>
@@ -70,211 +82,191 @@
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                         @foreach($students as $student)
-                            @php
-                                $studentScoreIds = $scoresMap->get($student->id, []);
-                                $studentExtraPoints = $extraPointsMap->get($student->id, collect());
-                                $dailyTotal = $dailyScores[$student->id]['total'] ?? 0;
-                                $dailyAutomated = $dailyScores[$student->id]['automated'] ?? 0;
-                                $dailyManual = $dailyScores[$student->id]['manual'] ?? 0;
-                                // Add extra points to manual total for display in this view
-                                $dailyManual += $studentExtraPoints->sum('points');
-                                $dailyTotal += $studentExtraPoints->sum('points');
-                            @endphp
-                            <tr class="even:bg-zinc-50/50 odd:bg-white dark:even:bg-zinc-800/20 dark:odd:bg-zinc-900/10 hover:!bg-zinc-100/80 dark:hover:!bg-zinc-800/50 transition-colors">
-                                <td class="p-4 font-medium text-zinc-900 dark:text-zinc-100 w-1/4">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
-                                                {{ mb_substr($student->name, 0, 1) }}
-                                            </div>
-                                            <div class="flex flex-col">
-                                                <span>{{ $student->name }}</span>
-                                                @if($dailyAutomated > 0)
-                                                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-normal">
-                                                        <flux:icon icon="cpu-chip" variant="micro" class="size-3 inline" /> {{ __('تلقائي اليوم:') }} {{ $dailyAutomated }}
-                                                    </span>
+                                            @php
+                                                $studentScoreIds = $scoresMap->get($student->id, []);
+                                                $studentExtraPoints = $extraPointsMap->get($student->id, collect());
+                                                $dailyTotal = $dailyScores[$student->id]['total'] ?? 0;
+                                                $dailyAutomated = $dailyScores[$student->id]['automated'] ?? 0;
+                                                $dailyManual = $dailyScores[$student->id]['manual'] ?? 0;
+                                                // Add extra points to manual total for display in this view
+                                                $dailyManual += $studentExtraPoints->sum('points');
+                                                $dailyTotal += $studentExtraPoints->sum('points');
+                                            @endphp
+                             <tr
+                                                class="even:bg-zinc-50/50 odd:bg-white dark:even:bg-zinc-800/20 dark:odd:bg-zinc-900/10 hover:!bg-zinc-100/80 dark:hover:!bg-zinc-800/50   s">
+                                                <td class="p-4 font-medium text-zinc-900 dark:text-zinc-100 w-1/4">
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="flex items-center gap-3">
+                                                            <div
+                                                                class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                                                                {{ mb_substr($student->name, 0, 1) }}
+                                                            </div>
+                                                            <div class="flex flex-col">
+                                                                <span>{{ $student->name }}</span>
+                                                                @if($dailyAutomated > 0)
+                                                                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-normal">
+                                                                        <flux:icon icon="cpu-chip" variant="micro" class="size-3 inline" />
+                                                                        {{ __('تلقائي اليوم:') }} {{ $dailyAutomated }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 text-xs px-2 py-1 rounded-md font-bold flex items-center gap-1"
+                                                            title="{{ __('مجموع نقاط اليوم (التلقائية + اليدوية)') }}">
+                                                            {{ $dailyTotal }}
+                                                            <flux:icon icon="star" variant="solid" class="size-3" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                @foreach($leaderboard->criteria as $criterion)
+                                                    @php
+                                                        $hasScore = in_array($criterion->id, $studentScoreIds);
+                                                    @endphp
+                                                    <td class="p-4 text-center border-l border-zinc-50 dark:border-zinc-800/50">
+                                                        {{--
+                                                        wire:key includes the date so Alpine fully re-initializes
+                                                        when the date changes, picking up the correct 'confirmed' value.
+                                                        --}}
+                                                        <div wire:key="score-{{ $student->id }}-{{ $criterion->id }}-{{ $date }}" x-data="{
+                                                                            confirmed: {{ $hasScore ? 'true' : 'false' }},
+                                                                            pending: false,
+                                                                            async toggle() {
+                                                                                if (this.pending) return;
+                                                                                this.pending = true;
+                                                                                try {
+                                                                                    await $wire.toggleScore({{ $student->id }}, {{ $criterion->id }}, {{ $criterion->points }});
+                                                                                    this.confirmed = !this.confirmed;
+                                                                                } finally {
+                                                                                    this.pending = false;
+                                                                                }
+                                                                            }
+                                                                        }">
+                                                            <button @click="toggle()"
+                                                                :title="confirmed ? '{{ __('إزالة النقطة') }}' : '{{ __('منح النقطة') }}'" :class="{
+                                                                                'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110': confirmed && !pending,
+                                                                                'bg-violet-500 border-violet-500 text-white shadow-md shadow-violet-500/30 scale-105 animate-pulse': pending,
+                                                                                'bg-white border-zinc-200 text-zinc-300 hover:border-emerald-200 hover:text-emerald-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-700 dark:hover:border-emerald-800 dark:hover:text-emerald-700': !confirmed && !pending
+                                                                            }"
+                                                                class="inline-flex w-10 h-10 items-center justify-center rounded-xl border-2   duration-200">
+                                                                <flux:icon icon="check" variant="micro" class="size-6" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                @endforeach
+
+                                                <!-- Extra Points Cell (Alpine.js inline form) -->
+                                                @if(!empty($leaderboard->settings['extra_points_enabled']))
+                                                    <td
+                                                        class="p-2 text-center border-x border-zinc-100 dark:border-zinc-800 bg-amber-50/30 dark:bg-amber-900/5">
+                                                        <div x-data="{
+                                                                            open: false,
+                                                                            amount: 1,
+                                                                            notes: '',
+                                                                            saving: false,
+                                                                            async save() {
+                                                                                if (this.saving || !this.amount || !this.notes.trim()) return;
+                                                                                this.saving = true;
+                                                                                try {
+                                                                                    await $wire.saveExtraPoints({{ $student->id }}, this.amount, this.notes);
+                                                                                    this.amount = 1;
+                                                                                    this.notes = '';
+                                                                                    this.open = false;
+                                                                                } finally {
+                                                                                    this.saving = false;
+                                                                                }
+                                                                            }
+                                                                        }" class="flex flex-col gap-2 items-center">
+                                                            {{-- Existing extra points list --}}
+                                                            @foreach($studentExtraPoints as $ep)
+                                                                <div x-data="{ deleting: false }"
+                                                                    class="group relative flex items-center justify-between w-full max-w-[120px] rounded-lg p-1.5 border shadow-sm text-xs   duration-300"
+                                                                    :class="deleting
+                                                                                        ? 'opacity-40 scale-95 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
+                                                                                        : 'bg-white dark:bg-zinc-800 border-amber-200 dark:border-amber-700'"
+                                                                    title="{{ $ep->notes }}">
+                                                                    <span
+                                                                        class="font-bold text-amber-600 dark:text-amber-400 px-1">+{{ $ep->points }}</span>
+                                                                    <span class="truncate max-w-[60px] text-zinc-500">{{ $ep->notes }}</span>
+                                                                    <button @click="
+                                                                                            if (deleting) return;
+                                                                                            deleting = true;
+                                                                                            $wire.deleteExtraPoints({{ $ep->id }}).catch(() => { deleting = false; });
+                                                                                        "
+                                                                        class="text-red-400 hover:text-red-600 flex md:hidden md:group-hover:flex absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5"
+                                                                        title="{{ __('حذف') }}">
+                                                                        <flux:icon icon="x-mark" variant="micro" class="size-3" />
+                                                                    </button>
+                                                                </div>
+                                                            @endforeach
+
+                                                            {{-- Inline form toggle --}}
+                                                            <button @click="open = !open"
+                                                                :class="open ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-400 text-amber-600' : 'border-dashed border-amber-300 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-600 dark:hover:bg-amber-900/30'"
+                                                                class="inline-flex w-8 h-8 items-center justify-center rounded-lg border   s"
+                                                                title="{{ __('إضافة نقاط إضافية') }}">
+                                                                <flux:icon x-show="!open" icon="plus" variant="micro" class="size-4" />
+                                                                <flux:icon x-show="open" icon="x-mark" variant="micro" class="size-4" />
+                                                            </button>
+
+                                                            {{-- Inline form --}}
+                                                            <div x-show="open" x-transition:enter="ease-out duration-200"
+                                                                x-transition:enter-start="opacity-0 scale-95"
+                                                                x-transition:enter-end="opacity-100 scale-100"
+                                                                x-transition:leave="ease-in duration-150"
+                                                                x-transition:leave-start="opacity-100 scale-100"
+                                                                x-transition:leave-end="opacity-0 scale-95" style="display:none;"
+                                                                class="w-full max-w-[150px] bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 rounded-xl p-2 shadow-lg space-y-1.5"
+                                                                @keydown.escape.window="open = false">
+                                                                <input x-model="amount" type="number" min="1" placeholder="{{ __('النقاط') }}"
+                                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300" />
+                                                                <input x-model="notes" type="text" placeholder="{{ __('السبب...') }}"
+                                                                    @keydown.enter="save()"
+                                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300" />
+                                                                <button @click="save()" :disabled="saving || !amount || !notes.trim()"
+                                                                    :class="saving ? 'opacity-50 cursor-wait' : 'hover:bg-amber-600'"
+                                                                    class="w-full text-xs bg-amber-500 text-white rounded-lg py-1 font-bold   s">
+                                                                    <span x-show="!saving">{{ __('حفظ') }}</span>
+                                                                    <span x-show="saving">...</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                 @endif
-                                            </div>
-                                        </div>
-                                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 text-xs px-2 py-1 rounded-md font-bold flex items-center gap-1" title="{{ __('مجموع نقاط اليوم (التلقائية + اليدوية)') }}">
-                                            {{ $dailyTotal }} <flux:icon icon="star" variant="solid" class="size-3" />
-                                        </div>
-                                    </div>
-                                </td>
-                                
-                                @foreach($leaderboard->criteria as $criterion)
-                                    @php
-                                        $hasScore = in_array($criterion->id, $studentScoreIds);
-                                    @endphp
-                                    <td class="p-4 text-center border-l border-zinc-50 dark:border-zinc-800/50">
-                                        {{-- 
-                                            wire:key includes the date so Alpine fully re-initializes
-                                            when the date changes, picking up the correct 'confirmed' value.
-                                        --}}
-                                        <div
-                                            wire:key="score-{{ $student->id }}-{{ $criterion->id }}-{{ $date }}"
-                                            x-data="{
-                                                confirmed: {{ $hasScore ? 'true' : 'false' }},
-                                                pending: false,
-                                                async toggle() {
-                                                    if (this.pending) return;
-                                                    this.pending = true;
-                                                    try {
-                                                        await $wire.toggleScore({{ $student->id }}, {{ $criterion->id }}, {{ $criterion->points }});
-                                                        this.confirmed = !this.confirmed;
-                                                    } finally {
-                                                        this.pending = false;
-                                                    }
-                                                }
-                                            }"
-                                        >
-                                            <button
-                                                @click="toggle()"
-                                                :title="confirmed ? '{{ __('إزالة النقطة') }}' : '{{ __('منح النقطة') }}'"
-                                                :class="{
-                                                    'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20 scale-110': confirmed && !pending,
-                                                    'bg-violet-500 border-violet-500 text-white shadow-md shadow-violet-500/30 scale-105 animate-pulse': pending,
-                                                    'bg-white border-zinc-200 text-zinc-300 hover:border-emerald-200 hover:text-emerald-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-700 dark:hover:border-emerald-800 dark:hover:text-emerald-700': !confirmed && !pending
-                                                }"
-                                                class="inline-flex w-10 h-10 items-center justify-center rounded-xl border-2 transition-all duration-200"
-                                            >
-                                                <flux:icon icon="check" variant="micro" class="size-6" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                @endforeach
 
-                                <!-- Extra Points Cell (Alpine.js inline form) -->
-                                @if(!empty($leaderboard->settings['extra_points_enabled']))
-                                    <td class="p-2 text-center border-x border-zinc-100 dark:border-zinc-800 bg-amber-50/30 dark:bg-amber-900/5">
-                                        <div
-                                            x-data="{
-                                                open: false,
-                                                amount: 1,
-                                                notes: '',
-                                                saving: false,
-                                                async save() {
-                                                    if (this.saving || !this.amount || !this.notes.trim()) return;
-                                                    this.saving = true;
-                                                    try {
-                                                        await $wire.saveExtraPoints({{ $student->id }}, this.amount, this.notes);
-                                                        this.amount = 1;
-                                                        this.notes = '';
-                                                        this.open = false;
-                                                    } finally {
-                                                        this.saving = false;
-                                                    }
-                                                }
-                                            }"
-                                            class="flex flex-col gap-2 items-center"
-                                        >
-                                            {{-- Existing extra points list --}}
-                                            @foreach($studentExtraPoints as $ep)
-                                                <div
-                                                    x-data="{ deleting: false }"
-                                                    class="group relative flex items-center justify-between w-full max-w-[120px] rounded-lg p-1.5 border shadow-sm text-xs transition-all duration-300"
-                                                    :class="deleting
-                                                        ? 'opacity-40 scale-95 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
-                                                        : 'bg-white dark:bg-zinc-800 border-amber-200 dark:border-amber-700'"
-                                                    title="{{ $ep->notes }}"
-                                                >
-                                                    <span class="font-bold text-amber-600 dark:text-amber-400 px-1">+{{ $ep->points }}</span>
-                                                    <span class="truncate max-w-[60px] text-zinc-500">{{ $ep->notes }}</span>
-                                                    <button
-                                                        @click="
-                                                            if (deleting) return;
-                                                            deleting = true;
-                                                            $wire.deleteExtraPoints({{ $ep->id }}).catch(() => { deleting = false; });
-                                                        "
-                                                        class="text-red-400 hover:text-red-600 flex md:hidden md:group-hover:flex absolute left-1 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 rounded-full p-0.5"
-                                                        title="{{ __('حذف') }}"
-                                                    >
-                                                        <flux:icon icon="x-mark" variant="micro" class="size-3" />
-                                                    </button>
-                                                </div>
-                                            @endforeach
-
-                                            {{-- Inline form toggle --}}
-                                            <button
-                                                @click="open = !open"
-                                                :class="open ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-400 text-amber-600' : 'border-dashed border-amber-300 text-amber-500 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-600 dark:hover:bg-amber-900/30'"
-                                                class="inline-flex w-8 h-8 items-center justify-center rounded-lg border transition-colors"
-                                                title="{{ __('إضافة نقاط إضافية') }}"
-                                            >
-                                                <flux:icon x-show="!open" icon="plus" variant="micro" class="size-4" />
-                                                <flux:icon x-show="open" icon="x-mark" variant="micro" class="size-4" />
-                                            </button>
-
-                                            {{-- Inline form --}}
-                                            <div
-                                                x-show="open"
-                                                x-transition:enter="transition ease-out duration-200"
-                                                x-transition:enter-start="opacity-0 scale-95"
-                                                x-transition:enter-end="opacity-100 scale-100"
-                                                x-transition:leave="transition ease-in duration-150"
-                                                x-transition:leave-start="opacity-100 scale-100"
-                                                x-transition:leave-end="opacity-0 scale-95"
-                                                style="display:none;"
-                                                class="w-full max-w-[150px] bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 rounded-xl p-2 shadow-lg space-y-1.5"
-                                                @keydown.escape.window="open = false"
-                                            >
-                                                <input
-                                                    x-model="amount"
-                                                    type="number"
-                                                    min="1"
-                                                    placeholder="{{ __('النقاط') }}"
-                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300"
-                                                />
-                                                <input
-                                                    x-model="notes"
-                                                    type="text"
-                                                    placeholder="{{ __('السبب...') }}"
-                                                    @keydown.enter="save()"
-                                                    class="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 text-zinc-700 dark:text-zinc-300"
-                                                />
-                                                <button
-                                                    @click="save()"
-                                                    :disabled="saving || !amount || !notes.trim()"
-                                                    :class="saving ? 'opacity-50 cursor-wait' : 'hover:bg-amber-600'"
-                                                    class="w-full text-xs bg-amber-500 text-white rounded-lg py-1 font-bold transition-colors"
-                                                >
-                                                    <span x-show="!saving">{{ __('حفظ') }}</span>
-                                                    <span x-show="saving">...</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                @endif
-
-                                <!-- Automated Points Cells -->
-                                <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30 border-r border-zinc-200/50 dark:border-zinc-700/50">
-                                    @if(($dailyScores[$student->id]['hifz'] ?? 0) > 0)
-                                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-                                            +{{ $dailyScores[$student->id]['hifz'] }}
-                                        </span>
-                                    @else
-                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
-                                    @endif
-                                </td>
-                                <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30">
-                                    @if(($dailyScores[$student->id]['review'] ?? 0) > 0)
-                                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-                                            +{{ $dailyScores[$student->id]['review'] }}
-                                        </span>
-                                    @else
-                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
-                                    @endif
-                                </td>
-                                <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30">
-                                    @if(($dailyScores[$student->id]['attendance'] ?? 0) > 0)
-                                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-                                            +{{ $dailyScores[$student->id]['attendance'] }}
-                                        </span>
-                                    @else
-                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
-                                    @endif
-                                </td>
-                            </tr>
+                                                <!-- Automated Points Cells -->
+                                                <td
+                                                    class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30 border-r border-zinc-200/50 dark:border-zinc-700/50">
+                                                    @if(($dailyScores[$student->id]['hifz'] ?? 0) > 0)
+                                                        <span
+                                                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                                                            +{{ $dailyScores[$student->id]['hifz'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30">
+                                                    @if(($dailyScores[$student->id]['review'] ?? 0) > 0)
+                                                        <span
+                                                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                                                            +{{ $dailyScores[$student->id]['review'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
+                                                    @endif
+                                                </td>
+                                                <td class="p-2 text-center bg-zinc-50/50 dark:bg-zinc-800/30">
+                                                    @if(($dailyScores[$student->id]['attendance'] ?? 0) > 0)
+                                                        <span
+                                                            class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                                                            +{{ $dailyScores[$student->id]['attendance'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-zinc-300 dark:text-zinc-600 text-sm">-</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
                         @endforeach
                     </tbody>
                 </table>

@@ -55,11 +55,11 @@
 
     <div class="no-print mb-4 flex justify-end gap-2">
         <button onclick="window.print()"
-            class="px-3 py-1.5 bg-indigo-600 text-white rounded shadow-sm hover:bg-indigo-700 font-medium text-xs transition-colors">
+            class="px-3 py-1.5 bg-indigo-600 text-white rounded shadow-sm hover:bg-indigo-700 font-medium text-xs   s">
             طباعة الخطة
         </button>
         <a href="{{ route('teacher.student-plans') }}"
-            class="px-3 py-1.5 bg-zinc-100 text-zinc-700 rounded hover:bg-zinc-200 font-medium text-xs transition-colors">
+            class="px-3 py-1.5 bg-zinc-100 text-zinc-700 rounded hover:bg-zinc-200 font-medium text-xs   s">
             رجوع
         </a>
     </div>

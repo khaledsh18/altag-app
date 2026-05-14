@@ -95,7 +95,7 @@
 
                 <!-- شريط التقدم -->
                 <div x-show="isUploading" class="w-full bg-zinc-200 rounded-full h-2.5 dark:bg-zinc-700 mt-2">
-                    <div class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                    <div class="bg-indigo-600 h-2.5 rounded-full   duration-300"
                         x-bind:style="'width: ' + progress + '%'"></div>
                 </div>
                 <div x-show="isUploading" class="text-xs text-zinc-500 text-center">جاري المعالجة والرفع... <span
@@ -148,8 +148,9 @@
                                                     icon="folder-open" variant="subtle" size="sm" class="text-indigo-600">
                                                     تصفح
                                                 </flux:button>
-                                                <flux:button wire:click="restoreFullBackup('{{ $backup['name'] }}')" icon="arrow-path"
-                                                    variant="subtle" size="sm" class="text-emerald-600 hover:text-emerald-700"
+                                                <flux:button wire:click="restoreFullBackup('{{ $backup['name'] }}')"
+                                                    icon="arrow-path" variant="subtle" size="sm"
+                                                    class="text-emerald-600 hover:text-emerald-700"
                                                     wire:confirm="هل أنت متأكد من العودة لهذه النسخة بشكل كامل؟ سيقوم النظام تلقائياً بحفظ نسخة من وضعك الحالي قبل الاسترجاع.">
                                                     استرجاع كامل
                                                 </flux:button>

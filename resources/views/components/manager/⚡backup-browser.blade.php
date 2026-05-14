@@ -169,7 +169,7 @@ new class extends Component {
                 <div class="space-y-1 max-h-[600px] overflow-y-auto pr-2">
                     @foreach($tables as $table)
                         <button wire:click="$set('selectedTable', '{{ $table }}')"
-                            class="w-full text-right px-3 py-2 rounded-lg text-sm transition-colors {{ $selectedTable === $table ? 'bg-indigo-50 text-indigo-700 font-bold dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}">
+                            class="w-full text-right px-3 py-2 rounded-lg text-sm   s {{ $selectedTable === $table ? 'bg-indigo-50 text-indigo-700 font-bold dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}">
                             {{ $table }}
                         </button>
                     @endforeach

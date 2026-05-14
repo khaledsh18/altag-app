@@ -36,7 +36,7 @@ class HijriDatepicker extends Component
 
     public function getHijriFormattedDateProperty()
     {
-        if (! $this->date) {
+        if (!$this->date) {
             return '';
         }
         $formatter = new \IntlDateFormatter(
@@ -132,11 +132,11 @@ class HijriDatepicker extends Component
                 $ratio = $completedCirclesCount / $totalCirclesCount;
 
                 if ($ratio >= 1.0) {
-                    $colorClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 transition-colors border-green-200';
+                    $colorClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60   s border-green-200';
                 } elseif ($ratio >= 0.5) {
-                    $colorClass = 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 transition-colors border-blue-100';
+                    $colorClass = 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40   s border-blue-100';
                 } else {
-                    $colorClass = 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 transition-colors border-amber-100';
+                    $colorClass = 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/40   s border-amber-100';
                 }
             }
 

@@ -5,10 +5,10 @@
 
     @php
         $guardian = auth()->guard('guardian')->user();
-        $student  = $guardian->students()->findOrFail($studentId);
+        $student = $guardian->students()->findOrFail($studentId);
 
         // Month navigation via query param ?month=2026-04
-        $monthParam  = request('month');
+        $monthParam = request('month');
         $currentMonth = $monthParam
             ? \Carbon\Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth()
             : now()->startOfMonth();
@@ -22,25 +22,28 @@
             ->whereYear('date', $currentMonth->year)
             ->whereMonth('date', $currentMonth->month)
             ->get()
-            ->keyBy(fn ($a) => $a->date->format('Y-m-d'));
+            ->keyBy(fn($a) => $a->date->format('Y-m-d'));
 
         // Calendar grid helpers
-        $daysInMonth   = $currentMonth->daysInMonth;
+        $daysInMonth = $currentMonth->daysInMonth;
         $firstDayOfWeek = $currentMonth->copy()->startOfMonth()->dayOfWeek; // 0=Sun
         // We want Saturday as first column (Islamic week), so shift accordingly
         // Sat=6, Sun=0, Mon=1 ... Fri=5
         $startOffset = ($firstDayOfWeek + 1) % 7; // offset from Saturday
 
         $statusConfig = [
-            'present' => ['label' => 'حاضر',    'bg' => 'bg-emerald-100 dark:bg-emerald-500/20', 'text' => 'text-emerald-700 dark:text-emerald-400', 'dot' => 'bg-emerald-500'],
-            'late'    => ['label' => 'متأخر',   'bg' => 'bg-amber-100  dark:bg-amber-500/20',   'text' => 'text-amber-700  dark:text-amber-400',   'dot' => 'bg-amber-500'],
-            'absent'  => ['label' => 'غائب',    'bg' => 'bg-red-100    dark:bg-red-500/20',      'text' => 'text-red-700    dark:text-red-400',      'dot' => 'bg-red-500'],
-            'excused' => ['label' => 'غياب بعذر','bg' => 'bg-blue-100  dark:bg-blue-500/20',    'text' => 'text-blue-700   dark:text-blue-400',    'dot' => 'bg-blue-500'],
+            'present' => ['label' => 'حاضر', 'bg' => 'bg-emerald-100 dark:bg-emerald-500/20', 'text' => 'text-emerald-700 dark:text-emerald-400', 'dot' => 'bg-emerald-500'],
+            'late' => ['label' => 'متأخر', 'bg' => 'bg-amber-100  dark:bg-amber-500/20', 'text' => 'text-amber-700  dark:text-amber-400', 'dot' => 'bg-amber-500'],
+            'absent' => ['label' => 'غائب', 'bg' => 'bg-red-100    dark:bg-red-500/20', 'text' => 'text-red-700    dark:text-red-400', 'dot' => 'bg-red-500'],
+            'excused' => ['label' => 'غياب بعذر', 'bg' => 'bg-blue-100  dark:bg-blue-500/20', 'text' => 'text-blue-700   dark:text-blue-400', 'dot' => 'bg-blue-500'],
         ];
 
         // Summary counts
         $summary = [
-            'present' => 0, 'late' => 0, 'absent' => 0, 'excused' => 0,
+            'present' => 0,
+            'late' => 0,
+            'absent' => 0,
+            'excused' => 0,
         ];
         foreach ($attendances as $att) {
             if (isset($summary[$att->status])) {
@@ -54,7 +57,7 @@
         {{-- Back + Title --}}
         <div class="flex items-center gap-3">
             <a href="{{ route('guardian.student', $student->id) }}"
-               class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800   s">
                 <flux:icon icon="arrow-right" class="size-5" />
             </a>
             <div>
@@ -66,7 +69,8 @@
         {{-- Summary cards --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @foreach($statusConfig as $key => $cfg)
-                <div class="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 flex items-center gap-3">
+                <div
+                    class="rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 flex items-center gap-3">
                     <div class="size-3 rounded-full {{ $cfg['dot'] }} shrink-0"></div>
                     <div>
                         <p class="text-xs text-neutral-500">{{ $cfg['label'] }}</p>
@@ -82,7 +86,7 @@
             {{-- Month navigation --}}
             <div class="flex items-center justify-between mb-6">
                 <a href="{{ route('guardian.student.attendance', ['id' => $student->id, 'month' => $prevMonth->format('Y-m')]) }}"
-                   class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                    class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800   s">
                     <flux:icon icon="chevron-right" class="size-5" />
                 </a>
 
@@ -92,7 +96,7 @@
 
                 @if($canGoNext)
                     <a href="{{ route('guardian.student.attendance', ['id' => $student->id, 'month' => $nextMonth->format('Y-m')]) }}"
-                       class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                        class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800   s">
                         <flux:icon icon="chevron-left" class="size-5" />
                     </a>
                 @else
@@ -117,15 +121,17 @@
                 {{-- Day cells --}}
                 @for($day = 1; $day <= $daysInMonth; $day++)
                     @php
-                        $dateStr    = $currentMonth->copy()->day($day)->format('Y-m-d');
+                        $dateStr = $currentMonth->copy()->day($day)->format('Y-m-d');
                         $attendance = $attendances[$dateStr] ?? null;
-                        $isToday    = $dateStr === today()->format('Y-m-d');
-                        $cfg        = $attendance ? $statusConfig[$attendance->status] ?? null : null;
+                        $isToday = $dateStr === today()->format('Y-m-d');
+                        $cfg = $attendance ? $statusConfig[$attendance->status] ?? null : null;
                     @endphp
-                    <div class="relative flex flex-col items-center justify-center rounded-lg py-2 min-h-[52px]
-                                {{ $cfg ? $cfg['bg'] : '' }}
-                                {{ $isToday && !$cfg ? 'ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-neutral-800' : '' }}">
-                        <span class="text-sm font-medium {{ $cfg ? $cfg['text'] : 'text-neutral-600 dark:text-neutral-400' }}">
+                    <div
+                        class="relative flex flex-col items-center justify-center rounded-lg py-2 min-h-[52px]
+                                    {{ $cfg ? $cfg['bg'] : '' }}
+                                    {{ $isToday && !$cfg ? 'ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-neutral-800' : '' }}">
+                        <span
+                            class="text-sm font-medium {{ $cfg ? $cfg['text'] : 'text-neutral-600 dark:text-neutral-400' }}">
                             {{ $day }}
                         </span>
                         @if($cfg)

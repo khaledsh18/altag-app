@@ -42,7 +42,7 @@
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach($standings as $index => $standing)
                         @php $rank = $index + 1; @endphp
-                        <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                        <tr class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30   s">
                             <td class="p-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm {{ $rank === 1 ? 'bg-amber-100 text-amber-600 border border-amber-300' : ($rank === 2 ? 'bg-slate-100 text-slate-600 border border-slate-300' : ($rank === 3 ? 'bg-orange-100 text-orange-600 border border-orange-300' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700')) }}">

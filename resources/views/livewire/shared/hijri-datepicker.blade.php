@@ -162,8 +162,8 @@ new class extends Component {
                     }
                 @endphp
                 <button wire:click="selectDate('{{ $gregDate }}')" type="button"
-                    class="relative h-8 w-8 flex flex-col items-center justify-center rounded-lg text-xs transition-colors
-                            {{ $isSelected ? 'bg-indigo-500 text-white font-bold' : ($isToday ? 'border border-indigo-300 text-indigo-600' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300') }}">
+                    class="relative h-8 w-8 flex flex-col items-center justify-center rounded-lg text-xs   s
+                                {{ $isSelected ? 'bg-indigo-500 text-white font-bold' : ($isToday ? 'border border-indigo-300 text-indigo-600' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300') }}">
                     <span class="{{ $showEvents && $dayEvents->isNotEmpty() ? '-mt-1' : '' }}">{{ $i }}</span>
 
                     @if($showEvents && $dayEvents->isNotEmpty())
@@ -184,11 +184,11 @@ new class extends Component {
 
         <div class="p-2 border-t border-zinc-100 dark:border-zinc-800 flex justify-between gap-2">
             <button wire:click="clearDate" type="button"
-                class="flex-1 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-900/20 rounded-lg transition-colors">
+                class="flex-1 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-900/20 rounded-lg   s">
                 {{ __('مسح') }}
             </button>
             <button @click="open = false" type="button"
-                class="flex-1 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                class="flex-1 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg   s">
                 {{ __('إغلاق') }}
             </button>
         </div>

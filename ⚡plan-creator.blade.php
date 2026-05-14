@@ -45,8 +45,8 @@ new class extends Component {
             $this->activeDays = $plan->active_days ?? [];
             $this->description = $plan->description;
             $this->planType = $plan->plan_type;
-            
-            $this->planDays = $plan->days->map(function($d) {
+
+            $this->planDays = $plan->days->map(function ($d) {
                 return [
                     'id' => $d->id,
                     'date' => $d->date->toDateString(),
@@ -109,14 +109,14 @@ new class extends Component {
         } else {
             $start = min($this->selectionStart, $index);
             $end = max($this->selectionStart, $index);
-            
+
             // Check if we should select or deselect based on the first click
             $targetValue = $this->planDays[$this->selectionStart]['selected'];
-            
+
             for ($i = $start; $i <= $end; $i++) {
                 $this->planDays[$i]['selected'] = $targetValue;
             }
-            
+
             $this->selectionStart = null;
         }
     }
@@ -407,15 +407,15 @@ new class extends Component {
         <flux:card class="lg:col-span-1 space-y-4">
             <div class="p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex flex-col gap-1">
                 <button wire:click="$set('planType', 'hifz')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                    class="w-full py-1.5 text-xs font-medium rounded-md   s {{ $planType === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
                     {{ __('حفظ فقط') }}
                 </button>
                 <button wire:click="$set('planType', 'hifz_review')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'hifz_review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                    class="w-full py-1.5 text-xs font-medium rounded-md   s {{ $planType === 'hifz_review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
                     {{ __('حفظ ومراجعة') }}
                 </button>
                 <button wire:click="$set('planType', 'review')"
-                    class="w-full py-1.5 text-xs font-medium rounded-md transition-colors {{ $planType === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
+                    class="w-full py-1.5 text-xs font-medium rounded-md   s {{ $planType === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500' }}">
                     {{ __('مراجعة فقط') }}
                 </button>
             </div>
@@ -528,7 +528,7 @@ new class extends Component {
                             <thead
                                 class="sticky top-0 z-10 bg-zinc-100 dark:bg-zinc-800 shadow-sm border-b border-zinc-200 dark:border-zinc-700">
                                 <tr>
-                                    <th class="p-3 w-32 font-medium text-zinc-500 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                                    <th class="p-3 w-32 font-medium text-zinc-500 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 "
                                         wire:click="$toggle('selectAll')">
                                         <div class="flex items-center gap-2">
                                             <flux:checkbox wire:model.live="selectAll" class="hidden" />
@@ -558,7 +558,7 @@ new class extends Component {
                             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                 @foreach($planDays as $index => $day)
                                     <tr wire:key="row-{{ $index }}">
-                                        <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40 {{ $day['selected'] ? 'bg-indigo-100 dark:bg-indigo-900/60' : '' }} {{ $selectionStart === $index ? 'ring-2 ring-inset ring-indigo-500' : '' }}"
+                                        <td class="p-3 cursor-pointer   s hover:bg-indigo-50 dark:hover:bg-indigo-900/40 {{ $day['selected'] ? 'bg-indigo-100 dark:bg-indigo-900/60' : '' }} {{ $selectionStart === $index ? 'ring-2 ring-inset ring-indigo-500' : '' }}"
                                             wire:click="toggleDaySelection({{ $index }})">
                                             <div class="flex flex-col">
                                                 <span

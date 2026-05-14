@@ -102,12 +102,12 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('guardian.student.challenge.create', $student->id) }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors">
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/20   s">
                                     <flux:icon icon="trophy" class="size-3.5" />
                                     مكافأة جديدة
                                 </a>
                                 <a href="{{ route('guardian.student', $student->id) }}"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors">
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/20   s">
                                     التفاصيل
                                     <flux:icon icon="arrow-left" class="size-3.5" />
                                 </a>
@@ -194,7 +194,7 @@
                                 </div>
                             </div>
                             <div class="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
-                                <div class="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500"
+                                <div class="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600   duration-500"
                                     style="width: {{ min($percentage, 100) }}%"></div>
                             </div>
                             @if($memorizedPages > 0)

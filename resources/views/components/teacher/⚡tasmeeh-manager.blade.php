@@ -530,7 +530,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                         class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }} truncate">{{ $student->name }}</span>
                                 </button>
                                 <a href="{{ route('teacher.plan-creator', ['studentId' => $student->id]) }}"
-                                    class="shrink-0 p-2.5 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 dark:text-emerald-400 dark:bg-emerald-900/20 dark:hover:bg-emerald-600 rounded-xl transition-colors"
+                                    class="shrink-0 p-2.5 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 dark:text-emerald-400 dark:bg-emerald-900/20 dark:hover:bg-emerald-600 rounded-xl   s"
                                     title="{{ __('إنشاء خطة') }}">
                                     <flux:icon icon="plus" class="size-4" variant="mini" />
                                 </a>
@@ -641,14 +641,14 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                             @endphp
                                             @if(count($hLinks) === 1)
                                                 <a href="{{ $hLinks[0]['url'] }}" target="_blank"
-                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
+                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
                                                     <flux:icon icon="book-open" class="size-3.5" />
                                                     {{ __('افتح') }} {{ $hLinks[0]['name'] }}
                                                 </a>
                                             @elseif(count($hLinks) > 1)
                                                 <div x-data="{ open: false }" class="mt-3">
                                                     <button type="button" @click="open = !open"
-                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
                                                         <flux:icon icon="book-open" class="size-3.5" />
                                                         <span>{{ __('افتح الآيات في القرآن') }} ({{ count($hLinks) }})</span>
                                                         <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
@@ -657,7 +657,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                                     <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                                         @foreach($hLinks as $link)
                                                             <a href="{{ $link['url'] }}" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
+                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
                                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                                 {{ $link['name'] }}
                                                             </a>
@@ -678,25 +678,25 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                                     :class="hifz === 3
                                                             ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">ممتاز</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">ممتاز</button>
 
                                                 <button type="button" @click="setHifz(2)"
                                                     :class="hifz === 2
                                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">جيد</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">جيد</button>
 
                                                 <button type="button" @click="setHifz(1)"
                                                     :class="hifz === 1
                                                             ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">مقبول</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">مقبول</button>
 
                                                 <button type="button" @click="setHifz(null)"
                                                     :class="hifz === null
                                                             ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">لم
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">لم
                                                     يسمع</button>
                                             </div>
                                         </div>
@@ -746,14 +746,14 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                             @endphp
                                             @if(count($rLinks) === 1)
                                                 <a href="{{ $rLinks[0]['url'] }}" target="_blank"
-                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
+                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
                                                     <flux:icon icon="book-open" class="size-3.5" />
                                                     {{ __('افتح') }} {{ $rLinks[0]['name'] }}
                                                 </a>
                                             @elseif(count($rLinks) > 1)
                                                 <div x-data="{ open: false }" class="mt-3">
                                                     <button type="button" @click="open = !open"
-                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
                                                         <flux:icon icon="book-open" class="size-3.5" />
                                                         <span>{{ __('افتح الآيات في القرآن') }} ({{ count($rLinks) }})</span>
                                                         <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
@@ -762,7 +762,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                                     <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                                         @foreach($rLinks as $link)
                                                             <a href="{{ $link['url'] }}" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
+                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
                                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                                 {{ $link['name'] }}
                                                             </a>
@@ -783,25 +783,25 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                                     :class="review === 3
                                                             ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">ممتاز</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">ممتاز</button>
 
                                                 <button type="button" @click="setReview(2)"
                                                     :class="review === 2
                                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">جيد</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">جيد</button>
 
                                                 <button type="button" @click="setReview(1)"
                                                     :class="review === 1
                                                             ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">مقبول</button>
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">مقبول</button>
 
                                                 <button type="button" @click="setReview(null)"
                                                     :class="review === null
                                                             ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
                                                             : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2 transition-all font-bold text-center">لم
+                                                    class="p-3 rounded-xl border-2   font-bold text-center">لم
                                                     يسمع</button>
                                             </div>
                                         </div>

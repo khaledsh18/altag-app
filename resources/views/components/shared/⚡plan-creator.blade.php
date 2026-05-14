@@ -53,7 +53,8 @@ new class extends Component {
         $this->versesData = [];
 
         $mapping = $ayahs->unique(function ($item) {
-            return $item->surah_id . '-' . $item->juz_number; });
+            return $item->surah_id . '-' . $item->juz_number;
+        });
         foreach ($mapping as $row) {
             $this->juzSurahs[$row->juz_number][] = $row->surah_id;
         }
@@ -308,16 +309,16 @@ new class extends Component {
     {
         $this->validate(['startDate' => 'required|date']);
         $currentDate = Carbon::parse($this->startDate);
-        
+
         foreach ($this->planDays as &$day) {
             while (!in_array($currentDate->format('l'), $this->activeDays)) {
                 $currentDate->addDay();
             }
-            
+
             $day['date'] = $currentDate->toDateString();
             $day['hijri'] = $this->getHijriLabel($currentDate);
             $day['day_name_ar'] = $this->translateDay($currentDate->format('l'));
-            
+
             $currentDate->addDay();
         }
         unset($day);
@@ -640,7 +641,7 @@ new class extends Component {
                     </div>
                 </div>
                 <div class="relative w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden mt-4">
-                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500 transition-all duration-300"
+                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500   duration-300"
                         style="width: {{ ($step / 6) * 100 }}%"></div>
                 </div>
             </div>
@@ -676,19 +677,19 @@ new class extends Component {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg mx-auto">
                             <button @click="planType = 'hifz'"
                                 :class="planType === 'hifz' ? 'ring-2 ring-emerald-500 shadow-md bg-emerald-50 dark:bg-emerald-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 pointer-events-auto'"
-                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                                class="flex flex-col items-center p-4 rounded-xl   cursor-pointer">
                                 <flux:icon icon="book-open" class="size-8 text-emerald-600 dark:text-emerald-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('حفظ فقط') }}</span>
                             </button>
                             <button @click="planType = 'hifz_review'"
                                 :class="planType === 'hifz_review' ? 'ring-2 ring-indigo-500 shadow-md bg-indigo-50 dark:bg-indigo-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
-                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                                class="flex flex-col items-center p-4 rounded-xl   cursor-pointer">
                                 <flux:icon icon="document-duplicate" class="size-8 text-indigo-600 dark:text-indigo-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('حفظ ومراجعة') }}</span>
                             </button>
                             <button @click="planType = 'review'"
                                 :class="planType === 'review' ? 'ring-2 ring-amber-500 shadow-md bg-amber-50 dark:bg-amber-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
-                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer">
+                                class="flex flex-col items-center p-4 rounded-xl   cursor-pointer">
                                 <flux:icon icon="arrow-path" class="size-8 text-amber-600 dark:text-amber-400 mb-2" />
                                 <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('مراجعة فقط') }}</span>
                             </button>
@@ -708,7 +709,7 @@ new class extends Component {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
                             <button @click="fillDirection = 'forward'"
                                 :class="fillDirection === 'forward' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
-                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
+                                class="flex flex-col items-center p-4 rounded-xl   cursor-pointer text-right relative overflow-hidden">
                                 <div class="w-full flex items-center justify-between mb-2">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('تصاعدي') }}</span>
                                     <flux:icon icon="arrow-up" class="size-5 text-blue-600 dark:text-blue-400" />
@@ -717,7 +718,7 @@ new class extends Component {
                             </button>
                             <button @click="fillDirection = 'reverse'"
                                 :class="fillDirection === 'reverse' ? 'ring-2 ring-blue-500 shadow-md bg-blue-50 dark:bg-blue-900/20' : 'border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'"
-                                class="flex flex-col items-center p-4 rounded-xl transition-all cursor-pointer text-right relative overflow-hidden">
+                                class="flex flex-col items-center p-4 rounded-xl   cursor-pointer text-right relative overflow-hidden">
                                 <div class="w-full flex items-center justify-between mb-2">
                                     <span class="font-bold text-zinc-800 dark:text-zinc-200">{{ __('تنازلي') }}</span>
                                     <flux:icon icon="arrow-down" class="size-5 text-blue-600 dark:text-blue-400" />
@@ -788,7 +789,8 @@ new class extends Component {
                             <div>
                                 <flux:heading size="lg" class="mb-2">{{ __('إلى أين يحفظ الطالب؟') }}</flux:heading>
                                 <p class="text-sm text-zinc-500 mb-6 px-4">
-                                    {{ __('هذا سيمثل الحاجز أو النهاية التي تتوقف عندها خطة المراجعة ولن تتجاوزها.') }}</p>
+                                    {{ __('هذا سيمثل الحاجز أو النهاية التي تتوقف عندها خطة المراجعة ولن تتجاوزها.') }}
+                                </p>
                                 <div
                                     class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
                                     <flux:select wire:model.live="memorizedUpToSurah"
@@ -821,7 +823,8 @@ new class extends Component {
                                 <flux:heading size="lg" class="mb-2">{{ __('ما هي نقطة البداية الافتراضية للجدول؟') }}
                                 </flux:heading>
                                 <p class="text-sm text-zinc-500 mb-6 px-4">
-                                    {{ __('سيتم ملء اليوم الأول بهذه السورة ويمكنك إكمال الجدول تلقائياً منها.') }}</p>
+                                    {{ __('سيتم ملء اليوم الأول بهذه السورة ويمكنك إكمال الجدول تلقائياً منها.') }}
+                                </p>
                                 <div
                                     class="max-w-md mx-auto text-right space-y-4 bg-zinc-50 dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
                                     <flux:select wire:model.live="bulkStartSurah" label="{{ __('السورة') }}">
@@ -899,7 +902,8 @@ new class extends Component {
             </div>
 
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div class="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1">
+                <div
+                    class="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1">
                     <span class="text-xs text-zinc-500">{{ __('تاريخ البدء:') }}</span>
                     <div class="w-40">
                         <livewire:teacher.hijri-datepicker wire:model.live="startDate" />
@@ -932,12 +936,12 @@ new class extends Component {
                                 class="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                                 <button @click="fillTarget = 'hifz'"
                                     :class="fillTarget === 'hifz' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'"
-                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
+                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md   s">
                                     {{ __('الحفظ') }}
                                 </button>
                                 <button @click="fillTarget = 'review'"
                                     :class="fillTarget === 'review' ? 'bg-white dark:bg-zinc-700 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-zinc-500 dark:text-zinc-400'"
-                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md transition-colors">
+                                    class="px-3 flex-1  py-2 text-lg font-medium rounded-md   s">
                                     {{ __('المراجعة') }}
                                 </button>
                             </div>
@@ -988,7 +992,7 @@ new class extends Component {
                             <thead
                                 class="sticky top-0 z-10 bg-zinc-100 dark:bg-zinc-800 shadow-sm border-b border-zinc-200 dark:border-zinc-700">
                                 <tr>
-                                    <th class="p-4 w-32 font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                                    <th class="p-4 w-32 font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 "
                                         @click="toggleAll()">
                                         <div class="flex items-center gap-2">
                                             <flux:icon icon="check-circle" class="size-4 opacity-50" />
@@ -1018,11 +1022,10 @@ new class extends Component {
                             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                                 @foreach($planDays as $index => $day)
                                     <tr wire:key="row-{{ $index }}">
-                                        <td class="p-3 cursor-pointer transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
-                                            :class="{
-                                                            'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
-                                                            'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
-                                                        }" @click="toggleDay({{ $index }})">
+                                        <td class="p-3 cursor-pointer   s hover:bg-indigo-50 dark:hover:bg-indigo-900/40" :class="{
+                                                                                                'bg-indigo-100 dark:bg-indigo-900/60': selected[{{ $index }}],
+                                                                                                'ring-2 ring-inset ring-indigo-500': selectionStart === {{ $index }}
+                                                                                            }" @click="toggleDay({{ $index }})">
                                             <div class="flex flex-col">
                                                 <span class="font-bold whitespace-normal leading-tight"
                                                     :class="selected[{{ $index }}] ? 'text-indigo-700 dark:text-indigo-300' : ''">
@@ -1123,10 +1126,12 @@ new class extends Component {
                     <div
                         class="p-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between bg-zinc-50 dark:bg-zinc-800/90 z-20">
                         <div class="text-sm text-zinc-500 pt-2">
-                            {{ __('تأكد من مراجعة النطاقات التلقائية أو تعديلها قبل الحفظ النهائي.') }}</div>
+                            {{ __('تأكد من مراجعة النطاقات التلقائية أو تعديلها قبل الحفظ النهائي.') }}
+                        </div>
                         <flux:button variant="primary" wire:click="save" icon="check"
                             class="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[200px] border-none">
-                            {{ __('اعتماد الخطة وإرسالها') }}</flux:button>
+                            {{ __('اعتماد الخطة وإرسالها') }}
+                        </flux:button>
                     </div>
                 </flux:card>
             @endif
@@ -1241,20 +1246,23 @@ new class extends Component {
         <flux:modal x-model="isOpen" class="md:w-[500px]">
             <div class="flex items-center justify-center gap-2 mb-4 relative">
                 <flux:heading class="!mb-0">{{ __('اختر السورة') }}</flux:heading>
-                <button type="button" @click="showHelp = !showHelp" class="text-zinc-400 hover:text-blue-500 transition outline-none" title="شرح الألوان">
+                <button type="button" @click="showHelp = !showHelp"
+                    class="text-zinc-400 hover:text-blue-500 outline-none" title="شرح الألوان">
                     <flux:icon icon="question-mark-circle" class="size-5" />
                 </button>
             </div>
 
             <div x-show="showHelp" x-collapse>
-                <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
+                <div
+                    class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded bg-blue-100 border border-blue-400 shrink-0"></div>
                         <span><strong>الأزرق:</strong> السورة المحددة حالياً.</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded bg-orange-100 border border-orange-400 shrink-0"></div>
-                        <span><strong>البرتقالي:</strong> السورة المرتبطة بالتحديد السابق لتسهيل استكمال الحفظ/المراجعة.</span>
+                        <span><strong>البرتقالي:</strong> السورة المرتبطة بالتحديد السابق لتسهيل استكمال
+                            الحفظ/المراجعة.</span>
                     </div>
                 </div>
             </div>
@@ -1263,7 +1271,7 @@ new class extends Component {
                 <template x-for="juz in orderedJuzs" :key="juz">
                     <div class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
                         <button type="button" @click="activeJuz = activeJuz === juz ? null : juz"
-                            class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition">
+                            class="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 ">
                             <span class="font-bold text-zinc-700 dark:text-zinc-300">الجزء <span
                                     x-text="juz"></span></span>
                             <flux:icon icon="chevron-down" class="size-4 transition-transform text-zinc-500"
@@ -1273,15 +1281,12 @@ new class extends Component {
                             <div
                                 class="p-2 grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800">
                                 <template x-for="surahId in getOrderedSurahs(juz)" :key="surahId">
-                                    <button type="button" @click="selectSurah(surahId)"
-                                        :id="'surah-btn-' + surahId"
-                                        class="py-2 px-1 text-sm text-center rounded border transition"
-                                        :class="{
+                                    <button type="button" @click="selectSurah(surahId)" :id="'surah-btn-' + surahId"
+                                        class="py-2 px-1 text-sm text-center rounded border " :class="{
                                             'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': surahId === currentSurah,
                                             'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': surahId === prevSurah && surahId !== currentSurah,
                                             'bg-white border-zinc-200 text-zinc-800 hover:bg-indigo-50 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-indigo-900/30': surahId !== currentSurah && surahId !== prevSurah
-                                        }"
-                                        x-text="$store.surahsData?.[surahId].name"></button>
+                                        }" x-text="$store.surahsData?.[surahId].name"></button>
                                 </template>
                             </div>
                         </div>
@@ -1354,13 +1359,15 @@ new class extends Component {
         <flux:modal x-model="isOpen" class="md:w-[500px]">
             <div class="flex items-center justify-center gap-2 mb-4 relative">
                 <flux:heading class="!mb-0">{{ __('اختر الآية') }}</flux:heading>
-                <button type="button" @click="showHelp = !showHelp" class="text-zinc-400 hover:text-blue-500 transition outline-none" title="شرح الألوان">
+                <button type="button" @click="showHelp = !showHelp"
+                    class="text-zinc-400 hover:text-blue-500 outline-none" title="شرح الألوان">
                     <flux:icon icon="question-mark-circle" class="size-5" />
                 </button>
             </div>
 
             <div x-show="showHelp" x-collapse>
-                <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
+                <div
+                    class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded-lg text-xs text-zinc-600 dark:text-zinc-300 space-y-2">
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded-full bg-blue-100 border border-blue-400 shrink-0"></div>
                         <span><strong>الأزرق:</strong> الآية المحددة حالياً.</span>
@@ -1371,7 +1378,9 @@ new class extends Component {
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded-full bg-amber-100 border border-amber-300 relative shrink-0">
-                            <div class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+                            <div
+                                class="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-400 rounded-full border border-white dark:border-zinc-900">
+                            </div>
                         </div>
                         <span><strong>الذهبي:</strong> الآية التي تقع في منتصف السورة.</span>
                     </div>
@@ -1393,13 +1402,16 @@ new class extends Component {
                                 <template x-if="groupByLine">
                                     <div class="space-y-2">
                                         <template x-for="(verses, line) in lines" :key="line">
-                                            <div class="flex flex-wrap items-center gap-2 bg-zinc-50 dark:bg-zinc-800/30 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                                <span class="text-[10px] text-zinc-400 font-bold shrink-0 w-8 text-center">{{ __('سطر') }} <span x-text="line"></span></span>
+                                            <div
+                                                class="flex flex-wrap items-center gap-2 bg-zinc-50 dark:bg-zinc-800/30 p-2 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                                                <span
+                                                    class="text-[10px] text-zinc-400 font-bold shrink-0 w-8 text-center">{{ __('سطر') }}
+                                                    <span x-text="line"></span></span>
                                                 <div class="flex flex-wrap gap-2 flex-1">
                                                     <template x-for="v in verses" :key="v">
                                                         <button type="button" @click="selectVerse(v)"
                                                             :id="groupByLine ? 'verse-btn-' + v : ''"
-                                                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all relative shrink-0"
+                                                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border   relative shrink-0"
                                                             :class="{
                                                                 'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': v === currentVerse,
                                                                 'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': v === prevVerse && v !== currentVerse,
@@ -1407,9 +1419,12 @@ new class extends Component {
                                                                 'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40': v !== currentVerse && v !== prevVerse && v !== $store.versesData[surahId].mid
                                                             }">
                                                             <span x-text="v"></span>
-                                                            
-                                                            <template x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
-                                                                 <div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+
+                                                            <template
+                                                                x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
+                                                                <div
+                                                                    class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900">
+                                                                </div>
                                                             </template>
                                                         </button>
                                                     </template>
@@ -1418,13 +1433,13 @@ new class extends Component {
                                         </template>
                                     </div>
                                 </template>
-                                
+
                                 <template x-if="!groupByLine">
                                     <div class="flex flex-wrap gap-2">
                                         <template x-for="v in Object.values(lines).flat()" :key="v">
                                             <button type="button" @click="selectVerse(v)"
                                                 :id="!groupByLine ? 'verse-btn-' + v : ''"
-                                                class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border transition-all relative shrink-0"
+                                                class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-mono border   relative shrink-0"
                                                 :class="{
                                                     'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300 font-bold ring-2 ring-blue-500 ring-offset-1': v === currentVerse,
                                                     'bg-orange-100 border-orange-400 text-orange-700 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-300 font-bold': v === prevVerse && v !== currentVerse,
@@ -1432,9 +1447,12 @@ new class extends Component {
                                                     'bg-white border-zinc-200 text-zinc-700 hover:bg-indigo-50 hover:border-indigo-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-indigo-900/40': v !== currentVerse && v !== prevVerse && v !== $store.versesData[surahId].mid
                                                 }">
                                                 <span x-text="v"></span>
-                                                
-                                                <template x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
-                                                     <div class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900"></div>
+
+                                                <template
+                                                    x-if="v === $store.versesData[surahId].mid && (v === currentVerse || v === prevVerse)">
+                                                    <div
+                                                        class="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white dark:border-zinc-900">
+                                                    </div>
                                                 </template>
                                             </button>
                                         </template>

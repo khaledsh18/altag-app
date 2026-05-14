@@ -85,7 +85,7 @@
         {{-- Back + Title --}}
         <div class="flex items-center gap-3">
             <a href="{{ route('guardian.dashboard') }}"
-                class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                class="p-2 rounded-lg text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800   s">
                 <flux:icon icon="arrow-right" class="size-5" />
             </a>
             <div>
@@ -144,14 +144,14 @@
                             {{-- quran.com links --}}
                             @if(count($hifzLinks) === 1)
                                 <a href="{{ $hifzLinks[0]['url'] }}" target="_blank"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 transition-colors">
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200   s">
                                     <flux:icon icon="book-open" class="size-3.5" />
                                     افتح {{ $hifzLinks[0]['name'] }}
                                 </a>
                             @elseif(count($hifzLinks) > 1)
                                 <div x-data="{ open: false }">
                                     <button @click="open = !open"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 transition-colors">
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200   s">
                                         <flux:icon icon="book-open" class="size-3.5" />
                                         افتح الآيات ({{ count($hifzLinks) }})
                                         <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
@@ -160,7 +160,7 @@
                                     <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                         @foreach($hifzLinks as $link)
                                             <a href="{{ $link['url'] }}" target="_blank"
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 transition-colors">
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200   s">
                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                 {{ $link['name'] }}
                                             </a>
@@ -180,14 +180,14 @@
                             </p>
                             @if(count($reviewLinks) === 1)
                                 <a href="{{ $reviewLinks[0]['url'] }}" target="_blank"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200   s">
                                     <flux:icon icon="book-open" class="size-3.5" />
                                     افتح {{ $reviewLinks[0]['name'] }}
                                 </a>
                             @elseif(count($reviewLinks) > 1)
                                 <div x-data="{ open: false }">
                                     <button @click="open = !open"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200   s">
                                         <flux:icon icon="book-open" class="size-3.5" />
                                         افتح الآيات ({{ count($reviewLinks) }})
                                         <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
@@ -196,7 +196,7 @@
                                     <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                         @foreach($reviewLinks as $link)
                                             <a href="{{ $link['url'] }}" target="_blank"
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition-colors">
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200   s">
                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                 {{ $link['name'] }}
                                             </a>
@@ -250,13 +250,13 @@
                                 <span>{{ $planPct }}%</span>
                             </div>
                             <div class="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
-                                <div class="h-2 rounded-full bg-gradient-to-r from-violet-400 to-violet-600 transition-all"
+                                <div class="h-2 rounded-full bg-gradient-to-r from-violet-400 to-violet-600  "
                                     style="width: {{ $planPct }}%"></div>
                             </div>
                         </div>
 
                         <a href="{{ route('guardian.student.attendance', $student->id) }}"
-                            class="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors">
+                            class="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700   s">
                             <flux:icon icon="calendar" class="size-4" />
                             عرض سجل الحضور
                         </a>

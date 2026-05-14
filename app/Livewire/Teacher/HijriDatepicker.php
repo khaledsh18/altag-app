@@ -141,13 +141,13 @@ class HijriDatepicker extends Component
                     $ratio = $presentCount / $totalTracked;
 
                     if ($ratio >= 0.8) {
-                        $colorClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 transition-colors border-green-200';
+                        $colorClass = 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60   s border-green-200';
                     } elseif ($ratio > 0.5) {
-                        $colorClass = 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 transition-colors border-green-100';
+                        $colorClass = 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40   s border-green-100';
                     } elseif ($ratio >= 0.2) {
-                        $colorClass = 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 transition-colors border-red-100';
+                        $colorClass = 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40   s border-red-100';
                     } else {
-                        $colorClass = 'bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 transition-colors border-red-200';
+                        $colorClass = 'bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60   s border-red-200';
                     }
                 }
             }

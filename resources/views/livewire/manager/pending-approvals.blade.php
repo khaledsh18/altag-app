@@ -7,24 +7,22 @@
     </div>
 
     {{-- Tabs --}}
-    <div class="flex gap-1 bg-zinc-50 dark:bg-zinc-800 p-1 rounded-xl w-fit border border-zinc-100 dark:border-zinc-700">
+    <div
+        class="flex gap-1 bg-zinc-50 dark:bg-zinc-800 p-1 rounded-xl w-fit border border-zinc-100 dark:border-zinc-700">
         @php
             $tabs = [
                 'supervisor' => ['label' => 'المشرفون', 'color' => 'blue'],
-                'teacher'    => ['label' => 'المعلمون',  'color' => 'violet'],
-                'student'    => ['label' => 'الطلاب',    'color' => 'emerald'],
+                'teacher' => ['label' => 'المعلمون', 'color' => 'violet'],
+                'student' => ['label' => 'الطلاب', 'color' => 'emerald'],
             ];
         @endphp
 
         @foreach ($tabs as $key => $tab)
-            <button
-                wire:click="setTab('{{ $key }}')"
-                @class([
-                    'flex items-center gap-2 px-6 py-2 text-sm font-bold rounded-lg transition-all',
-                    'bg-white dark:bg-zinc-700 text-maroon dark:text-white shadow-sm' => $activeTab === $key,
-                    'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' => $activeTab !== $key,
-                ])
-            >
+            <button wire:click="setTab('{{ $key }}')" @class([
+                'flex items-center gap-2 px-6 py-2 text-sm font-bold rounded-lg  ',
+                'bg-white dark:bg-zinc-700 text-maroon dark:text-white shadow-sm' => $activeTab === $key,
+                'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300' => $activeTab !== $key,
+            ])>
                 {{ $tab['label'] }}
                 @if (($this->counts[$key] ?? 0) > 0)
                     <span @class([
@@ -60,25 +58,14 @@
                         </flux:table.cell>
                         <flux:table.cell>
                             <div class="flex items-center gap-2 justify-end">
-                                <flux:button
-                                    size="sm"
-                                    variant="primary"
-                                    wire:click="approve({{ $user->id }})"
-                                    wire:loading.attr="disabled"
-                                    wire:target="approve({{ $user->id }})"
-                                    class="bg-emerald-600 hover:bg-emerald-700 border-none px-4"
-                                >
+                                <flux:button size="sm" variant="primary" wire:click="approve({{ $user->id }})"
+                                    wire:loading.attr="disabled" wire:target="approve({{ $user->id }})"
+                                    class="bg-emerald-600 hover:bg-emerald-700 border-none px-4">
                                     موافقة
                                 </flux:button>
-                                <flux:button
-                                    size="sm"
-                                    variant="danger"
-                                    wire:click="reject({{ $user->id }})"
-                                    wire:loading.attr="disabled"
-                                    wire:target="reject({{ $user->id }})"
-                                    wire:confirm="هل أنت متأكد من رفض هذا المستخدم وحذفه؟"
-                                    class="px-4"
-                                >
+                                <flux:button size="sm" variant="danger" wire:click="reject({{ $user->id }})"
+                                    wire:loading.attr="disabled" wire:target="reject({{ $user->id }})"
+                                    wire:confirm="هل أنت متأكد من رفض هذا المستخدم وحذفه؟" class="px-4">
                                     رفض
                                 </flux:button>
                             </div>

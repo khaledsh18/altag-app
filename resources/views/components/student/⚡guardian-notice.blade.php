@@ -95,16 +95,16 @@ new class extends Component {
                     </p>
                 </div>
                 <button @click="expanded = !expanded"
-                    class="flex-shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5 transition-colors">
+                    class="flex-shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5   s">
                     <span x-show="!expanded">{{ __('إضافة الآن') }}</span>
                     <span x-show="expanded" style="display:none;">{{ __('إخفاء') }}</span>
                 </button>
             </div>
 
             {{-- Inline Form --}}
-            <div x-show="expanded" x-transition:enter="transition ease-out duration-200"
+            <div x-show="expanded" x-transition:enter="ease-out duration-200"
                 x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 -translate-y-2" style="display:none;"
                 class="border-t border-amber-200 dark:border-amber-800/50 px-5 pb-5 pt-4 bg-white/60 dark:bg-zinc-900/40">
                 <form wire:submit="save" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">

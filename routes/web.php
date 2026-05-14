@@ -119,18 +119,24 @@ Route::middleware(['auth:supervisor', 'approved'])->prefix('supervisor')->name('
     Route::view('/whatsapp-settings', 'supervisor.whatsapp-settings')->name('whatsapp-settings');
 });
 Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teacher.')->group(function () {
-    Route::get('/dashboard', fn () => view('teacher.dashboard'))->name('dashboard');
-    Route::view('/attendance', 'teacher.attendance')->name('attendance');
-    Route::view('/discipline', 'teacher.discipline')->name('discipline');
-    Route::view('/quranic-discipline', 'teacher.quranic-discipline')->name('quranic-discipline');
-    Route::view('/students', 'teacher.students')->name('students');
-    Route::view('/plan-creator', 'teacher.plan-creator')->name('plan-creator');
-    Route::view('/student-plans', 'teacher.student-plans')->name('student-plans');
-    Route::view('/tasmeeh', 'teacher.tasmeeh')->name('tasmeeh');
-    Route::view('/exceeded-limits', 'teacher.exceeded-limits')->name('exceeded-limits');
-    Route::view('/pairs', 'teacher.pairs')->name('pairs');
-    Route::view('/leaderboards', 'teacher.leaderboards')->name('leaderboards');
-    Route::view('/student-exams', 'teacher.student-exams')->name('student-exams');
+    $appShellRoute = function ($tab) {
+        return function () use ($tab) {
+            return view('teacher.app-shell', ['initialTab' => $tab]);
+        };
+    };
+
+    Route::get('/dashboard', $appShellRoute('dashboard'))->name('dashboard');
+    Route::get('/attendance', $appShellRoute('attendance'))->name('attendance');
+    Route::get('/discipline', $appShellRoute('discipline'))->name('discipline');
+    Route::get('/quranic-discipline', $appShellRoute('quranic-discipline'))->name('quranic-discipline');
+    Route::get('/students', $appShellRoute('students'))->name('students');
+    Route::get('/plan-creator', $appShellRoute('plan-creator'))->name('plan-creator');
+    Route::get('/student-plans', $appShellRoute('student-plans'))->name('student-plans');
+    Route::get('/tasmeeh', $appShellRoute('tasmeeh'))->name('tasmeeh');
+    Route::get('/exceeded-limits', $appShellRoute('exceeded-limits'))->name('exceeded-limits');
+    Route::get('/pairs', $appShellRoute('pairs'))->name('pairs');
+    Route::get('/leaderboards', $appShellRoute('leaderboards'))->name('leaderboards');
+    Route::get('/student-exams', $appShellRoute('student-exams'))->name('student-exams');
 
     Route::get('/student-recitation-log/{studentId}', function ($studentId) {
         return view('teacher.student-recitation-log', ['studentId' => $studentId]);

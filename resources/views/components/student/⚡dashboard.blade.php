@@ -414,7 +414,7 @@ new class extends Component {
                                 <span class="text-xs font-black {{ $readinessColor['text'] }}">{{ $examReadiness }}%</span>
                             </div>
                             <div class="{{ $readinessColor['bg'] }} rounded-full h-2.5 overflow-hidden w-full">
-                                <div class="h-2.5 rounded-full bg-gradient-to-l {{ $readinessColor['bar'] }} transition-all duration-700"
+                                <div class="h-2.5 rounded-full bg-gradient-to-l {{ $readinessColor['bar'] }}   duration-700"
                                     style="width: {{ $examReadiness }}%"></div>
                             </div>
                         </div>
@@ -528,7 +528,7 @@ new class extends Component {
                 </div>
                 <p class="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">{{ $percentage }}%</p>
                 <div class="mt-2 w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-full h-2 overflow-hidden">
-                    <div class="h-2 rounded-full bg-gradient-to-l from-emerald-400 to-emerald-600 transition-all duration-700"
+                    <div class="h-2 rounded-full bg-gradient-to-l from-emerald-400 to-emerald-600   duration-700"
                         style="width: {{ $percentage }}%"></div>
                 </div>
                 <p class="text-[15px] md:text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium line-clamp-1"
@@ -680,7 +680,7 @@ new class extends Component {
                                         </div>
                                         @if ($item->target_value > 0)
                                             <div class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
-                                                <div class="h-2.5 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500"
+                                                <div class="h-2.5 rounded-full bg-gradient-to-r from-orange-400 to-red-500   duration-500"
                                                     style="width: {{ $progressPercent }}%"></div>
                                             </div>
                                         @else
@@ -929,14 +929,14 @@ new class extends Component {
                                                     @endphp
                                                     @if (count($hLinks) === 1)
                                                         <a href="{{ $hLinks[0]['url'] }}" target="_blank"
-                                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                             <flux:icon icon="book-open" class="size-3.5" />
                                                             {{ __('افتح') }} {{ $hLinks[0]['name'] }}
                                                         </a>
                                                     @elseif(count($hLinks) > 1)
                                                         <div x-data="{ open: false }" class="mt-2">
                                                             <button type="button" @click="open = !open"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                                 <span>{{ __('افتح الآيات في القرآن') }}
                                                                     ({{ count($hLinks) }})</span>
@@ -946,7 +946,7 @@ new class extends Component {
                                                             <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                                                 @foreach ($hLinks as $link)
                                                                     <a href="{{ $link['url'] }}" target="_blank"
-                                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                                         <flux:icon icon="book-open" class="size-3.5" />
                                                                         {{ $link['name'] }}
                                                                     </a>
@@ -1015,14 +1015,14 @@ new class extends Component {
                                                     @endphp
                                                     @if (count($rLinks) === 1)
                                                         <a href="{{ $rLinks[0]['url'] }}" target="_blank"
-                                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                            class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                             <flux:icon icon="book-open" class="size-3.5" />
                                                             {{ __('افتح') }} {{ $rLinks[0]['name'] }}
                                                         </a>
                                                     @elseif(count($rLinks) > 1)
                                                         <div x-data="{ open: false }" class="mt-2">
                                                             <button type="button" @click="open = !open"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                                 <flux:icon icon="book-open" class="size-3.5" />
                                                                 <span>{{ __('افتح الآيات في القرآن') }}
                                                                     ({{ count($rLinks) }})</span>
@@ -1032,7 +1032,7 @@ new class extends Component {
                                                             <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
                                                                 @foreach ($rLinks as $link)
                                                                     <a href="{{ $link['url'] }}" target="_blank"
-                                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white transition-colors">
+                                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-medium text-white   s">
                                                                         <flux:icon icon="book-open" class="size-3.5" />
                                                                         {{ $link['name'] }}
                                                                     </a>
@@ -1225,7 +1225,7 @@ new class extends Component {
                                         @foreach ($rest as $index => $standing)
                                             @php $rank = $index + 4; @endphp
                                             <div
-                                                class="flex items-center justify-between p-3 md:p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors {{ $standing['student']->id === $student->id ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : '' }}">
+                                                class="flex items-center justify-between p-3 md:p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/30   s {{ $standing['student']->id === $student->id ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : '' }}">
                                                 <div class="flex items-center gap-3 md:gap-4">
                                                     <div
                                                         class="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-zinc-400 font-black text-sm md:text-base">
@@ -1304,7 +1304,7 @@ new class extends Component {
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                                     @foreach ($approvedPlans as $plan)
                                                         <div
-                                                            class="group relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm hover:shadow-xl hover:border-emerald-500/30 transition-all duration-300">
+                                                            class="group relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm hover:shadow-xl hover:border-emerald-500/30   duration-300">
                                                             <div class="flex items-start justify-between mb-5">
                                                                 <div class="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl text-emerald-600">
                                                                     <flux:icon icon="academic-cap" class="size-7" />
@@ -1338,7 +1338,7 @@ new class extends Component {
 
                                                             <div class="pt-5 border-t border-zinc-100 dark:border-zinc-800">
                                                                 <flux:button variant="filled"
-                                                                    class="w-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white text-lg font-bold py-3 rounded-2xl border-none transition-all duration-300"
+                                                                    class="w-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white text-lg font-bold py-3 rounded-2xl border-none   duration-300"
                                                                     icon="eye" href="{{ route('student.show-plan', $plan->id) }}">
                                                                     {{ __('عرض التقدم') }}
                                                                 </flux:button>
@@ -1362,7 +1362,7 @@ new class extends Component {
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                                     @foreach ($privatePlans as $plan)
                                                         <div
-                                                            class="group relative rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-900/30 p-6 hover:bg-white dark:hover:bg-zinc-900 hover:border-amber-500/50 transition-all duration-300">
+                                                            class="group relative rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/30 dark:bg-zinc-900/30 p-6 hover:bg-white dark:hover:bg-zinc-900 hover:border-amber-500/50   duration-300">
                                                             <div class="flex items-start justify-between mb-5 opacity-70">
                                                                 <div class="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500">
                                                                     <flux:icon icon="lock-closed" class="size-7" />
@@ -1396,7 +1396,7 @@ new class extends Component {
 
                                                             <div class="pt-5 border-t border-zinc-100 dark:border-zinc-800">
                                                                 <flux:button variant="ghost"
-                                                                    class="w-full text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-lg font-bold py-3 rounded-2xl border border-dashed border-amber-200 dark:border-amber-800/50 transition-all duration-300"
+                                                                    class="w-full text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-lg font-bold py-3 rounded-2xl border border-dashed border-amber-200 dark:border-amber-800/50   duration-300"
                                                                     icon="eye" href="{{ route('student.show-plan', $plan->id) }}">
                                                                     {{ __('معاينة الخطة') }}
                                                                 </flux:button>
