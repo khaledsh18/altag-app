@@ -435,7 +435,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
             <div
                 class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-scroll shadow-sm">
                 <button @click="openSection = openSection === 1 ? 0 : 1"
-                    class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                    class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                     <div class="flex items-center gap-2">
                         <flux:icon icon="check-circle" variant="micro" class="text-emerald-500" />
                         <span class="font-bold text-sm text-zinc-700 dark:text-zinc-300">{{ __('حاضر / متأخر') }}</span>
@@ -449,7 +449,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                     @forelse($studentsWithPlansPresent as $student)
                         <button @click="selectStudent({{ $student->id }})"
-                            class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
+                            class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
                             <div class="flex items-center gap-3">
                                 <div
                                     class="size-2.5 rounded-full bg-{{ $student->tasmeeh_color }}-500 shadow-sm shadow-{{ $student->tasmeeh_color }}-500/30 shrink-0">
@@ -475,7 +475,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                 <div
                     class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm shrink-0">
                     <button @click="openSection = openSection === 2 ? 0 : 2"
-                        class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                        class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                         <div class="flex items-center gap-2">
                             <flux:icon icon="x-circle" variant="micro" class="text-rose-500" />
                             <span class="font-bold text-sm text-zinc-700 dark:text-zinc-300">{{ __('غائب / معتذر') }}</span>
@@ -489,7 +489,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithPlansAbsent as $student)
                             <button @click="selectStudent({{ $student->id }})"
-                                class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100' }}">
+                                class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100' }}">
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="size-2.5 rounded-full bg-{{ $student->tasmeeh_color }}-500 shadow-sm shadow-{{ $student->tasmeeh_color }}-500/30 shrink-0">
@@ -509,7 +509,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                 <div
                     class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm shrink-0">
                     <button @click="openSection = openSection === 3 ? 0 : 3"
-                        class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                        class="w-full flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                         <div class="flex items-center gap-2">
                             <flux:icon icon="document-minus" variant="micro" class="text-zinc-400" />
                             <span
@@ -525,7 +525,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         @forelse($studentsWithoutPlans as $student)
                             <div class="flex items-center gap-2">
                                 <button @click="selectStudent({{ $student->id }})"
-                                    class="flex-1 flex items-center p-2.5 rounded-xl border text-right transition-colors {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-zinc-100/50 dark:bg-zinc-800/30 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
+                                    class="flex-1 flex items-center p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-zinc-100/50 dark:bg-zinc-800/30 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
                                     <span
                                         class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }} truncate">{{ $student->name }}</span>
                                 </button>

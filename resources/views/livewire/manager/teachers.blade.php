@@ -55,7 +55,7 @@
 
             <flux:table.rows>
                 @foreach ($teachers as $teacher)
-                    <flux:table.row :key="$teacher->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" wire:click="edit({{ $teacher->id }})">
+                    <flux:table.row :key="$teacher->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})">
                         <flux:table.cell>
                             <div class="flex flex-col">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ $teacher->name }}</span>
@@ -91,7 +91,7 @@
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item wire:click="edit({{ $teacher->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:menu.item x-on:click="$flux.modal('teacher-modal').show(); $wire.edit({{ $teacher->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
                                         <flux:menu.item wire:click="delete({{ $teacher->id }})" wire:confirm="هل أنت متأكد من حذف هذا المعلم؟" variant="danger" icon="trash">{{ __('حذف المعلم') }}</flux:menu.item>
                                     </flux:menu>
@@ -106,9 +106,15 @@
 
     <!-- Teacher Details Modal -->
     <flux:modal name="teacher-modal" variant="flyout" class="md:w-[500px]">
-        @if ($viewingTeacher)
-            <div class="space-y-8">
-                <div>
+        <div wire:loading wire:target="edit" class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
+            <flux:icon icon="arrow-path" class="size-8 animate-spin mb-4" />
+            <p>{{ __('جاري تحميل بيانات المعلم...') }}</p>
+        </div>
+
+        <div wire:loading.remove wire:target="edit">
+            @if ($viewingTeacher)
+                <div class="space-y-8">
+                    <div>
                     <flux:heading size="xl">{{ __('ملف المعلم') }}</flux:heading>
                     <flux:subheading>{{ __('عرض وتعديل بيانات المعلم الأساسية') }}</flux:subheading>
                 </div>
@@ -175,7 +181,8 @@
                         @endif
                     </div>
                 </div>
-            </div>
-        @endif
+                </div>
+            @endif
+        </div>
     </flux:modal>
 </div>

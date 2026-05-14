@@ -115,8 +115,7 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
             <div class="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg h-fit">
                 <button @click="mode = 'wizard'" :class="mode === 'wizard'
                             ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                            : 'text-zinc-500 dark:text-zinc-400'"
-                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-all">
+                            : 'text-zinc-500 dark:text-zinc-400'" class="px-3 py-1.5 text-sm font-medium rounded-md ">
                     <span class="flex items-center gap-1.5">
                         <flux:icon icon="play" class="size-4" />
                         تحضير تفاعلي
@@ -124,8 +123,7 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                 </button>
                 <button @click="mode = 'list'" :class="mode === 'list'
                             ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                            : 'text-zinc-500 dark:text-zinc-400'"
-                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-all">
+                            : 'text-zinc-500 dark:text-zinc-400'" class="px-3 py-1.5 text-sm font-medium rounded-md ">
                     <span class="flex items-center gap-1.5">
                         <flux:icon icon="list-bullet" class="size-4" />
                         قائمة يدوية
@@ -156,7 +154,7 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                 </span>
             </div>
             <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
-                <div class="h-2 rounded-full transition-all duration-500 ease-out"
+                <div class="h-2 rounded-full  duration-500 ease-out"
                     :class="isComplete ? 'bg-green-500' : 'bg-blue-500'"
                     :style="{ width: (studentOrder.length > 0 ? (markedCount / studentOrder.length) * 100 : 0) + '%' }">
                 </div>
@@ -232,38 +230,38 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 max-w-2xl mx-auto">
                         <button @click="markAndAdvance({{ $student->id }}, 'present')"
                             :class="getStatus({{ $student->id }}) === 'present'
-                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-400 hover:bg-green-50 dark:hover:border-green-600 dark:hover:bg-green-900/10'"
-                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200">
+                                                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-400 hover:bg-green-50 dark:hover:border-green-600 dark:hover:bg-green-900/10'"
+                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2  duration-200">
                             <span class="font-semibold text-gray-800 dark:text-white">حاضر</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'absent')"
                             :class="getStatus({{ $student->id }}) === 'absent'
-                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-400 hover:bg-red-50 dark:hover:border-red-600 dark:hover:bg-red-900/10'"
-                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200">
+                                                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-400 hover:bg-red-50 dark:hover:border-red-600 dark:hover:bg-red-900/10'"
+                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2  duration-200">
                             <span class="font-semibold text-gray-800 dark:text-white">غائب</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'late')"
                             :class="getStatus({{ $student->id }}) === 'late'
-                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:border-amber-600 dark:hover:bg-amber-900/10'"
-                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200">
+                                                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:border-amber-600 dark:hover:bg-amber-900/10'"
+                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2  duration-200">
                             <span class="font-semibold text-gray-800 dark:text-white">متأخر</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'excused')"
                             :class="getStatus({{ $student->id }}) === 'excused'
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-600 dark:hover:bg-blue-900/10'"
-                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200">
+                                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-600 dark:hover:bg-blue-900/10'"
+                            class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2  duration-200">
                             <span class="font-semibold text-gray-800 dark:text-white">مستأذن</span>
                         </button>
                     </div>
 
                     {{-- Navigation — Alpine only, zero round-trips --}}
-                    <div class="flex items-center justify-center gap-4 pt-4">
+                    <div class="flex items-center justify-between mt-4">
                         <button @click="goToPrevious()" :disabled="currentIndex === 0"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed ">
                             <flux:icon icon="chevron-right" class="size-4" />
                             السابق
                         </button>
@@ -272,16 +270,16 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                         <div class="flex items-center gap-1 max-w-xs overflow-hidden">
                             @foreach ($students as $idx => $s)
                                 <div :class="{
-                                                    'bg-blue-500 scale-125': currentIndex === {{ $idx }},
-                                                    'bg-green-400': currentIndex !== {{ $idx }} && records[{{ $s->id }}],
-                                                    'bg-zinc-300 dark:bg-zinc-600': currentIndex !== {{ $idx }} && !records[{{ $s->id }}]
-                                                }" class="size-2 rounded-full transition-all">
+                                                                                                    'bg-blue-500 scale-125': currentIndex === {{ $idx }},
+                                                                                                    'bg-green-400': currentIndex !== {{ $idx }} && records[{{ $s->id }}],
+                                                                                                    'bg-zinc-300 dark:bg-zinc-600': currentIndex !== {{ $idx }} && !records[{{ $s->id }}]
+                                                                                                }" class="size-2 rounded-full ">
                                 </div>
                             @endforeach
                         </div>
 
                         <button @click="goToNext()" :disabled="currentIndex >= studentOrder.length - 1"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed ">
                             التالي
                             <flux:icon icon="chevron-left" class="size-4" />
                         </button>
@@ -296,7 +294,7 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
             <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @foreach ($students as $index => $student)
                     <div wire:key="student-{{ $student->id }}"
-                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-mono text-zinc-400 w-6 text-center">{{ $index + 1 }}</span>
                             <div class="flex items-center gap-2">
@@ -315,14 +313,13 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                                     <a class="whatsapp-link"
                                         href="https://wa.me/{{ $student->guardian_phone }}/?text={{ urlencode($msg) }}" target="_blank"
                                         title="تواصل عبر واتساب">
-                                        <flux:icon icon="chat-bubble-left-right"
-                                            class="size-5 text-green-500 hover:text-green-600 transition-colors" />
+                                        <flux:icon icon="chat-bubble-left-right" class="size-5 text-green-500 hover:text-green-600" />
                                     </a>
                                 @else
                                     <button x-data="{ copied: false }" data-msg="{{ $msg }}"
                                         x-on:click="navigator.clipboard.writeText($el.dataset.msg).then(() => { copied = true; setTimeout(() => copied = false, 2000); })"
                                         title="لا يوجد رقم - نسخ الرسالة"
-                                        class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors flex items-center justify-center">
+                                        class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center justify-center">
                                         <flux:icon x-show="!copied" icon="clipboard-document" class="size-5" />
                                         <flux:icon x-cloak x-show="copied" icon="check" class="size-5 text-green-500" />
                                     </button>
@@ -333,27 +330,27 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                             <button
                                 @click="records[{{ $student->id }}] = 'present'; $wire.updateStatus({{ $student->id }}, 'present')"
                                 :class="getStatus({{ $student->id }}) === 'present'
-                                                ? 'bg-green-100 text-white border border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
-                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-green-900/20 dark:hover:text-green-400'"
-                                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all">حاضر</button>
+                                                                                ? 'bg-green-100 text-white border border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
+                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-green-900/20 dark:hover:text-green-400'"
+                                class="px-3 py-1.5 text-xs font-medium rounded-lg ">حاضر</button>
                             <button
                                 @click="records[{{ $student->id }}] = 'absent'; $wire.updateStatus({{ $student->id }}, 'absent')"
                                 :class="getStatus({{ $student->id }}) === 'absent'
-                                                ? 'bg-red-100 text-white border border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
-                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-red-900/20 dark:hover:text-red-400'"
-                                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all">غائب</button>
+                                                                                ? 'bg-red-100 text-white border border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
+                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-red-900/20 dark:hover:text-red-400'"
+                                class="px-3 py-1.5 text-xs font-medium rounded-lg ">غائب</button>
                             <button
                                 @click="records[{{ $student->id }}] = 'late'; $wire.updateStatus({{ $student->id }}, 'late')"
                                 :class="getStatus({{ $student->id }}) === 'late'
-                                                ? 'bg-amber-100 text-white border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
-                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'"
-                                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all">متأخر</button>
+                                                                                ? 'bg-amber-100 text-white border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
+                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'"
+                                class="px-3 py-1.5 text-xs font-medium rounded-lg ">متأخر</button>
                             <button
                                 @click="records[{{ $student->id }}] = 'excused'; $wire.updateStatus({{ $student->id }}, 'excused')"
                                 :class="getStatus({{ $student->id }}) === 'excused'
-                                                ? 'bg-blue-100 text-white border border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700'
-                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'"
-                                class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all">مستأذن</button>
+                                                                                ? 'bg-blue-100 text-white border border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700'
+                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'"
+                                class="px-3 py-1.5 text-xs font-medium rounded-lg ">مستأذن</button>
                         </div>
                     </div>
                 @endforeach

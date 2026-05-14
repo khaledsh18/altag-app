@@ -56,7 +56,7 @@
 
             <flux:table.rows>
                 @foreach ($supervisors as $supervisor)
-                    <flux:table.row :key="$supervisor->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" wire:click="edit({{ $supervisor->id }})">
+                    <flux:table.row :key="$supervisor->id" class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors" x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})">
                         <flux:table.cell>
                             <div class="flex flex-col">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ $supervisor->name }}</span>
@@ -92,7 +92,7 @@
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item wire:click="edit({{ $supervisor->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
+                                        <flux:menu.item x-on:click="$flux.modal('supervisor-modal').show(); $wire.edit({{ $supervisor->id }})" icon="eye">{{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
                                         <flux:menu.item wire:click="delete({{ $supervisor->id }})" wire:confirm="هل أنت متأكد من حذف هذا المشرف؟" variant="danger" icon="trash">{{ __('حذف المشرف') }}</flux:menu.item>
                                     </flux:menu>
@@ -107,9 +107,15 @@
 
     <!-- Supervisor Details Modal -->
     <flux:modal name="supervisor-modal" variant="flyout" class="md:w-[500px]">
-        @if ($viewingSupervisor)
-            <div class="space-y-8">
-                <div>
+        <div wire:loading wire:target="edit" class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
+            <flux:icon icon="arrow-path" class="size-8 animate-spin mb-4" />
+            <p>{{ __('جاري تحميل بيانات المشرف...') }}</p>
+        </div>
+
+        <div wire:loading.remove wire:target="edit">
+            @if ($viewingSupervisor)
+                <div class="space-y-8">
+                    <div>
                     <flux:heading size="xl">{{ __('ملف المشرف') }}</flux:heading>
                     <flux:subheading>{{ __('عرض وتعديل بيانات المشرف الأساسية') }}</flux:subheading>
                 </div>
@@ -183,7 +189,8 @@
                         @endif
                     </div>
                 </div>
-            </div>
-        @endif
+                </div>
+            @endif
+        </div>
     </flux:modal>
 </div>

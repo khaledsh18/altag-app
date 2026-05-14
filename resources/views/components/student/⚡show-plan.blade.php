@@ -29,7 +29,7 @@ new class extends Component {
         ])
         ->where('student_plan_id', $this->planId)
         ->orderBy('date', 'asc')
-        ->paginate(10);
+        ->paginate(20);
 
         return [
             'plan' => $plan,

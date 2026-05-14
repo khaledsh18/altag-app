@@ -853,7 +853,7 @@ new class extends Component {
 
             <!-- Footer Toolbar -->
             <div
-                class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center transition-all">
+                class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
                 <flux:button variant="ghost" icon="arrow-right" class="" wire:click="prevStep"
                     :disabled="$step == 1 || ($step == 2 && $userLevel == 'student')">
                     {{ __('السابق') }}

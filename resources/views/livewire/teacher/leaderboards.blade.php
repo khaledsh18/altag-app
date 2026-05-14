@@ -16,7 +16,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($leaderboards as $board)
                 <flux:card
-                    class="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border border-zinc-200 dark:border-zinc-700/50">
+                    class="relative overflow-hidden group hover:shadow-lg transition-[shadow,transform] duration-300 border border-zinc-200 dark:border-zinc-700/50">
                     <div class="absolute top-0 right-0 p-4">
                         <flux:dropdown>
                             <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal"

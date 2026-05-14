@@ -148,7 +148,7 @@ new class extends Component {
             // Move unapproved to top, then active ones
             ->orderBy('is_approved', 'asc')
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
 
         return [
             'plans' => $plans,

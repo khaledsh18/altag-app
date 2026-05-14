@@ -182,19 +182,19 @@ new class extends Component {
         <flux:heading size="lg" class="mb-4">{{ __('روابط سريعة') }}</flux:heading>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <a href="{{ route('teacher.tasmeeh') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-all h-36 flex flex-col justify-center items-center text-center">
+            <a href="{{ route('teacher.tasmeeh') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-[transform,shadow,border-color] h-36 flex flex-col justify-center items-center text-center">
                 <flux:icon icon="book-open" class="size-8 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" />
                 <flux:heading size="md" class="group-hover:text-indigo-600 transition-colors">{{ __('التسميع اليومي') }}</flux:heading>
                 <flux:subheading class="text-xs mt-1">{{ __('متابعة تسميع المهام اليومية للطلاب') }}</flux:subheading>
             </a>
 
-            <a href="{{ route('teacher.plan-creator') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-all h-36 flex flex-col justify-center items-center text-center">
+            <a href="{{ route('teacher.plan-creator') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-[transform,shadow,border-color] h-36 flex flex-col justify-center items-center text-center">
                 <flux:icon icon="calendar-days" class="size-8 text-emerald-500 mb-2 group-hover:scale-110 transition-transform" />
                 <flux:heading size="md" class="group-hover:text-indigo-600 transition-colors">{{ __('منشئ الخطط') }}</flux:heading>
                 <flux:subheading class="text-xs mt-1">{{ __('إنشاء وتوزيع مسارات الحفظ والمراجعة') }}</flux:subheading>
             </a>
             
-            <a href="{{ route('teacher.students') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-all h-36 flex flex-col justify-center items-center text-center">
+            <a href="{{ route('teacher.students') }}" class="group bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-xs hover:border-indigo-500/50 hover:shadow-md transition-[transform,shadow,border-color] h-36 flex flex-col justify-center items-center text-center">
                 <flux:icon icon="users" class="size-8 text-amber-500 mb-2 group-hover:scale-110 transition-transform" />
                 <flux:heading size="md" class="group-hover:text-indigo-600 transition-colors">{{ __('طلابي') }}</flux:heading>
                 <flux:subheading class="text-xs mt-1">{{ __('إدارة قائمة الطلاب ( ' . $studentsCount . ' طالب )') }}</flux:subheading>

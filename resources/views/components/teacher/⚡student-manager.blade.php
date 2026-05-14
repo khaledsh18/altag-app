@@ -203,7 +203,7 @@ new class extends Component {
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
 
         return [
             'students' => $students,
@@ -262,9 +262,9 @@ new class extends Component {
             <flux:table.rows>
                 @foreach ($students as $student)
                     <flux:table.row wire:key="student-row-{{ $student->id }}"
-                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <flux:table.cell class="font-medium whitespace-nowrap"
-                            wire:click="viewStudent({{ $student->id }})">
+                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        x-on:click="$flux.modal('student-details').show(); $wire.viewStudent({{ $student->id }})">
+                        <flux:table.cell class="font-medium whitespace-nowrap">
                             {{ $student->name }}
                         </flux:table.cell>
                         <flux:table.cell @click.stop>
@@ -279,10 +279,10 @@ new class extends Component {
                                 <span class="text-zinc-400 text-xs">-</span>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell wire:click="viewStudent({{ $student->id }})">
+                        <flux:table.cell>
                             {{ $student->joined_at ? $student->joined_at->format('Y-m-d') : '-' }}
                         </flux:table.cell>
-                        <flux:table.cell wire:click="viewStudent({{ $student->id }})">
+                        <flux:table.cell>
                             @php
                                 $statusColors = [
                                     'active' => 'green',
@@ -301,7 +301,7 @@ new class extends Component {
                             @endphp
                             <flux:badge :color="$stColor" size="sm">{{ $stLabel }}</flux:badge>
                         </flux:table.cell>
-                        <flux:table.cell wire:click="viewStudent({{ $student->id }})">
+                        <flux:table.cell>
                             @if ($student->is_data_completed)
                                 <flux:badge color="green" size="sm" icon="check-circle">{{ __('مكتملة') }}
                                 </flux:badge>
@@ -310,7 +310,7 @@ new class extends Component {
                                 </flux:badge>
                             @endif
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell @click.stop>
                             @if ($student->access_token)
                                 <div class="flex items-center gap-2" x-data="{ copied: false, link: '{{ route('magic-link', ['token' => $student->access_token]) }}' }" @click.stop>
                                     <flux:input readonly copyable class="max-w-xs text-xs"
@@ -323,7 +323,7 @@ new class extends Component {
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="xs" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item wire:click="viewStudent({{ $student->id }})" icon="eye">
+                                        <flux:menu.item x-on:click="$flux.modal('student-details').show(); $wire.viewStudent({{ $student->id }})" icon="eye">
                                             {{ __('عرض وتعديل التفاصيل') }}</flux:menu.item>
                                         <flux:separator />
                                         @if ($student->access_token)
@@ -352,8 +352,14 @@ new class extends Component {
 
     <!-- Student Details Modal -->
     <flux:modal name="student-details" variant="flyout" class="md:w-[500px]">
-        @if ($viewingStudent)
-            <div class="space-y-8">
+        <div wire:loading wire:target="viewStudent" class="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-zinc-400">
+            <flux:icon icon="arrow-path" class="size-8 animate-spin mb-4" />
+            <p>{{ __('جاري تحميل بيانات الطالب...') }}</p>
+        </div>
+
+        <div wire:loading.remove wire:target="viewStudent">
+            @if ($viewingStudent)
+                <div class="space-y-8">
                 <div>
                     <flux:heading size="xl">{{ __('ملف الطالب') }}</flux:heading>
                     <flux:subheading>{{ __('عرض وتعديل بيانات الطالب وخططه') }}</flux:subheading>
@@ -531,7 +537,8 @@ new class extends Component {
                     wire:confirm="{{ __('هل أنت متأكد من إزالة الطالب من الحلقة؟ (لن يتم حذف بياناته، بل سيتم فصله عن حلقتك فقط)') }}"
                     variant="ghost" size="sm" icon="user-minus">{{ __('إزالة من الحلقة') }}</flux:button>
             </div>
-        @endif
+            @endif
+        </div>
     </flux:modal>
 
     <!-- Unassigned Students Modal -->

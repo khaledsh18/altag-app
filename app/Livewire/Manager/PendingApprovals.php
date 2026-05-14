@@ -61,7 +61,7 @@ class PendingApprovals extends Component
         return $model::query()
             ->where('is_approved', false)
             ->latest()
-            ->paginate(10);
+            ->paginate(20);
     }
 
     #[Computed]
