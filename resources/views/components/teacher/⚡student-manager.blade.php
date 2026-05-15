@@ -262,7 +262,7 @@ new class extends Component {
             <flux:table.rows>
                 @foreach ($students as $student)
                     <flux:table.row wire:key="student-row-{{ $student->id }}"
-                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s"
+                        class="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                         x-on:click="$flux.modal('student-details').show(); $wire.viewStudent({{ $student->id }})">
                         <flux:table.cell class="font-medium whitespace-nowrap">
                             {{ $student->name }}
@@ -427,7 +427,7 @@ new class extends Component {
                     <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
                         @forelse($viewingStudent->plans as $plan)
                             <div
-                                class="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700/50 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50   s">
+                                class="flex items-center justify-between p-3 border border-zinc-200 dark:border-zinc-700/50 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                                 <div class="flex flex-col">
                                     <span class="text-sm font-medium">
                                         @if ($plan->plan_type === 'hifz_review')

@@ -115,6 +115,7 @@ Route::middleware(['auth:supervisor', 'approved'])->prefix('supervisor')->name('
     Route::get('/dashboard', fn () => view('supervisor.dashboard'))->name('dashboard');
     Route::view('/exceeded-limits', 'supervisor.exceeded-limits')->name('exceeded-limits');
     Route::view('/academic-calendar', 'supervisor.academic-calendar')->name('academic-calendar');
+    Route::view('/yearly-attendance', 'supervisor.yearly-attendance')->name('yearly-attendance');
     Route::view('/tasks', 'supervisor.tasks')->name('tasks');
     Route::view('/whatsapp-settings', 'supervisor.whatsapp-settings')->name('whatsapp-settings');
 });
@@ -125,18 +126,22 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
         };
     };
 
-    Route::get('/dashboard', $appShellRoute('dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn () => view('teacher.dashboard'))->name('dashboard');
+    
+    // SPA Routes (5 Tabs)
     Route::get('/attendance', $appShellRoute('attendance'))->name('attendance');
-    Route::get('/discipline', $appShellRoute('discipline'))->name('discipline');
-    Route::get('/quranic-discipline', $appShellRoute('quranic-discipline'))->name('quranic-discipline');
     Route::get('/students', $appShellRoute('students'))->name('students');
     Route::get('/plan-creator', $appShellRoute('plan-creator'))->name('plan-creator');
-    Route::get('/student-plans', $appShellRoute('student-plans'))->name('student-plans');
     Route::get('/tasmeeh', $appShellRoute('tasmeeh'))->name('tasmeeh');
-    Route::get('/exceeded-limits', $appShellRoute('exceeded-limits'))->name('exceeded-limits');
-    Route::get('/pairs', $appShellRoute('pairs'))->name('pairs');
     Route::get('/leaderboards', $appShellRoute('leaderboards'))->name('leaderboards');
-    Route::get('/student-exams', $appShellRoute('student-exams'))->name('student-exams');
+    
+    // Standard Routes
+    Route::view('/discipline', 'teacher.discipline')->name('discipline');
+    Route::view('/quranic-discipline', 'teacher.quranic-discipline')->name('quranic-discipline');
+    Route::view('/student-plans', 'teacher.student-plans')->name('student-plans');
+    Route::view('/exceeded-limits', 'teacher.exceeded-limits')->name('exceeded-limits');
+    Route::view('/pairs', 'teacher.pairs')->name('pairs');
+    Route::view('/student-exams', 'teacher.student-exams')->name('student-exams');
 
     Route::get('/student-recitation-log/{studentId}', function ($studentId) {
         return view('teacher.student-recitation-log', ['studentId' => $studentId]);
@@ -210,6 +215,10 @@ Route::get('/teacher-magic/{token}', function ($token) {
 
     if (! $teacher->is_data_completed) {
         return redirect()->route('teacher.complete-profile');
+    }
+
+    if (request()->has('redirect')) {
+        return redirect()->to(request()->query('redirect'));
     }
 
     return redirect()->route('teacher.dashboard');

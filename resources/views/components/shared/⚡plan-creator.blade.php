@@ -545,7 +545,15 @@ new class extends Component {
             return redirect()->route('student.plan')->with('success', 'تم الحفظ وسيتم عرضها على المعلم للاعتماد');
         }
 
-        return redirect()->route('teacher.student-plans')->with('success', 'تم حفظ الخطة بنجاح');
+        $this->dispatch('plan-created');
+        
+        if ($this->edit) {
+            return redirect()->route('teacher.student-plans')->with('success', 'تم تعديل الخطة بنجاح');
+        }
+
+        Flux::toast('تم إنشاء الخطة بنجاح', variant: 'success');
+        $this->resetPlan();
+        $this->dispatch('switch-tab', tab: 'tasmeeh', url: route('teacher.tasmeeh'));
     }
 
     protected function getHijriLabel(\DateTimeInterface $date)

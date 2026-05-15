@@ -6,6 +6,7 @@ use App\Models\StudentPlan;
 use App\Models\StudentPlanDay;
 use Illuminate\Support\Facades\Auth;
 use Flux\Flux;
+use Livewire\Attributes\On;
 
 new class extends Component {
     public $studentId = null;
@@ -25,10 +26,20 @@ new class extends Component {
     public $reviewAchievement = null;
     
     public $gradedAtDate;
+    public $refreshToggle = false;
 
     public function mount()
     {
         $this->gradedAtDate = now()->format('Y-m-d');
+    }
+
+    #[On('attendance-updated')]
+    #[On('attendance-cleared')]
+    #[On('plan-created')]
+    public function refreshData()
+    {
+        $this->refreshToggle = ! $this->refreshToggle;
+        Flux::toast('تم تحديث قائمة التسميع', variant: 'success');
     }
 
     public function with()
@@ -448,7 +459,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                 <div x-show="openSection === 1"
                     class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                     @forelse($studentsWithPlansPresent as $student)
-                        <button @click="selectStudent({{ $student->id }})"
+                        <button wire:key="present-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" @click="selectStudent({{ $student->id }})"
                             class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
                             <div class="flex items-center gap-3">
                                 <div
@@ -488,7 +499,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     <div x-show="openSection === 2"
                         class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithPlansAbsent as $student)
-                            <button @click="selectStudent({{ $student->id }})"
+                            <button wire:key="absent-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" @click="selectStudent({{ $student->id }})"
                                 class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100' }}">
                                 <div class="flex items-center gap-3">
                                     <div
@@ -523,7 +534,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     <div x-show="openSection === 3"
                         class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithoutPlans as $student)
-                            <div class="flex items-center gap-2">
+                            <div wire:key="noplan-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" class="flex items-center gap-2">
                                 <button @click="selectStudent({{ $student->id }})"
                                     class="flex-1 flex items-center p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-zinc-100/50 dark:bg-zinc-800/30 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
                                     <span

@@ -14,6 +14,7 @@ class Attendance extends Component
 
     public ?int $selectedCircle = null;
 
+    #[\Livewire\Attributes\Url]
     public string $date = '';
 
     public $students;
@@ -28,7 +29,9 @@ class Attendance extends Component
     {
 
         $this->students = collect();
-        $this->date = now()->format('Y-m-d');
+        if (empty($this->date)) {
+            $this->date = now()->format('Y-m-d');
+        }
 
         $teacher = auth()->guard('teacher')->user();
         $this->circles = $teacher->circles()->get();
@@ -107,6 +110,7 @@ class Attendance extends Component
 
         $this->records[$studentId] = $status;
         $this->saveRecord($studentId, $status);
+        $this->dispatch('attendance-updated');
     }
 
     /**
@@ -120,6 +124,7 @@ class Attendance extends Component
 
         $this->records[$studentId] = $status;
         $this->saveRecord($studentId, $status);
+        $this->dispatch('attendance-updated');
     }
 
     public function markAllPresent(): void
@@ -146,7 +151,26 @@ class Attendance extends Component
         }
 
         $this->isComplete = true;
+        $this->dispatch('attendance-updated');
         Flux::toast('تم تسجيل حضور جميع الطلاب بنجاح', variant: 'success');
+    }
+
+    public function clearDayAttendance(): void
+    {
+        if (! $this->selectedCircle || empty($this->date)) {
+            return;
+        }
+
+        AttendanceModel::where('circle_id', $this->selectedCircle)
+            ->whereDate('date', $this->date)
+            ->delete();
+
+        foreach ($this->students as $student) {
+            $this->records[$student->id] = '';
+        }
+
+        $this->dispatch('attendance-cleared');
+        Flux::toast('تم حذف جميع بيانات التحضير لهذا اليوم', variant: 'success');
     }
 
     private function saveRecord(int $studentId, string $status): void

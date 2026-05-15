@@ -15,7 +15,7 @@
         @foreach($navItems as $item)
             <a href="{{ route($item['route']) }}" 
                 x-data="{ isActive: '{{ $initialTab ?? '' }}' === '{{ $item['tab'] }}' || {{ request()->routeIs($item['route'] . '*') ? 'true' : 'false' }} }"
-                x-on:click="if(document.getElementById('teacher-app-shell')) { $event.preventDefault(); $dispatch('switch-tab', { tab: '{{ $item['tab'] }}', url: '{{ route($item['route']) }}' }); }"
+                x-on:click.prevent="if(document.getElementById('teacher-app-shell')) { $dispatch('switch-tab', { tab: '{{ $item['tab'] }}', url: '{{ route($item['route']) }}' }); } else { Livewire.navigate('{{ route($item['route']) }}'); }"
                 x-on:switch-tab.window="isActive = ($event.detail.tab === '{{ $item['tab'] }}')"
                 :class="isActive ? 'text-white' : 'text-white/60 hover:text-white'"
                 class="relative flex flex-col items-center justify-center duration-300 ease-out h-full flex-1">

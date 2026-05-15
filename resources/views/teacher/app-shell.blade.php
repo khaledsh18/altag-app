@@ -50,14 +50,6 @@
              </button>
         </div>
 
-        <div x-show="activeTab === 'dashboard'" x-cloak class="p-6 md:p-8 space-y-8" dir="rtl">
-            <livewire:teacher.dashboard />
-            <div>
-                <flux:heading size="lg" class="mb-4">{{ __('لائحة التجاوزات والانذارات') }}</flux:heading>
-                <livewire:shared.exceeded-limits />
-            </div>
-        </div>
-
         <div x-show="activeTab === 'students'" x-cloak>
             <livewire:teacher.student-manager />
         </div>
@@ -66,40 +58,16 @@
             <livewire:shared.plan-creator />
         </div>
 
-        <div x-show="activeTab === 'student-plans'" x-cloak>
-            <livewire:teacher.student-plans-list />
-        </div>
-
         <div x-show="activeTab === 'tasmeeh'" x-cloak>
             <livewire:teacher.tasmeeh-manager />
-        </div>
-
-        <div x-show="activeTab === 'pairs'" x-cloak>
-            <livewire:teacher.pairs-manager />
         </div>
 
         <div x-show="activeTab === 'leaderboards'" x-cloak>
             <livewire:teacher.leaderboards />
         </div>
 
-        <div x-show="activeTab === 'student-exams'" x-cloak>
-            <livewire:teacher.student-exams />
-        </div>
-
         <div x-show="activeTab === 'attendance'" x-cloak class="p-1 md:p-8">
             <livewire:teacher.attendance />
-        </div>
-
-        <div x-show="activeTab === 'discipline'" x-cloak class="p-1 md:p-8">
-            <livewire:teacher.attendance-discipline />
-        </div>
-
-        <div x-show="activeTab === 'quranic-discipline'" x-cloak class="p-1 md:p-8">
-            <livewire:teacher.quranic-discipline />
-        </div>
-
-        <div x-show="activeTab === 'exceeded-limits'" x-cloak>
-            <livewire:shared.exceeded-limits />
         </div>
     </div>
 </x-layouts.role-shell>

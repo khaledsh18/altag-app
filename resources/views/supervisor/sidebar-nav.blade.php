@@ -11,6 +11,10 @@
     <flux:sidebar.item icon="users" href="#" wire:navigate>
         المعلمون
     </flux:sidebar.item>
+    <flux:sidebar.item icon="calendar" :href="route('supervisor.yearly-attendance')"
+        :current="request()->routeIs('supervisor.yearly-attendance')" wire:navigate>
+        متابعة الحلقات السنوي
+    </flux:sidebar.item>
     <flux:sidebar.item icon="calendar" :href="route('supervisor.academic-calendar')"
         :current="request()->routeIs('supervisor.academic-calendar')" wire:navigate>
         التقويم الأكاديمي

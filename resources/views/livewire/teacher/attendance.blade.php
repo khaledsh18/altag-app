@@ -145,13 +145,24 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                 </button>
             </div>
 
-            {{-- Mark all — Alpine hides/shows, Livewire executes --}}
-            <flux:button x-show="studentOrder.length > 0 && !isComplete" wire:click="markAllPresent" size="sm">
-                <span class="flex items-center gap-1">
-                    <flux:icon icon="check-circle" class="size-4" />
-                    تحضير الكل
-                </span>
-            </flux:button>
+            {{-- Mark all / Delete all actions --}}
+            <div x-show="studentOrder.length > 0" class="flex items-center gap-2">
+                <flux:button x-show="!isComplete" wire:click="markAllPresent" size="sm">
+                    <span class="flex items-center gap-1">
+                        <flux:icon icon="check-circle" class="size-4" />
+                        تحضير الكل
+                    </span>
+                </flux:button>
+
+                <button x-show="markedCount > 0" x-on:click="$flux.modal('confirm-clear-attendance').show()" size="sm"
+                    class=" border-red-600 rounded-md px-2 py-1 text-red-600 bg-red-600/20 hover:bg-red-600/70 hover:text-white"
+                    title="حذف التحضير">
+                    <span class="flex items-center gap-1">
+                        <flux:icon icon="trash" class="size-4" />
+                        حذف التحضير
+                    </span>
+                </button>
+            </div>
         </div>
 
         {{-- Progress bar — Alpine computed, no round-trip --}}
@@ -245,40 +256,40 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                         <button @click="markAndAdvance({{ $student->id }}, 'present')"
                             :disabled="syncing.includes({{ $student->id }})"
                             :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'present'
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
-                                : (getStatus({{ $student->id }}) === 'present'
-                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-gray-800 dark:text-white'
-                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-green-400 hover:bg-green-50 dark:hover:border-green-600 dark:hover:bg-green-900/10 text-gray-800 dark:text-white')"
+                                                                                                                                                                                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                                                                                                                                                                                                                        : (getStatus({{ $student->id }}) === 'present'
+                                                                                                                                                                                                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-gray-800 dark:text-white'
+                                                                                                                                                                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-400 hover:bg-green-50 dark:hover:border-green-600 dark:hover:bg-green-900/10 text-gray-800 dark:text-white')"
                             class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 duration-200">
                             <span class="font-semibold">حاضر</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'absent')"
                             :disabled="syncing.includes({{ $student->id }})"
                             :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'absent'
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
-                                : (getStatus({{ $student->id }}) === 'absent'
-                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-gray-800 dark:text-white'
-                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-red-400 hover:bg-red-50 dark:hover:border-red-600 dark:hover:bg-red-900/10 text-gray-800 dark:text-white')"
+                                                                                                                                                                                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                                                                                                                                                                                                                        : (getStatus({{ $student->id }}) === 'absent'
+                                                                                                                                                                                                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-gray-800 dark:text-white'
+                                                                                                                                                                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-400 hover:bg-red-50 dark:hover:border-red-600 dark:hover:bg-red-900/10 text-gray-800 dark:text-white')"
                             class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 duration-200">
                             <span class="font-semibold">غائب</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'late')"
                             :disabled="syncing.includes({{ $student->id }})"
                             :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'late'
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
-                                : (getStatus({{ $student->id }}) === 'late'
-                                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-gray-800 dark:text-white'
-                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:border-amber-600 dark:hover:bg-amber-900/10 text-gray-800 dark:text-white')"
+                                                                                                                                                                                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                                                                                                                                                                                                                        : (getStatus({{ $student->id }}) === 'late'
+                                                                                                                                                                                                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-gray-800 dark:text-white'
+                                                                                                                                                                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:border-amber-600 dark:hover:bg-amber-900/10 text-gray-800 dark:text-white')"
                             class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 duration-200">
                             <span class="font-semibold">متأخر</span>
                         </button>
                         <button @click="markAndAdvance({{ $student->id }}, 'excused')"
                             :disabled="syncing.includes({{ $student->id }})"
                             :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'excused'
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
-                                : (getStatus({{ $student->id }}) === 'excused'
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-gray-800 dark:text-white'
-                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-600 dark:hover:bg-blue-900/10 text-gray-800 dark:text-white')"
+                                                                                                                                                                                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                                                                                                                                                                                                                        : (getStatus({{ $student->id }}) === 'excused'
+                                                                                                                                                                                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-gray-800 dark:text-white'
+                                                                                                                                                                                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-600 dark:hover:bg-blue-900/10 text-gray-800 dark:text-white')"
                             class="group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 duration-200">
                             <span class="font-semibold">مستأذن</span>
                         </button>
@@ -296,10 +307,11 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                         <div class="flex items-center gap-1 max-w-xs overflow-hidden">
                             @foreach ($students as $idx => $s)
                                 <div :class="{
-                                                                                                    'bg-blue-500 scale-125': currentIndex === {{ $idx }},
-                                                                                                    'bg-green-400': currentIndex !== {{ $idx }} && records[{{ $s->id }}],
-                                                                                                    'bg-zinc-300 dark:bg-zinc-600': currentIndex !== {{ $idx }} && !records[{{ $s->id }}]
-                                                                                                }" class="size-2 rounded-full ">
+                                                                                                                                                                                                                                                                                                                                                                                        'bg-blue-500 scale-125': currentIndex === {{ $idx }},
+                                                                                                                                                                                                                                                                                                                                                                                        'bg-green-400': currentIndex !== {{ $idx }} && records[{{ $s->id }}],
+                                                                                                                                                                                                                                                                                                                                                                                        'bg-zinc-300 dark:bg-zinc-600': currentIndex !== {{ $idx }} && !records[{{ $s->id }}]
+                                                                                                                                                                                                                                                                                                                                                                                    }"
+                                    class="size-2 rounded-full ">
                                 </div>
                             @endforeach
                         </div>
@@ -344,9 +356,10 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                                     @php $msg = $this->getWhatsAppMessage($student, $records[$student->id]); @endphp
                                     @if ($student->guardian_phone)
                                         <a class="whatsapp-link"
-                                            href="https://wa.me/{{ $student->guardian_phone }}/?text={{ urlencode($msg) }}" target="_blank"
-                                            title="تواصل عبر واتساب">
-                                            <flux:icon icon="chat-bubble-left-right" class="size-5 text-green-500 hover:text-green-600" />
+                                            href="https://wa.me/{{ $student->guardian_phone }}/?text={{ urlencode($msg) }}"
+                                            target="_blank" title="تواصل عبر واتساب">
+                                            <flux:icon icon="chat-bubble-left-right"
+                                                class="size-5 text-green-500 hover:text-green-600" />
                                         </a>
                                     @else
                                         <button x-data="{ copied: false }" data-msg="{{ $msg }}"
@@ -361,41 +374,37 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
                             </div>
 
                             {{-- Status buttons — Alpine instant color, Livewire re-renders for WhatsApp --}}
-                            <button
-                                @click="updateRecord({{ $student->id }}, 'present')"
+                            <button @click="updateRecord({{ $student->id }}, 'present')"
                                 :disabled="syncing.includes({{ $student->id }})"
                                 :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'present'
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
-                                    : (getStatus({{ $student->id }}) === 'present'
-                                        ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
-                                        : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-green-900/20 dark:hover:text-green-400')"
+                                                                                                                                                                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
+                                                                                                                                                                                                                            : (getStatus({{ $student->id }}) === 'present'
+                                                                                                                                                                                                                                ? 'bg-green-100 text-green-700 border border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700'
+                                                                                                                                                                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-green-50 hover:text-green-700 hover:border-green-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-green-900/20 dark:hover:text-green-400')"
                                 class="px-3 py-1.5 text-xs font-medium rounded-lg">حاضر</button>
-                            <button
-                                @click="updateRecord({{ $student->id }}, 'absent')"
+                            <button @click="updateRecord({{ $student->id }}, 'absent')"
                                 :disabled="syncing.includes({{ $student->id }})"
                                 :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'absent'
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
-                                    : (getStatus({{ $student->id }}) === 'absent'
-                                        ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
-                                        : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-red-900/20 dark:hover:text-red-400')"
+                                                                                                                                                                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
+                                                                                                                                                                                                                            : (getStatus({{ $student->id }}) === 'absent'
+                                                                                                                                                                                                                                ? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
+                                                                                                                                                                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-red-900/20 dark:hover:text-red-400')"
                                 class="px-3 py-1.5 text-xs font-medium rounded-lg">غائب</button>
-                            <button
-                                @click="updateRecord({{ $student->id }}, 'late')"
+                            <button @click="updateRecord({{ $student->id }}, 'late')"
                                 :disabled="syncing.includes({{ $student->id }})"
                                 :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'late'
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
-                                    : (getStatus({{ $student->id }}) === 'late'
-                                        ? 'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
-                                        : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-amber-900/20 dark:hover:text-amber-400')"
+                                                                                                                                                                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
+                                                                                                                                                                                                                            : (getStatus({{ $student->id }}) === 'late'
+                                                                                                                                                                                                                                ? 'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
+                                                                                                                                                                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-amber-900/20 dark:hover:text-amber-400')"
                                 class="px-3 py-1.5 text-xs font-medium rounded-lg">متأخر</button>
-                            <button
-                                @click="updateRecord({{ $student->id }}, 'excused')"
+                            <button @click="updateRecord({{ $student->id }}, 'excused')"
                                 :disabled="syncing.includes({{ $student->id }})"
                                 :class="syncing.includes({{ $student->id }}) && getStatus({{ $student->id }}) === 'excused'
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
-                                    : (getStatus({{ $student->id }}) === 'excused'
-                                        ? 'bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700'
-                                        : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400')"
+                                                                                                                                                                                                                            ? 'bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
+                                                                                                                                                                                                                            : (getStatus({{ $student->id }}) === 'excused'
+                                                                                                                                                                                                                                ? 'bg-blue-100 text-blue-700 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700'
+                                                                                                                                                                                                                                : 'bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400')"
                                 class="px-3 py-1.5 text-xs font-medium rounded-lg">مستأذن</button>
                         </div>
                     </div>
@@ -430,4 +439,32 @@ Livewire fires only on: markStatus | updateStatus | markAllPresent | loadStudent
             <div class="text-sm text-blue-600 dark:text-blue-500">مستأذن</div>
         </div>
     </div>
+
+    {{-- Clear Attendance Modal --}}
+    <flux:modal name="confirm-clear-attendance" class="min-w-[22rem]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg" class="text-red-600 dark:text-red-400">تأكيد مسح التحضير</flux:heading>
+                <flux:subheading>
+                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        هل أنت متأكد من مسح كافة بيانات التحضير لطلاب هذه الحلقة لهذا اليوم؟
+                        <br>
+                        <strong>هذا الإجراء سيحذف السجلات ولا يمكن التراجع عنه.</strong>
+                    </p>
+                </flux:subheading>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <flux:spacer />
+                <flux:modal.close>
+                    <flux:button variant="ghost">إلغاء</flux:button>
+                </flux:modal.close>
+
+                <flux:button wire:click="clearDayAttendance"
+                    x-on:click="$flux.modal('confirm-clear-attendance').close()" variant="danger">
+                    نعم، امسح التحضير
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>
