@@ -559,8 +559,7 @@ hifz/review — local state per day card for instant visual feedback
                         </div>
 
                         @if($currentDay)
-                            <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700"
-                                x-data="{ hifz: {{ $currentDay->hifz_achievement ?? 'null' }}, review: {{ $currentDay->review_achievement ?? 'null' }} }">
+                            <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700">
 
                                 {{-- Day navigation --}}
                                 <div class="flex items-center justify-between mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -650,21 +649,17 @@ hifz/review — local state per day card for instant visual feedback
                                             <div>
                                                 <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                    <button type="button" @click="hifz = 3; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 3)"
-                                                        :class="hifz === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">ممتاز</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 3)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">ممتاز</button>
 
-                                                    <button type="button" @click="hifz = 2; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 2)"
-                                                        :class="hifz === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">جيد</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 2)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">جيد</button>
 
-                                                    <button type="button" @click="hifz = 1; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 1)"
-                                                        :class="hifz === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">مقبول</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 1)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">مقبول</button>
 
-                                                    <button type="button" @click="hifz = null; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', null)"
-                                                        :class="hifz === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">لم يسمع</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', null)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">لم يسمع</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -741,21 +736,17 @@ hifz/review — local state per day card for instant visual feedback
                                             <div>
                                                 <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                    <button type="button" @click="review = 3; $wire.saveAchievement({{ $currentDay->id }}, 'review', 3)"
-                                                        :class="review === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">ممتاز</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 3)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">ممتاز</button>
 
-                                                    <button type="button" @click="review = 2; $wire.saveAchievement({{ $currentDay->id }}, 'review', 2)"
-                                                        :class="review === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">جيد</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 2)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">جيد</button>
 
-                                                    <button type="button" @click="review = 1; $wire.saveAchievement({{ $currentDay->id }}, 'review', 1)"
-                                                        :class="review === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">مقبول</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 1)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">مقبول</button>
 
-                                                    <button type="button" @click="review = null; $wire.saveAchievement({{ $currentDay->id }}, 'review', null)"
-                                                        :class="review === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">لم يسمع</button>
+                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', null)"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">لم يسمع</button>
                                                 </div>
                                             </div>
                                         </div>
