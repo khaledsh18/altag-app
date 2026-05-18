@@ -268,6 +268,14 @@ new class extends Component {
         }
 
         StudentPlanDay::where('id', $dayId)->update($updateData);
+        
+        // Lock the navigated day so the UI doesn't suddenly jump to the next incomplete day
+        // which makes it look like the button reverted to an ungraded state
+        $day = StudentPlanDay::with('plan')->find($dayId);
+        if ($day) {
+            $this->navigatedDays[$day->plan->student_id] = $dayId;
+        }
+
         Flux::toast('تم حفظ التقييم', variant: 'success');
     }
 
