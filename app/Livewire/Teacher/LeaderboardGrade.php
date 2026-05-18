@@ -78,18 +78,13 @@ class LeaderboardGrade extends Component
     {
         $leaderboard = Leaderboard::with('criteria', 'circles')->findOrFail($this->leaderboardId);
 
-        // For supervisor competitions (multi-circle), load all participating circles' students
-        if ($leaderboard->isSupervisorCompetition() && $leaderboard->circles->isNotEmpty()) {
-            $circleIds = $leaderboard->circles->pluck('id')->toArray();
-            $students = Student::whereIn('circle_id', $circleIds)
-                ->where('status', 'active')
-                ->orderBy('circle_id')
-                ->orderBy('name')
-                ->with('circle')
-                ->get();
-        } else {
-            $students = Student::where('circle_id', $leaderboard->circle_id)->orderBy('name')->get();
-        }
+        $teacher = auth()->guard('teacher')->user();
+        $circleId = $teacher ? ($teacher->circles()->first()->id ?? $leaderboard->circle_id) : $leaderboard->circle_id;
+
+        $students = Student::where('circle_id', $circleId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
 
         $scores = LeaderboardScore::where('leaderboard_id', $this->leaderboardId)
             ->whereDate('date', \Carbon\Carbon::parse($this->date))

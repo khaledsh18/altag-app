@@ -120,8 +120,8 @@
                         <div class="flex flex-col gap-2">
                             <div class="flex gap-2">
                                 <flux:button wire:click="toggleActive({{ $board->id }})"
-                                    variant="{{ $board->is_active ? 'ghost' : 'ghost' }}"
-                                    class=" border border-zinc-200 dark:border-zinc-700">
+                                    variant="ghost"
+                                    class="flex-1 border border-zinc-200 dark:border-zinc-700">
                                     @if ($board->is_active)
                                         {{ __('إيقاف') }}
                                         <flux:icon icon="pause-circle" class="size-4 ml-1" />
@@ -130,19 +130,27 @@
                                         <flux:icon icon="play-circle" class="size-4 ml-1 text-emerald-500" />
                                     @endif
                                 </flux:button>
-                                <flux:button href="{{ route('teacher.leaderboards.report', $board->id) }}" variant="ghost"
-                                    class="border flex-1 border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
-                                    title="{{ __('التقرير الشامل') }}">
-                                    <span class="text-muted dark:text-white">{{ __('التقرير الشامل') }}</span>
-                                    <flux:icon icon="chart-bar" class="size-4" />
+                                <flux:button wire:click="toggleActiveForGrading({{ $board->id }})" variant="ghost"
+                                    class="flex-1 border {{ $board->is_active_for_grading ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-300 dark:border-amber-700' : 'border-zinc-200 dark:border-zinc-700' }}"
+                                    title="{{ __('أساسية للتسجيل') }}">
+                                    @if ($board->is_active_for_grading)
+                                        <flux:icon icon="star" variant="solid" class="size-4 text-amber-500" />
+                                    @else
+                                        <flux:icon icon="star" variant="outline" class="size-4 text-zinc-400" />
+                                    @endif
                                 </flux:button>
                             </div>
-                            <div class="flex gap-3">
+                            <div class="flex gap-2">
+                                <flux:button href="{{ route('teacher.leaderboards.report', $board->id) }}" variant="ghost"
+                                    class="border border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
+                                    title="{{ __('التقرير') }}">
+                                    <flux:icon icon="chart-bar" class="size-4" />
+                                </flux:button>
                                 <flux:button href="{{ route('teacher.leaderboards.grade', $board->id) }}" variant="primary"
                                     class="flex-1 bg-amber-500 hover:bg-amber-600 border-none text-amber-950 shadow-md shadow-amber-500/20"
-                                    title="{{ __('رصد النقاط اليدوية') }}">
-                                    <span>{{ __('رصد النقاط اليدوية') }}</span>
-                                    <flux:icon icon="clipboard-document-check" class="size-4" />
+                                    title="{{ __('رصد النقاط') }}">
+                                    <span>{{ __('رصد النقاط') }}</span>
+                                    <flux:icon icon="clipboard-document-check" class="size-4 mr-1" />
                                 </flux:button>
                             </div>
                         </div>

@@ -559,7 +559,7 @@ hifz/review — local state per day card for instant visual feedback
                         </div>
 
                         @if($currentDay)
-                            <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700">
+                            <flux:card wire:key="day-card-{{ $currentDay->id }}" x-data="{ syncingTask: null }" class="mt-2 border-zinc-200 dark:border-zinc-700">
 
                                 {{-- Day navigation --}}
                                 <div class="flex items-center justify-between mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -649,17 +649,25 @@ hifz/review — local state per day card for instant visual feedback
                                             <div>
                                                 <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 3)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">ممتاز</button>
+                                                    <button type="button" @click="syncingTask = 'hifz-3'; await $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 3); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'hifz-3' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->hifz_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">ممتاز</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 2)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">جيد</button>
+                                                    <button type="button" @click="syncingTask = 'hifz-2'; await $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 2); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'hifz-2' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->hifz_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">جيد</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', 1)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">مقبول</button>
+                                                    <button type="button" @click="syncingTask = 'hifz-1'; await $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 1); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'hifz-1' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->hifz_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">مقبول</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'hifz', null)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->hifz_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">لم يسمع</button>
+                                                    <button type="button" @click="syncingTask = 'hifz-null'; await $wire.saveAchievement({{ $currentDay->id }}, 'hifz', null); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'hifz-null' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->hifz_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">لم يسمع</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -736,17 +744,25 @@ hifz/review — local state per day card for instant visual feedback
                                             <div>
                                                 <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
                                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 3)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">ممتاز</button>
+                                                    <button type="button" @click="syncingTask = 'review-3'; await $wire.saveAchievement({{ $currentDay->id }}, 'review', 3); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'review-3' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->review_achievement === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">ممتاز</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 2)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">جيد</button>
+                                                    <button type="button" @click="syncingTask = 'review-2'; await $wire.saveAchievement({{ $currentDay->id }}, 'review', 2); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'review-2' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->review_achievement === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">جيد</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', 1)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">مقبول</button>
+                                                    <button type="button" @click="syncingTask = 'review-1'; await $wire.saveAchievement({{ $currentDay->id }}, 'review', 1); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'review-1' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->review_achievement === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">مقبول</button>
 
-                                                    <button type="button" wire:click="saveAchievement({{ $currentDay->id }}, 'review', null)"
-                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center {{ $currentDay->review_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}">لم يسمع</button>
+                                                    <button type="button" @click="syncingTask = 'review-null'; await $wire.saveAchievement({{ $currentDay->id }}, 'review', null); syncingTask = null"
+                                                        :disabled="syncingTask !== null"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center disabled:opacity-50 disabled:cursor-wait"
+                                                        :class="syncingTask === 'review-null' ? 'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-white dark:bg-white dark:text-zinc-900 scale-105' : '{{ $currentDay->review_achievement === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' }}'">لم يسمع</button>
                                                 </div>
                                             </div>
                                         </div>

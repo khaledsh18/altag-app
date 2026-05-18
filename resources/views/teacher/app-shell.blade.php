@@ -7,6 +7,29 @@
         @include('teacher.sidebar-nav')
     </x-slot:sidebar>
 
+    @php
+        $teacher = Auth::guard('teacher')->user();
+        $circle = $teacher->circles()->first();
+
+        $activeLeaderboard = null;
+
+        if ($circle) {
+            $activeLeaderboard = \App\Models\Leaderboard::whereHas('circles', function($q) use ($circle) {
+                    $q->where('circles.id', $circle->id);
+                })
+                ->whereNotNull('supervisor_id')
+                ->where('is_active_for_grading', true)
+                ->first();
+
+            if (!$activeLeaderboard) {
+                $activeLeaderboard = \App\Models\Leaderboard::where('circle_id', $circle->id)
+                    ->whereNull('supervisor_id')
+                    ->where('is_active_for_grading', true)
+                    ->first();
+            }
+        }
+    @endphp
+
     <div id="teacher-app-shell" x-data="{
         activeTab: '{{ $initialTab ?? 'dashboard' }}',
         showStaleWarning: false,
@@ -64,6 +87,23 @@
 
         <div x-show="activeTab === 'leaderboards'" x-cloak>
             <livewire:teacher.leaderboards />
+        </div>
+
+        <div x-show="activeTab === 'grade-items'" x-cloak class="p-1 md:p-8">
+            @if ($activeLeaderboard)
+                <livewire:teacher.leaderboard-grade :leaderboard-id="$activeLeaderboard->id" />
+            @else
+                <div class="text-center py-12 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                    <flux:icon icon="star" class="size-10 mx-auto text-zinc-400 mb-3" />
+                    <flux:heading size="md" class="mb-2">{{ __('لا توجد مسابقة معتمدة للتسجيل') }}</flux:heading>
+                    <p class="text-zinc-500 mb-4 max-w-md mx-auto">
+                        {{ __('يرجى تحديد مسابقة من قائمة المسابقات لاعتمادها كالمسابقة الأساسية في شريط التنقل لتسجيل بنود التقييم.') }}
+                    </p>
+                    <flux:button x-on:click="$dispatch('switch-tab', { tab: 'leaderboards', url: '{{ route('teacher.leaderboards') }}' })" variant="primary" icon="trophy">
+                        {{ __('الذهاب لإدارة المسابقات') }}
+                    </flux:button>
+                </div>
+            @endif
         </div>
 
         <div x-show="activeTab === 'attendance'" x-cloak class="p-1 md:p-8">

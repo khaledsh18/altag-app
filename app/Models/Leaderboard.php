@@ -15,6 +15,7 @@ class Leaderboard extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'is_active' => 'boolean',
+        'is_active_for_grading' => 'boolean',
         'settings' => 'json',
     ];
 

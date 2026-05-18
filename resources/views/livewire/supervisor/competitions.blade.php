@@ -87,15 +87,26 @@
                         </div>
                     </div>
 
-                    {{-- Toggle Active --}}
-                    <flux:button wire:click="toggleActive({{ $competition->id }})" variant="ghost"
-                        class="w-full border border-zinc-200 dark:border-zinc-700">
-                        @if ($competition->is_active)
-                            <flux:icon icon="pause-circle" class="size-4 ml-1" /> إيقاف المسابقة
-                        @else
-                            <flux:icon icon="play-circle" class="size-4 ml-1 text-emerald-500" /> تنشيط المسابقة
-                        @endif
-                    </flux:button>
+                    {{-- Actions --}}
+                    <div class="grid grid-cols-2 gap-2 mt-4">
+                        <flux:button wire:click="toggleActive({{ $competition->id }})" variant="ghost" size="sm"
+                            class="w-full border border-zinc-200 dark:border-zinc-700">
+                            @if ($competition->is_active)
+                                <flux:icon icon="pause-circle" class="size-4 ml-1" /> إيقاف
+                            @else
+                                <flux:icon icon="play-circle" class="size-4 ml-1 text-emerald-500" /> تنشيط
+                            @endif
+                        </flux:button>
+                        
+                        <flux:button wire:click="toggleActiveForGrading({{ $competition->id }})" variant="ghost" size="sm"
+                            class="w-full border {{ $competition->is_active_for_grading ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-300 dark:border-amber-700' : 'border-zinc-200 dark:border-zinc-700' }}">
+                            @if ($competition->is_active_for_grading)
+                                <flux:icon icon="star" variant="solid" class="size-4 ml-1 text-amber-500" /> أساسية للتسجيل
+                            @else
+                                <flux:icon icon="star" variant="outline" class="size-4 ml-1 text-zinc-400" /> تعيين للتسجيل
+                            @endif
+                        </flux:button>
+                    </div>
                 </flux:card>
             @endforeach
         </div>

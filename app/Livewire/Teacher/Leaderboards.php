@@ -194,6 +194,23 @@ class Leaderboards extends Component
         $this->loadLeaderboards();
     }
 
+    public function toggleActiveForGrading($id)
+    {
+        $board = Leaderboard::findOrFail($id);
+        
+        if (! $board->is_active_for_grading) {
+            // Unset for all other teacher's leaderboards in this circle
+            Leaderboard::where('circle_id', $this->circleId)
+                ->whereNull('supervisor_id')
+                ->where('id', '!=', $id)
+                ->update(['is_active_for_grading' => false]);
+        }
+        
+        $board->is_active_for_grading = ! $board->is_active_for_grading;
+        $board->save();
+        $this->loadLeaderboards();
+    }
+
     public function save()
     {
         $this->validate();

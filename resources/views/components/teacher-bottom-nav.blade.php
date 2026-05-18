@@ -6,7 +6,7 @@
             $navItems = [
                 ['name' => 'التحضير', 'route' => 'teacher.attendance', 'icon' => 'calendar', 'tab' => 'attendance'],
                 ['name' => 'التسميع', 'route' => 'teacher.tasmeeh', 'icon' => 'book-open', 'tab' => 'tasmeeh'],
-                ['name' => 'البنود', 'route' => 'teacher.leaderboards', 'icon' => 'star', 'tab' => 'leaderboards'],
+                ['name' => 'البنود', 'route' => 'teacher.grade-items', 'icon' => 'star', 'tab' => 'grade-items'],
                 ['name' => 'الخطط', 'route' => 'teacher.plan-creator', 'icon' => 'pencil-square', 'tab' => 'plan-creator'],
                 ['name' => 'الطلاب', 'route' => 'teacher.students', 'icon' => 'users', 'tab' => 'students'],
             ];

@@ -138,6 +138,7 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     Route::get('/plan-creator', $appShellRoute('plan-creator'))->name('plan-creator');
     Route::get('/tasmeeh', $appShellRoute('tasmeeh'))->name('tasmeeh');
     Route::get('/leaderboards', $appShellRoute('leaderboards'))->name('leaderboards');
+    Route::get('/grade-items', $appShellRoute('grade-items'))->name('grade-items');
 
     // Standard Routes
     Route::view('/discipline', 'teacher.discipline')->name('discipline');

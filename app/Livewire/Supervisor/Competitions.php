@@ -179,6 +179,23 @@ class Competitions extends Component
         Flux::toast($competition->is_active ? 'تم تنشيط المسابقة' : 'تم إيقاف المسابقة', variant: 'success');
     }
 
+    public function toggleActiveForGrading($id): void
+    {
+        $supervisorId = auth()->guard('supervisor')->id();
+        $competition = Leaderboard::where('supervisor_id', $supervisorId)->findOrFail($id);
+
+        if (! $competition->is_active_for_grading) {
+            Leaderboard::where('supervisor_id', $supervisorId)
+                ->where('id', '!=', $id)
+                ->update(['is_active_for_grading' => false]);
+        }
+
+        $competition->is_active_for_grading = ! $competition->is_active_for_grading;
+        $competition->save();
+        $this->loadData();
+        Flux::toast($competition->is_active_for_grading ? 'تم تعيينها كالمسابقة الأساسية للتسجيل' : 'تم إلغاء التعيين', variant: 'success');
+    }
+
     public function save(): void
     {
         $this->validate();
