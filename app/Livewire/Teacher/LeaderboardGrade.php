@@ -52,7 +52,7 @@ class LeaderboardGrade extends Component
             'date' => 'required|date',
         ]);
 
-        if (! $amount || ! $notes) {
+        if (!$amount || !$notes) {
             return;
         }
 
@@ -76,8 +76,20 @@ class LeaderboardGrade extends Component
 
     public function render()
     {
-        $leaderboard = Leaderboard::with('criteria')->findOrFail($this->leaderboardId);
-        $students = Student::where('circle_id', $leaderboard->circle_id)->orderBy('name')->get();
+        $leaderboard = Leaderboard::with('criteria', 'circles')->findOrFail($this->leaderboardId);
+
+        // For supervisor competitions (multi-circle), load all participating circles' students
+        if ($leaderboard->isSupervisorCompetition() && $leaderboard->circles->isNotEmpty()) {
+            $circleIds = $leaderboard->circles->pluck('id')->toArray();
+            $students = Student::whereIn('circle_id', $circleIds)
+                ->where('status', 'active')
+                ->orderBy('circle_id')
+                ->orderBy('name')
+                ->with('circle')
+                ->get();
+        } else {
+            $students = Student::where('circle_id', $leaderboard->circle_id)->orderBy('name')->get();
+        }
 
         $scores = LeaderboardScore::where('leaderboard_id', $this->leaderboardId)
             ->whereDate('date', \Carbon\Carbon::parse($this->date))

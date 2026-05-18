@@ -83,6 +83,14 @@ select:focus[data-flux-control] {
     @apply size-4;
 } */
 
+/* Fix for Flux Sidebar Active Item Text Color in Light Mode */
+[data-flux-sidebar-item][data-current] {
+    @apply !text-accent;
+}
+.dark [data-flux-sidebar-item][data-current] {
+    @apply !text-white;
+}
+
 /* Plan-creator fill progress bar */
 @keyframes shimmer {
     0%   { left: -33%; }

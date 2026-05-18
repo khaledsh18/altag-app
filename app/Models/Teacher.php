@@ -41,6 +41,7 @@ class Teacher extends Authenticatable
         'approved_by',
         'access_token',
         'is_data_completed',
+        'permissions',
     ];
 
     /**
@@ -65,6 +66,41 @@ class Teacher extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
+    }
+
+    /**
+     * Returns the effective permissions for this teacher.
+     * If the teacher has their own overridden permissions, use those.
+     * Otherwise fall back to the global default teacher permissions from settings.
+     *
+     * @return array{can_manage_students: bool, can_change_student_status: bool}
+     */
+    public function effectivePermissions(): array
+    {
+        if ($this->permissions !== null) {
+            return $this->permissions;
+        }
+
+        $global = Setting::getVal('default_teacher_permissions');
+
+        if (is_string($global)) {
+            $global = json_decode($global, true);
+        }
+
+        return $global ?? [
+            'can_manage_students' => true,
+            'can_change_student_status' => true,
+            'can_create_students' => true,
+        ];
+    }
+
+    /**
+     * Whether this teacher has a custom permission override (vs inheriting global defaults).
+     */
+    public function hasOverriddenPermissions(): bool
+    {
+        return $this->permissions !== null;
     }
 }

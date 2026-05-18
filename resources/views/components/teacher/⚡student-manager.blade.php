@@ -42,6 +42,12 @@ new class extends Component {
     public function addToCircle($studentId)
     {
         $teacher = Auth::guard('teacher')->user();
+
+        if (empty($teacher->effectivePermissions()['can_manage_students'])) {
+            Flux::toast('ليس لديك صلاحية لإضافة الطلاب', variant: 'danger');
+            return;
+        }
+
         $circle = $teacher->circles()->first();
 
         if (!$circle) {
@@ -58,6 +64,12 @@ new class extends Component {
     public function removeFromCircle()
     {
         $teacher = Auth::guard('teacher')->user();
+
+        if (empty($teacher->effectivePermissions()['can_manage_students'])) {
+            Flux::toast('ليس لديك صلاحية لإزالة الطلاب', variant: 'danger');
+            return;
+        }
+
         $teacherCircles = $teacher->circles()->pluck('id')->toArray();
         if (!in_array($this->viewingStudent->circle_id, $teacherCircles)) {
             abort(403);
@@ -76,12 +88,18 @@ new class extends Component {
 
     public function createStudent()
     {
+        $teacher = Auth::guard('teacher')->user();
+
+        if (empty($teacher->effectivePermissions()['can_create_students'])) {
+            Flux::toast('ليس لديك صلاحية إضافة طلاب جدد', variant: 'danger');
+            return;
+        }
+
         $this->validate([
             'name' => 'required|string|min:2|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
 
-        $teacher = Auth::guard('teacher')->user();
         $circle = $teacher->circles()->first();
 
         if (!$circle) {
@@ -98,12 +116,12 @@ new class extends Component {
             'is_approved' => true,
             'access_token' => Str::random(32),
             'is_data_completed' => false,
-            'status' => 'active',
+            'status' => 'registering',
             'joined_at' => now()->format('Y-m-d'),
         ]);
 
         $student->statusHistories()->create([
-            'status' => 'active',
+            'status' => 'registering',
             'start_date' => now(),
             'notes' => 'تسجيل جديد',
         ]);
@@ -157,6 +175,17 @@ new class extends Component {
 
         $oldStatus = $this->viewingStudent->status;
 
+        $teacher = Auth::guard('teacher')->user();
+        $statusChanged = $this->editStatus !== $oldStatus;
+
+        // If teacher lacks permission to change status, silently revert it
+        // but still continue saving name, phone, and joined_at
+        $statusBlockedByPermission = false;
+        if ($statusChanged && empty($teacher->effectivePermissions()['can_change_student_status'])) {
+            $this->editStatus = $oldStatus;
+            $statusBlockedByPermission = true;
+        }
+
         $this->viewingStudent->update([
             'name' => $this->editName,
             'phone' => $this->editPhone,
@@ -176,7 +205,11 @@ new class extends Component {
             ]);
         }
 
-        Flux::toast('تم حفظ بيانات الطالب بنجاح', variant: 'success');
+        if ($statusBlockedByPermission) {
+            Flux::toast('تم حفظ البيانات، لكن تغيير الحالة غير مسموح به لك', variant: 'warning');
+        } else {
+            Flux::toast('تم حفظ بيانات الطالب بنجاح', variant: 'success');
+        }
     }
 
     public function resetToken($studentId)
@@ -224,6 +257,7 @@ new class extends Component {
     </div>
 
     <!-- Quick Create Card -->
+    @if(Auth::guard('teacher')->user()?->effectivePermissions()['can_create_students'] ?? true)
     <flux:card>
         <form wire:submit="createStudent" class="flex flex-col md:flex-row items-end gap-4">
             <div class="w-full md:w-2/5">
@@ -233,7 +267,7 @@ new class extends Component {
             <div class="w-full md:w-2/5">
                 <flux:input wire:model="phone" label="{{ __('رقم هاتف الطالب') }}" placeholder="{{ __('اختياري') }}" />
             </div>
-            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء للطالب') }}
+            <flux:button type="submit" variant="primary" icon="user-plus" class="min-w-fit">{{ __('إنشاء طالب') }}
             </flux:button>
         </form>
         <flux:button wire:click="$set('unassignedSearch', '')"
@@ -241,6 +275,7 @@ new class extends Component {
             {{ __('إضافة طالب غير مرتبط بحلقة') }}
         </flux:button>
     </flux:card>
+    @endif
 
     <flux:card class="p-0 overflow-hidden">
         <div class="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4">
@@ -371,15 +406,32 @@ new class extends Component {
                     <flux:input wire:model="editPhone" label="{{ __('رقم الهاتف') }}"
                         placeholder="{{ __('اختياري') }}" dir="ltr" class="text-right" />
                         
+                    @php
+                        $canChangeStatus = Auth::guard('teacher')->user()?->effectivePermissions()['can_change_student_status'] ?? true;
+                    @endphp
+
                     <div class="grid grid-cols-2 gap-4">
+                        @if($canChangeStatus)
                         <flux:select wire:model="editStatus" label="{{ __('حالة الطالب') }}">
                             <flux:select.option value="active">مشارك</flux:select.option>
                             <flux:select.option value="registering">تحت التسجيل</flux:select.option>
                             <flux:select.option value="suspended">موقوف</flux:select.option>
                             <flux:select.option value="left">غادر الحلقات</flux:select.option>
                         </flux:select>
-                        
                         <livewire:shared.hijri-datepicker wire:model="editJoinedAt" label="{{ __('تاريخ الالتحاق') }}" />
+                        @else
+                        <div>
+                            <div class="text-xs text-zinc-500 mb-1">{{ __('حالة الطالب') }}</div>
+                            <flux:badge size="sm" class="mt-1">{{ $viewingStudent->status }}</flux:badge>
+                            <div class="text-[0.65rem] text-zinc-400 mt-1">لا تملك صلاحية التعديل</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-zinc-500 mb-1">{{ __('تاريخ الالتحاق') }}</div>
+                            <div class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mt-1">
+                                {{ $viewingStudent->joined_at?->format('Y-m-d') ?? '—' }}
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <div class="flex justify-between pt-2">
@@ -533,9 +585,11 @@ new class extends Component {
                 </div>
             </div>
             <div class="flex justify-between pt-6">
+                @if(Auth::guard('teacher')->user()?->effectivePermissions()['can_manage_students'] ?? true)
                 <flux:button wire:click="removeFromCircle"
                     wire:confirm="{{ __('هل أنت متأكد من إزالة الطالب من الحلقة؟ (لن يتم حذف بياناته، بل سيتم فصله عن حلقتك فقط)') }}"
                     variant="ghost" size="sm" icon="user-minus">{{ __('إزالة من الحلقة') }}</flux:button>
+                @endif
             </div>
             @endif
         </div>
@@ -556,8 +610,12 @@ new class extends Component {
                         <div class="font-medium text-sm">{{ $unassignedStudent->name }}</div>
                         <div class="text-xs text-zinc-500">{{ $unassignedStudent->email }}</div>
                     </div>
+                    @if(Auth::guard('teacher')->user()?->effectivePermissions()['can_manage_students'] ?? true)
                     <flux:button wire:click="addToCircle({{ $unassignedStudent->id }})" size="sm"
                         icon="plus" variant="primary">{{ __('إضافة') }}</flux:button>
+                    @else
+                    <flux:badge size="sm" variant="neutral">لا تملك صلاحية</flux:badge>
+                    @endif
                 </div>
             @empty
                 <div class="text-center text-sm text-zinc-500 py-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">

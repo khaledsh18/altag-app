@@ -5,10 +5,13 @@
 </flux:sidebar.group>
 
 <flux:sidebar.group heading="الإشراف" class="grid">
-    <flux:sidebar.item icon="circle-stack" href="#" wire:navigate>
-        الحلقات المسؤولة
+    <flux:sidebar.item icon="circle-stack" :href="route('supervisor.circles')" :current="request()->routeIs('supervisor.circles')" wire:navigate>
+        الحلقات
     </flux:sidebar.item>
-    <flux:sidebar.item icon="users" href="#" wire:navigate>
+    <flux:sidebar.item icon="academic-cap" :href="route('supervisor.students')" :current="request()->routeIs('supervisor.students')" wire:navigate>
+        الطلاب
+    </flux:sidebar.item>
+    <flux:sidebar.item icon="users" :href="route('supervisor.teachers')" :current="request()->routeIs('supervisor.teachers')" wire:navigate>
         المعلمون
     </flux:sidebar.item>
     <flux:sidebar.item icon="calendar" :href="route('supervisor.yearly-attendance')"
@@ -18,6 +21,9 @@
     <flux:sidebar.item icon="calendar" :href="route('supervisor.academic-calendar')"
         :current="request()->routeIs('supervisor.academic-calendar')" wire:navigate>
         التقويم الأكاديمي
+    </flux:sidebar.item>
+    <flux:sidebar.item icon="trophy" :href="route('supervisor.competitions')" :current="request()->routeIs('supervisor.competitions')" wire:navigate>
+        المسابقات
     </flux:sidebar.item>
     <flux:sidebar.item icon="clipboard-document-list" :href="route('supervisor.tasks')"
         :current="request()->routeIs('supervisor.tasks')" wire:navigate>

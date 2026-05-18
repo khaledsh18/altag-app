@@ -113,6 +113,10 @@ Route::middleware('guest:guardian')->prefix('parent')->name('parent.')->group(fu
 Route::middleware(['auth:manager', 'approved'])->get('/manager/dashboard', fn () => view('manager.dashboard'))->name('manager.dashboard');
 Route::middleware(['auth:supervisor', 'approved'])->prefix('supervisor')->name('supervisor.')->group(function () {
     Route::get('/dashboard', fn () => view('supervisor.dashboard'))->name('dashboard');
+    Route::view('/teachers', 'supervisor.teachers')->name('teachers');
+    Route::view('/circles', 'supervisor.circles')->name('circles');
+    Route::view('/students', 'supervisor.students')->name('students');
+    Route::view('/competitions', 'supervisor.competitions')->name('competitions');
     Route::view('/exceeded-limits', 'supervisor.exceeded-limits')->name('exceeded-limits');
     Route::view('/academic-calendar', 'supervisor.academic-calendar')->name('academic-calendar');
     Route::view('/yearly-attendance', 'supervisor.yearly-attendance')->name('yearly-attendance');
@@ -127,14 +131,14 @@ Route::middleware(['auth:teacher', 'approved'])->prefix('teacher')->name('teache
     };
 
     Route::get('/dashboard', fn () => view('teacher.dashboard'))->name('dashboard');
-    
+
     // SPA Routes (5 Tabs)
     Route::get('/attendance', $appShellRoute('attendance'))->name('attendance');
     Route::get('/students', $appShellRoute('students'))->name('students');
     Route::get('/plan-creator', $appShellRoute('plan-creator'))->name('plan-creator');
     Route::get('/tasmeeh', $appShellRoute('tasmeeh'))->name('tasmeeh');
     Route::get('/leaderboards', $appShellRoute('leaderboards'))->name('leaderboards');
-    
+
     // Standard Routes
     Route::view('/discipline', 'teacher.discipline')->name('discipline');
     Route::view('/quranic-discipline', 'teacher.quranic-discipline')->name('quranic-discipline');

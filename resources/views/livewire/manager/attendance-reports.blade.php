@@ -114,10 +114,9 @@
                                         @endphp
                                         <td class="border border-zinc-100 dark:border-zinc-800 px-1 py-1 text-center">
                                             @if($cell)
-                                                <div class="text-[11px] leading-snug">
-                                                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $cell['present'] }}</span>
-                                                    <span class="text-zinc-300 dark:text-zinc-600">/</span>
-                                                    <span class="text-zinc-500 dark:text-zinc-400">{{ $cell['total'] }}</span>
+                                                <div class="text-[15px] leading-snug flex flex-col">
+                                                    <div class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $cell['present'] }}</div>
+                                                    <div class="text-zinc-500 dark:text-zinc-400">{{ $cell['total'] }}</div>
                                                 </div>
                                             @else
                                                 <span class="text-zinc-300 dark:text-zinc-700">—</span>
@@ -128,7 +127,7 @@
                                         @php
                                             $avgTotal = $daysWithData > 0 ? round($circleGlobalTotal / $daysWithData) : 0;
                                         @endphp
-                                        <div class="text-[11px] leading-snug">
+                                        <div class="text-[15px] leading-snug">
                                             <div class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $circleTotalPresent }}</div>
                                             <div class="text-zinc-400 text-[10px]">متوسط: {{ $avgTotal }}</div>
                                             <div class="text-blue-500 dark:text-blue-400 text-[10px]">المشاركون: {{ $circleGlobalTotal }}</div>
@@ -170,10 +169,9 @@
                                 @endphp
                                 <td class="border border-zinc-300 dark:border-zinc-600 px-1 py-1 text-center">
                                     @if($dayTotal > 0)
-                                        <div class="text-[11px] leading-snug">
-                                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $dayPresent }}</span>
-                                            <span class="text-zinc-400 dark:text-zinc-500">/</span>
-                                            <span class="text-zinc-600 dark:text-zinc-300">{{ $dayTotal }}</span>
+                                        <div class="text-[15px] leading-snug flex flex-col">
+                                            <div class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $dayPresent }}</div>
+                                            <div class="text-zinc-600 dark:text-zinc-300">{{ $dayTotal }}</div>
                                         </div>
                                     @else
                                         <span class="text-zinc-300 dark:text-zinc-700">—</span>
@@ -181,7 +179,7 @@
                                 </td>
                             @endforeach
                             <td class="border border-zinc-300 dark:border-zinc-600 px-2 py-2 text-center bg-zinc-200 dark:bg-zinc-700">
-                                <div class="text-[11px] leading-snug">
+                                <div class="text-[15px] leading-snug">
                                     <div class="text-emerald-600 dark:text-emerald-400 font-bold">{{ $grandTotalPresent }}</div>
                                     <div class="text-blue-500 dark:text-blue-400 text-[10px]">المشاركون: {{ $grandTotalParticipants }}</div>
                                 </div>

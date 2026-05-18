@@ -23,6 +23,22 @@ class Leaderboard extends Model
         return $this->belongsTo(Circle::class);
     }
 
+    public function supervisor()
+    {
+        return $this->belongsTo(Supervisor::class);
+    }
+
+    /** Circles participating in this competition (supervisor-created multi-circle competitions) */
+    public function circles()
+    {
+        return $this->belongsToMany(Circle::class, 'circle_leaderboard');
+    }
+
+    public function isSupervisorCompetition(): bool
+    {
+        return $this->supervisor_id !== null;
+    }
+
     public function criteria()
     {
         return $this->hasMany(LeaderboardCriterion::class);

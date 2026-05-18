@@ -11,31 +11,46 @@ use Livewire\Component;
 class Leaderboards extends Component
 {
     public $circleId;
+
     public $leaderboards = [];
+
+    public $supervisorCompetitions = [];
 
     // Modal state
     public $isEditing = false;
+
     public $showModal = false;
+
     public $leaderboardId = null;
 
     // Form fields
     public $title = '';
+
     public $start_date = '';
+
     public $end_date = '';
+
     public $is_active = true;
 
     // Settings
     public $hifz_enabled = true;
+
     public $hifz_excellent = 10;
+
     public $hifz_good = 7;
+
     public $hifz_acceptable = 4;
 
     public $review_enabled = true;
+
     public $review_excellent = 5;
+
     public $review_good = 3;
 
     public $attendance_enabled = true;
+
     public $attendance_present = 4;
+
     public $attendance_late = 2;
 
     public $extra_points_enabled = true;
@@ -76,8 +91,20 @@ class Leaderboards extends Component
     public function loadLeaderboards()
     {
         $this->leaderboards = Leaderboard::where('circle_id', $this->circleId)
+            ->whereNull('supervisor_id')      // Teacher-created only
             ->withCount('criteria')
             ->orderBy('id', 'desc')
+            ->get();
+
+        // Supervisor competitions that include this teacher's circle
+        $this->supervisorCompetitions = Leaderboard::whereHas('circles', function ($q) {
+            $q->where('circles.id', $this->circleId);
+        })
+            ->whereNotNull('supervisor_id')
+            ->withCount('criteria')
+            ->with('supervisor')
+            ->orderByDesc('is_active')  // Active ones first
+            ->orderByDesc('created_at')
             ->get();
     }
 
@@ -85,15 +112,15 @@ class Leaderboards extends Component
     {
         $this->resetValidation();
         $this->reset('title', 'end_date', 'leaderboardId');
-        
+
         $this->start_date = now()->format('Y-m-d');
         $this->is_active = true;
-        
+
         $this->hifz_enabled = true;
         $this->hifz_excellent = 10;
         $this->hifz_good = 7;
         $this->hifz_acceptable = 4;
-        
+
         $this->review_enabled = true;
         $this->review_excellent = 5;
         $this->review_good = 3;
@@ -113,7 +140,7 @@ class Leaderboards extends Component
     {
         $this->resetValidation();
         $leaderboard = Leaderboard::with('criteria')->findOrFail($id);
-        
+
         $this->leaderboardId = $leaderboard->id;
         $this->title = $leaderboard->title;
         $this->start_date = $leaderboard->start_date->format('Y-m-d');
@@ -162,7 +189,7 @@ class Leaderboards extends Component
     public function toggleActive($id)
     {
         $board = Leaderboard::findOrFail($id);
-        $board->is_active = !$board->is_active;
+        $board->is_active = ! $board->is_active;
         $board->save();
         $this->loadLeaderboards();
     }
@@ -173,18 +200,18 @@ class Leaderboards extends Component
 
         $settings = [
             'hifz_enabled' => $this->hifz_enabled,
-            'hifz_excellent' => (int)$this->hifz_excellent,
-            'hifz_good' => (int)$this->hifz_good,
-            'hifz_acceptable' => (int)$this->hifz_acceptable,
-            
+            'hifz_excellent' => (int) $this->hifz_excellent,
+            'hifz_good' => (int) $this->hifz_good,
+            'hifz_acceptable' => (int) $this->hifz_acceptable,
+
             'review_enabled' => $this->review_enabled,
-            'review_excellent' => (int)$this->review_excellent,
-            'review_good' => (int)$this->review_good,
+            'review_excellent' => (int) $this->review_excellent,
+            'review_good' => (int) $this->review_good,
 
             'attendance_enabled' => $this->attendance_enabled,
-            'attendance_present' => (int)$this->attendance_present,
-            'attendance_late' => (int)$this->attendance_late,
-            
+            'attendance_present' => (int) $this->attendance_present,
+            'attendance_late' => (int) $this->attendance_late,
+
             'extra_points_enabled' => $this->extra_points_enabled,
         ];
 

@@ -1,0 +1,314 @@
+<?php
+
+namespace App\Livewire\Manager;
+
+use App\Models\AcademicCalendarEvent;
+use App\Models\Attendance;
+use App\Models\Circle;
+use App\Models\Stage;
+use App\Models\StudentPlanDay;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+
+class Dashboard extends Component
+{
+    // ──────── Attendance section ────────
+    public string $attendancePeriod = 'today';  // today|yesterday|last_data|last_week|custom
+
+    public string $attFrom = '';
+
+    public string $attTo = '';
+
+    // ──────── Quran section ────────
+    public string $quranPeriod = 'today';
+
+    public string $quranFrom = '';
+
+    public string $quranTo = '';
+
+    public function mount(): void
+    {
+        $this->attFrom = $this->attTo = now('Asia/Riyadh')->format('Y-m-d');
+        $this->quranFrom = $this->quranTo = now('Asia/Riyadh')->format('Y-m-d');
+    }
+
+    // ──────── School-day check ────────
+
+    /** Returns true if $date is a school day per the academic calendar. */
+    private function isSchoolDay(string $date): bool
+    {
+        $d = Carbon::parse($date);
+        $dayOfWeek = (int) $d->format('N'); // 1=Mon … 7=Sun
+
+        return AcademicCalendarEvent::where('is_attendance_period', true)
+            ->where('start_date', '<=', $date)
+            ->where(function ($q) use ($date) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $date);
+            })
+            ->get()
+            ->some(function ($event) use ($dayOfWeek) {
+                $weekdays = $event->weekdays ?? [];
+
+                return empty($weekdays) || in_array($dayOfWeek, $weekdays);
+            });
+    }
+
+    // ──────── Date-range resolvers ────────
+
+    private function resolveAttendanceDates(): array
+    {
+        return $this->resolveDates($this->attendancePeriod, $this->attFrom, $this->attTo, 'attendance');
+    }
+
+    private function resolveQuranDates(): array
+    {
+        return $this->resolveDates($this->quranPeriod, $this->quranFrom, $this->quranTo, 'quran');
+    }
+
+    /**
+     * @return array{from:string, to:string, label:string}
+     */
+    private function resolveDates(string $period, string $customFrom, string $customTo, string $type): array
+    {
+        $today = now('Asia/Riyadh')->format('Y-m-d');
+
+        return match ($period) {
+            'today' => ['from' => $today, 'to' => $today, 'label' => 'اليوم'],
+            'yesterday' => [
+                'from' => now('Asia/Riyadh')->subDay()->format('Y-m-d'),
+                'to' => now('Asia/Riyadh')->subDay()->format('Y-m-d'),
+                'label' => 'أمس',
+            ],
+            'last_data' => $this->resolveLastDataDates($type),
+            'last_week' => [
+                'from' => now('Asia/Riyadh')->subDays(6)->format('Y-m-d'),
+                'to' => $today,
+                'label' => 'الأسبوع الماضي',
+            ],
+            'custom' => [
+                'from' => $customFrom ?: $today,
+                'to' => $customTo ?: $today,
+                'label' => 'مخصص',
+            ],
+            default => ['from' => $today, 'to' => $today, 'label' => 'اليوم'],
+        };
+    }
+
+    private function resolveLastDataDates(string $type): array
+    {
+        if ($type === 'attendance') {
+            $lastDate = Attendance::max('date');
+        } else {
+            $lastDate = StudentPlanDay::where(function ($q) {
+                $q->whereNotNull('hifz_achievement')
+                    ->orWhereNotNull('review_achievement');
+            })->max('date');
+        }
+
+        // Ensure we have just the date portion (no time component)
+        $date = $lastDate ? Carbon::parse($lastDate)->format('Y-m-d') : now('Asia/Riyadh')->format('Y-m-d');
+
+        return ['from' => $date, 'to' => $date, 'label' => 'آخر يوم بيانات'];
+    }
+
+    // ──────── Attendance data ────────
+
+    public function getAttendanceDataProperty(): array
+    {
+        ['from' => $from, 'to' => $to] = $this->resolveAttendanceDates();
+        $isSingleDay = $from === $to;
+
+        // Skip school-day check when 'last_data' — data presence implies school was held
+        if ($this->attendancePeriod === 'last_data') {
+            $isSchoolDay = null;
+        } else {
+            $isSchoolDay = $isSingleDay ? $this->isSchoolDay($from) : null;
+        }
+
+        // Total students per circle
+        $circleStudentCounts = DB::table('students')
+            ->whereNotNull('circle_id')
+            ->whereIn('status', ['active', 'under_registration'])
+            ->select('circle_id', DB::raw('count(*) as total'))
+            ->groupBy('circle_id')
+            ->pluck('total', 'circle_id')
+            ->toArray();
+
+        $totalStudents = array_sum($circleStudentCounts);
+
+        // Attendance records in range
+        $records = DB::table('attendances')
+            ->whereBetween('date', [$from, $to])
+            ->select('attendances.status', DB::raw('count(*) as cnt'))
+            ->groupBy('attendances.status')
+            ->pluck('cnt', 'attendances.status')
+            ->toArray();
+
+        $present = ($records['present'] ?? 0) + ($records['late'] ?? 0);
+        $absent = $records['absent'] ?? 0;
+        $total = $present + $absent;
+
+        // Per-stage breakdown
+        $stageRows = $this->getAttendanceByStage($from, $to);
+
+        return compact('from', 'to', 'isSingleDay', 'isSchoolDay', 'present', 'absent', 'total', 'totalStudents', 'stageRows');
+    }
+
+    private function getAttendanceByStage(string $from, string $to): Collection
+    {
+        return Stage::with('circles')->get()->map(function ($stage) use ($from, $to) {
+            $circleIds = $stage->circles->pluck('id')->toArray();
+            if (empty($circleIds)) {
+                return null;
+            }
+
+            $rows = DB::table('attendances')
+                ->join('students', 'attendances.student_id', '=', 'students.id')
+                ->whereIn('students.circle_id', $circleIds)
+                ->whereBetween('attendances.date', [$from, $to])
+                ->select('attendances.status', DB::raw('count(*) as cnt'))
+                ->groupBy('attendances.status')
+                ->pluck('cnt', 'attendances.status')
+                ->toArray();
+
+            $present = ($rows['present'] ?? 0) + ($rows['late'] ?? 0);
+            $absent = $rows['absent'] ?? 0;
+
+            return [
+                'name' => $stage->name,
+                'present' => $present,
+                'absent' => $absent,
+                'total' => $present + $absent,
+            ];
+        })->filter()->values();
+    }
+
+    // ──────── Quran data ────────
+
+    public function getQuranDataProperty(): array
+    {
+        ['from' => $from, 'to' => $to] = $this->resolveQuranDates();
+        $isSingleDay = $from === $to;
+
+        // Skip school-day check when 'last_data' — data presence implies school was held
+        if ($this->quranPeriod === 'last_data') {
+            $isSchoolDay = null;
+        } else {
+            $isSchoolDay = $isSingleDay ? $this->isSchoolDay($from) : null;
+        }
+
+        $rows = DB::table('student_plan_days')
+            ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+            ->join('students', 'student_plans.student_id', '=', 'students.id')
+            ->whereBetween('student_plan_days.date', [$from, $to])
+            ->where('student_plans.is_approved', 1)
+            ->where(function ($q) {
+                $q->whereNotNull('hifz_achievement')->orWhereNotNull('review_achievement');
+            })
+            ->select(
+                'students.circle_id',
+                DB::raw('SUM(CASE WHEN hifz_achievement IS NOT NULL THEN CAST((
+                    COALESCE(to_ayah_id, from_ayah_id) - COALESCE(from_ayah_id, to_ayah_id)
+                ) AS FLOAT) / 15 ELSE 0 END) as hifz_pages'),
+                DB::raw('SUM(CASE WHEN review_achievement IS NOT NULL THEN CAST((
+                    COALESCE(review_to_ayah_id, review_from_ayah_id) - COALESCE(review_from_ayah_id, review_to_ayah_id)
+                ) AS FLOAT) / 15 ELSE 0 END) as review_pages'),
+                DB::raw('COUNT(DISTINCT student_plans.student_id) as active_students'),
+                DB::raw('COUNT(*) as sessions')
+            )
+            ->groupBy('students.circle_id')
+            ->get();
+
+        // Totals from actual graded sessions (counts sessions not pages for simplicity)
+        $hifzSessions = DB::table('student_plan_days')
+            ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+            ->whereBetween('student_plan_days.date', [$from, $to])
+            ->where('student_plans.is_approved', 1)
+            ->whereNotNull('hifz_achievement')
+            ->count();
+
+        $reviewSessions = DB::table('student_plan_days')
+            ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+            ->whereBetween('student_plan_days.date', [$from, $to])
+            ->where('student_plans.is_approved', 1)
+            ->whereNotNull('review_achievement')
+            ->count();
+
+        $excellentCount = DB::table('student_plan_days')
+            ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+            ->whereBetween('student_plan_days.date', [$from, $to])
+            ->where('student_plans.is_approved', 1)
+            ->where(function ($q) {
+                $q->where('hifz_achievement', 3)->orWhere('review_achievement', 3);
+            })
+            ->count();
+
+        $stageRows = $this->getQuranByStage($from, $to);
+
+        $hasData = $hifzSessions + $reviewSessions > 0;
+
+        return compact('from', 'to', 'isSingleDay', 'isSchoolDay', 'hifzSessions', 'reviewSessions', 'excellentCount', 'stageRows', 'hasData');
+    }
+
+    private function getQuranByStage(string $from, string $to): Collection
+    {
+        return Stage::with('circles')->get()->map(function ($stage) use ($from, $to) {
+            $circleIds = $stage->circles->pluck('id')->toArray();
+            if (empty($circleIds)) {
+                return null;
+            }
+
+            $hifz = DB::table('student_plan_days')
+                ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+                ->join('students', 'student_plans.student_id', '=', 'students.id')
+                ->whereIn('students.circle_id', $circleIds)
+                ->whereBetween('student_plan_days.date', [$from, $to])
+                ->where('student_plans.is_approved', 1)
+                ->whereNotNull('hifz_achievement')
+                ->count();
+
+            $review = DB::table('student_plan_days')
+                ->join('student_plans', 'student_plan_days.student_plan_id', '=', 'student_plans.id')
+                ->join('students', 'student_plans.student_id', '=', 'students.id')
+                ->whereIn('students.circle_id', $circleIds)
+                ->whereBetween('student_plan_days.date', [$from, $to])
+                ->where('student_plans.is_approved', 1)
+                ->whereNotNull('review_achievement')
+                ->count();
+
+            if ($hifz + $review === 0) {
+                return null;
+            }
+
+            return [
+                'name' => $stage->name,
+                'hifz' => $hifz,
+                'review' => $review,
+            ];
+        })->filter()->values();
+    }
+
+    // ──────── Period quick-setters ────────
+
+    public function setAttendancePeriod(string $period): void
+    {
+        $this->attendancePeriod = $period;
+    }
+
+    public function setQuranPeriod(string $period): void
+    {
+        $this->quranPeriod = $period;
+    }
+
+    public function render()
+    {
+        return view('livewire.manager.dashboard', [
+            'attendanceData' => $this->attendanceData,
+            'quranData' => $this->quranData,
+            'attDates' => $this->resolveAttendanceDates(),
+            'quranDates' => $this->resolveQuranDates(),
+        ])->layout('layouts.role-shell');
+    }
+}

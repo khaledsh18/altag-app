@@ -62,8 +62,22 @@ new class extends Component {
 
         $lateness = \App\Models\Attendance::where('student_id', $student->id)->where('date', '>=', $periodStart)->where('status', 'late')->count();
 
-        // Fetch Active Leaderboard for Circle
-        $leaderboard = \App\Models\Leaderboard::where('circle_id', $student->circle_id)->where('is_active', true)->latest()->first();
+        // Fetch Active Leaderboard: supervisor competitions (active) have priority, then teacher competitions
+        $leaderboard = \App\Models\Leaderboard::whereHas('circles', fn($q) => $q->where('circles.id', $student->circle_id))
+            ->whereNotNull('supervisor_id')
+            ->where('is_active', true)
+            ->with('circles')
+            ->latest()
+            ->first();
+
+        if (!$leaderboard) {
+            $leaderboard = \App\Models\Leaderboard::where('circle_id', $student->circle_id)
+                ->whereNull('supervisor_id')
+                ->where('is_active', true)
+                ->with('circles')
+                ->latest()
+                ->first();
+        }
 
         $leaderboardStandings = [];
         if ($leaderboard) {

@@ -17,8 +17,8 @@ class LeaderboardReport extends Component
 
     public function render()
     {
-        $leaderboard = Leaderboard::with('criteria')->findOrFail($this->leaderboardId);
-        $service = new LeaderboardService();
+        $leaderboard = Leaderboard::with('criteria', 'circles')->findOrFail($this->leaderboardId);
+        $service = new LeaderboardService;
         $standings = $service->getDetailedStandings($leaderboard);
 
         return view('livewire.teacher.leaderboard-report', [

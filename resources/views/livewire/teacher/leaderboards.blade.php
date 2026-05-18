@@ -11,7 +11,62 @@
         </flux:button>
     </div>
 
-    <!-- Leaderboards Grid -->
+    {{-- Supervisor Competitions (shown first if any active) --}}
+    @if (count($supervisorCompetitions) > 0)
+        <div class="space-y-3">
+            <div class="flex items-center gap-2">
+                <flux:icon icon="shield-check" class="size-5 text-indigo-500" />
+                <flux:heading size="md" class="text-indigo-700 dark:text-indigo-400">مسابقات المشرف</flux:heading>
+                <flux:badge size="sm" color="indigo">{{ count($supervisorCompetitions) }}</flux:badge>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach ($supervisorCompetitions as $comp)
+                    <flux:card class="relative border {{ $comp->is_active ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20' : 'border-zinc-200 dark:border-zinc-700/50' }} overflow-hidden">
+                        {{-- Active priority ribbon --}}
+                        @if ($comp->is_active)
+                            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-amber-400"></div>
+                        @endif
+
+                        <div class="flex items-start justify-between mb-3 mt-1">
+                            <flux:badge size="sm" color="{{ $comp->is_active ? 'amber' : 'zinc' }}">
+                                {{ $comp->is_active ? 'نشطة' : 'مغلقة' }}
+                            </flux:badge>
+                            <flux:badge size="sm" color="indigo" icon="shield-check">مشرف</flux:badge>
+                        </div>
+
+                        <flux:heading size="md" class="mb-1 text-zinc-800 dark:text-zinc-100 leading-snug">
+                            {{ $comp->title }}
+                        </flux:heading>
+                        <div class="text-sm text-zinc-500 flex items-center gap-2 mb-3">
+                            <flux:icon icon="calendar" class="size-4" />
+                            <span>{{ $comp->start_date->format('Y-m-d') }}</span>
+                            @if ($comp->end_date)
+                                <span>-</span>
+                                <span>{{ $comp->end_date->format('Y-m-d') }}</span>
+                            @endif
+                        </div>
+
+                        <div class="flex gap-2">
+                            <flux:button href="{{ route('teacher.leaderboards.grade', $comp->id) }}" variant="primary"
+                                class="flex-1 bg-indigo-500 hover:bg-indigo-600 border-none text-white"
+                                size="sm" icon="clipboard-document-check">
+                                رصد النقاط
+                            </flux:button>
+                            <flux:button href="{{ route('teacher.leaderboards.report', $comp->id) }}" variant="ghost"
+                                class="border border-indigo-200 text-indigo-600 dark:border-indigo-900/50 dark:text-indigo-400"
+                                size="sm" icon="chart-bar">
+                            </flux:button>
+                        </div>
+                    </flux:card>
+                @endforeach
+            </div>
+        </div>
+
+        <flux:separator />
+    @endif
+
+    {{-- Teacher's Own Leaderboards --}}
+
     @if (count($leaderboards) > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($leaderboards as $board)

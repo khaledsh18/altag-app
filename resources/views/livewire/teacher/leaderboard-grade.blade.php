@@ -103,6 +103,12 @@
                                                             </div>
                                                             <div class="flex flex-col">
                                                                 <span>{{ $student->name }}</span>
+                                                                @if($leaderboard->isSupervisorCompetition() && $student->circle)
+                                                                    <span class="text-xs text-indigo-500 dark:text-indigo-400 font-normal">
+                                                                        <flux:icon icon="circle-stack" variant="micro" class="size-3 inline" />
+                                                                        {{ $student->circle->name }}
+                                                                    </span>
+                                                                @endif
                                                                 @if($dailyAutomated > 0)
                                                                     <span class="text-xs text-emerald-600 dark:text-emerald-400 font-normal">
                                                                         <flux:icon icon="cpu-chip" variant="micro" class="size-3 inline" />

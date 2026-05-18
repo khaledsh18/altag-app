@@ -12,7 +12,14 @@ class LeaderboardService
 {
     public function getDetailedStandings(Leaderboard $leaderboard)
     {
-        $students = Student::where('circle_id', $leaderboard->circle_id)->get();
+        // For supervisor competitions, load students from all participating circles
+        if ($leaderboard->isSupervisorCompetition() && $leaderboard->relationLoaded('circles') && $leaderboard->circles->isNotEmpty()) {
+            $circleIds = $leaderboard->circles->pluck('id')->toArray();
+            $students = Student::whereIn('circle_id', $circleIds)->with('circle')->get();
+        } else {
+            $students = Student::where('circle_id', $leaderboard->circle_id)->get();
+        }
+
         if ($students->isEmpty()) {
             return collect([]);
         }
@@ -73,19 +80,19 @@ class LeaderboardService
                     $q->where('student_id', $student->id)
                         ->where('is_approved', 1);
                 })
-                ->where(function($q) use ($startDate, $endDate) {
-                    $q->whereBetween('hifz_graded_at', [$startDate, $endDate])
-                      ->orWhereBetween('review_graded_at', [$startDate, $endDate])
-                      ->orWhere(function($sub) use ($startDate, $endDate) {
-                          $sub->whereNull('hifz_graded_at')
-                              ->whereNull('review_graded_at')
-                              ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-                              ->where(function($s) {
-                                  $s->whereNotNull('hifz_achievement')
-                                    ->orWhereNotNull('review_achievement');
-                              });
-                      });
-                })->get();
+                    ->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('hifz_graded_at', [$startDate, $endDate])
+                            ->orWhereBetween('review_graded_at', [$startDate, $endDate])
+                            ->orWhere(function ($sub) use ($startDate, $endDate) {
+                                $sub->whereNull('hifz_graded_at')
+                                    ->whereNull('review_graded_at')
+                                    ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                                    ->where(function ($s) {
+                                        $s->whereNotNull('hifz_achievement')
+                                            ->orWhereNotNull('review_achievement');
+                                    });
+                            });
+                    })->get();
 
                 if ($settings['hifz_enabled'] ?? false) {
                     foreach ($days as $day) {
@@ -152,7 +159,13 @@ class LeaderboardService
 
     public function getDailyScores(Leaderboard $leaderboard, $date)
     {
-        $students = Student::where('circle_id', $leaderboard->circle_id)->get();
+        // For supervisor competitions, include all participating circles
+        if ($leaderboard->isSupervisorCompetition() && $leaderboard->relationLoaded('circles') && $leaderboard->circles->isNotEmpty()) {
+            $circleIds = $leaderboard->circles->pluck('id')->toArray();
+            $students = Student::whereIn('circle_id', $circleIds)->get();
+        } else {
+            $students = Student::where('circle_id', $leaderboard->circle_id)->get();
+        }
         $settings = $leaderboard->settings ?? [];
 
         $dailyScores = [];
@@ -197,19 +210,19 @@ class LeaderboardService
                     $q->where('student_id', $student->id)
                         ->where('is_approved', 1);
                 })
-                ->where(function($q) use ($date) {
-                    $q->whereDate('hifz_graded_at', $date)
-                      ->orWhereDate('review_graded_at', $date)
-                      ->orWhere(function($sub) use ($date) {
-                          $sub->whereNull('hifz_graded_at')
-                              ->whereNull('review_graded_at')
-                              ->whereDate('date', $date)
-                              ->where(function($s) {
-                                  $s->whereNotNull('hifz_achievement')
-                                    ->orWhereNotNull('review_achievement');
-                              });
-                      });
-                })->get();
+                    ->where(function ($q) use ($date) {
+                        $q->whereDate('hifz_graded_at', $date)
+                            ->orWhereDate('review_graded_at', $date)
+                            ->orWhere(function ($sub) use ($date) {
+                                $sub->whereNull('hifz_graded_at')
+                                    ->whereNull('review_graded_at')
+                                    ->whereDate('date', $date)
+                                    ->where(function ($s) {
+                                        $s->whereNotNull('hifz_achievement')
+                                            ->orWhereNotNull('review_achievement');
+                                    });
+                            });
+                    })->get();
 
                 foreach ($days as $day) {
                     if ($settings['hifz_enabled'] ?? false) {

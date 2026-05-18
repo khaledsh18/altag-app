@@ -134,50 +134,31 @@ new class extends Component {
         }
     }
 
-    public function nextStep()
+    public function autoFillActiveDays()
     {
-        if ($this->step == 1 && $this->userLevel == 'teacher') {
-            $this->validate(['studentId' => 'required'], ['studentId.required' => 'يرجى اختيار الطالب أولاً.']);
-        } elseif ($this->step == 4) {
-            $this->validate([
-                'startDate' => 'required|date',
-                'daysCount' => 'required|integer|min:1|max:365',
-            ]);
+        $this->validate([
+            'startDate' => 'required|date',
+            'daysCount' => 'required|integer|min:1|max:365',
+        ]);
 
-            // Auto-fill activeDays based on manager's attendance periods
-            $startDateObj = Carbon::parse($this->startDate);
-            $attendancePeriod = \App\Models\AcademicCalendarEvent::where('is_attendance_period', true)
-                ->where('start_date', '<=', $startDateObj->format('Y-m-d'))
-                ->where('end_date', '>=', $startDateObj->format('Y-m-d'))
-                ->first();
+        $startDateObj = Carbon::parse($this->startDate);
+        $attendancePeriod = \App\Models\AcademicCalendarEvent::where('is_attendance_period', true)
+            ->where('start_date', '<=', $startDateObj->format('Y-m-d'))
+            ->where('end_date', '>=', $startDateObj->format('Y-m-d'))
+            ->first();
 
-            if ($attendancePeriod && !empty($attendancePeriod->weekdays)) {
-                $mapping = [
-                    1 => 'Sunday',
-                    2 => 'Monday',
-                    3 => 'Tuesday',
-                    4 => 'Wednesday',
-                    5 => 'Thursday',
-                    6 => 'Friday',
-                    7 => 'Saturday',
-                ];
+        if ($attendancePeriod && !empty($attendancePeriod->weekdays)) {
+            $mapping = [
+                1 => 'Sunday',
+                2 => 'Monday',
+                3 => 'Tuesday',
+                4 => 'Wednesday',
+                5 => 'Thursday',
+                6 => 'Friday',
+                7 => 'Saturday',
+            ];
 
-                $this->activeDays = array_map(fn($wd) => $mapping[$wd], $attendancePeriod->weekdays);
-            }
-        } elseif ($this->step == 5) {
-            $this->validate(['activeDays' => 'required|array|min:1'], ['activeDays.required' => 'يجب اختيار يوم واحد على الأقل.']);
-        }
-        $this->step++;
-    }
-
-    public function prevStep()
-    {
-        if ($this->step > 1) {
-            $this->step--;
-        }
-        if ($this->step == 1 && $this->userLevel == 'student') {
-            // Cannot go back to step 1 if student
-            $this->step = 2;
+            $this->activeDays = array_map(fn($wd) => $mapping[$wd], $attendancePeriod->weekdays);
         }
     }
 
@@ -588,6 +569,8 @@ new class extends Component {
 ?>
 
 <div class="space-y-6" x-data="{
+        wizardStep:    $wire.entangle('step'),
+        userLevel:     '{{ $userLevel }}',
         days:          $wire.entangle('planDays'),
         planType:      $wire.entangle('planType').live,
         fillDirection: $wire.entangle('fillDirection').live,
@@ -598,6 +581,34 @@ new class extends Component {
         selectionStart: null,
         filling:        false,
         
+        async goNext() {
+            if (this.wizardStep === 1 && this.userLevel === 'teacher' && !$wire.get('studentId')) {
+                alert('يرجى اختيار الطالب أولاً.');
+                return;
+            }
+            if (this.wizardStep === 4) {
+                if (!$wire.get('startDate') || !$wire.get('daysCount')) {
+                    alert('يرجى تحديد تاريخ البدء ومدة الخطة.');
+                    return;
+                }
+                await $wire.autoFillActiveDays();
+            }
+            if (this.wizardStep === 5) {
+                if (!$wire.get('activeDays') || $wire.get('activeDays').length === 0) {
+                    alert('يجب اختيار يوم واحد على الأقل.');
+                    return;
+                }
+            }
+            this.wizardStep++;
+        },
+        goPrev() {
+            if (this.wizardStep > 1) {
+                this.wizardStep--;
+            }
+            if (this.wizardStep === 1 && this.userLevel === 'student') {
+                this.wizardStep = 2;
+            }
+        },
         init() {
             this.selected = Array((this.days && this.days.length) ? this.days.length : 0).fill(false);
         },
@@ -644,20 +655,20 @@ new class extends Component {
                         <flux:subheading>{{ __('معالج إنشاء الجدول بخطوات بسيطة') }}</flux:subheading>
                     </div>
                     <div
-                        class="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">
-                        {{ __('خطوة') }} {{ $step }} {{ __('من') }} 6
+                        class="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full"
+                        x-text="'{{ __('خطوة') }} ' + wizardStep + ' {{ __('من') }} 6'">
                     </div>
                 </div>
                 <div class="relative w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden mt-4">
-                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500   duration-300"
-                        style="width: {{ ($step / 6) * 100 }}%"></div>
+                    <div class="absolute top-0 bottom-0 right-0 bg-indigo-500 duration-300"
+                        x-bind:style="'width: ' + ((wizardStep / 6) * 100) + '%'"></div>
                 </div>
             </div>
 
             <div class="p-6 h-[400px] flex flex-col justify-center">
                 <!-- STEP 1: Student -->
-                @if($step == 1 && $userLevel == 'teacher')
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                @if($userLevel == 'teacher')
+                    <div x-show="wizardStep == 1" class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-indigo-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-indigo-500 mb-4">
                             <flux:icon icon="user" class="size-8" />
@@ -674,8 +685,7 @@ new class extends Component {
                 @endif
 
                 <!-- STEP 2: Plan Type -->
-                @if($step == 2)
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                <div x-show="wizardStep == 2" x-cloak class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-emerald-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-emerald-500 mb-4">
                             <flux:icon icon="rectangle-stack" class="size-8" />
@@ -703,11 +713,9 @@ new class extends Component {
                             </button>
                         </div>
                     </div>
-                @endif
 
                 <!-- STEP 3: Direction -->
-                @if($step == 3)
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                <div x-show="wizardStep == 3" x-cloak class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-blue-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-blue-500 mb-4">
                             <flux:icon icon="arrows-up-down" class="size-8" />
@@ -735,11 +743,9 @@ new class extends Component {
                             </button>
                         </div>
                     </div>
-                @endif
 
                 <!-- STEP 4: Dates & Count -->
-                @if($step == 4)
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                <div x-show="wizardStep == 4" x-cloak class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-rose-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-rose-500 mb-4">
                             <flux:icon icon="calendar-days" class="size-8" />
@@ -755,11 +761,9 @@ new class extends Component {
                                 wire:model="daysCount" placeholder="مثال: 16" />
                         </div>
                     </div>
-                @endif
 
                 <!-- STEP 5: Active Days -->
-                @if($step == 5)
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                <div x-show="wizardStep == 5" x-cloak class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-purple-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-purple-500 mb-4">
                             <flux:icon icon="calendar" class="size-8" />
@@ -783,11 +787,9 @@ new class extends Component {
                             @enderror
                         </div>
                     </div>
-                @endif
 
                 <!-- STEP 6: Starting Surah / Memorized -->
-                @if($step == 6)
-                    <div class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+                <div x-show="wizardStep == 6" x-cloak class="space-y-6 text-center animate-in fade-in zoom-in duration-300">
                         <div
                             class="mx-auto bg-teal-50 dark:bg-zinc-800 w-16 h-16 rounded-full flex items-center justify-center text-teal-500 mb-4">
                             <flux:icon icon="map-pin" class="size-8" />
@@ -859,27 +861,27 @@ new class extends Component {
                             </div>
                         </template>
                     </div>
-                @endif
             </div>
 
             <!-- Footer Toolbar -->
             <div
                 class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
-                <flux:button variant="ghost" icon="arrow-right" class="" wire:click="prevStep"
-                    :disabled="$step == 1 || ($step == 2 && $userLevel == 'student')">
+                <flux:button variant="ghost" icon="arrow-right" class="" @click="goPrev"
+                    x-bind:disabled="wizardStep == 1 || (wizardStep == 2 && userLevel == 'student')">
                     {{ __('السابق') }}
                 </flux:button>
 
-                @if($step < 6)
-                    <flux:button variant="primary" wire:click="nextStep" class="min-w-[120px]">
+                <template x-if="wizardStep < 6">
+                    <flux:button variant="primary" @click="goNext" class="min-w-[120px]">
                         {{ __('التالي') }}
                     </flux:button>
-                @else
+                </template>
+                <template x-if="wizardStep == 6">
                     <flux:button variant="primary" wire:click="generateDays" icon="sparkles"
                         class="min-w-[120px] bg-indigo-600 hover:bg-indigo-700 border-none">
                         {{ __('توليد وتأكيد الجدول') }}
                     </flux:button>
-                @endif
+                </template>
             </div>
         </flux:card>
     @else

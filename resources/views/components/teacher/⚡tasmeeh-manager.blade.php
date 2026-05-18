@@ -9,9 +9,8 @@ use Flux\Flux;
 use Livewire\Attributes\On;
 
 new class extends Component {
-    public $studentId = null;
-    public $planId = null;
-    public $dayId = null;
+    public $navigatedDays = []; // [student_id => day_id]
+    public $selectedPlans = []; // [student_id => plan_id]
 
     // Reservation session properties
     public $showSessionModal = false;
@@ -21,10 +20,6 @@ new class extends Component {
     public $sessionEndDate;
     public $sessionDaysOfWeek = [0, 1, 2, 3, 4, 5, 6];
 
-    /** Persisted in DB — also @entangled to Alpine for instant visual feedback */
-    public $hifzAchievement = null;
-    public $reviewAchievement = null;
-    
     public $gradedAtDate;
     public $refreshToggle = false;
 
@@ -51,14 +46,29 @@ new class extends Component {
 
         $todayStr = \Carbon\Carbon::today()->format('Y-m-d');
 
-        $allPlans = StudentPlan::whereIn('student_id', $students->pluck('id'))
-            ->where('status', 'active')
-            ->where('is_approved', 1)
+        // Fetch active plans (or selected plans) for these students
+        $activePlans = [];
+        $studentPlansList = StudentPlan::whereIn('student_id', $students->pluck('id'))
+            ->latest()
             ->get()
             ->groupBy('student_id');
 
+        foreach ($students as $student) {
+            $sPlans = $studentPlansList[$student->id] ?? collect();
+            if ($sPlans->isEmpty()) continue;
+
+            $chosenPlanId = $this->selectedPlans[$student->id] ?? null;
+            $activePlan = $chosenPlanId 
+                ? $sPlans->firstWhere('id', $chosenPlanId) 
+                : $sPlans->firstWhere('status', 'active');
+            
+            if (!$activePlan) $activePlan = $sPlans->first(); // fallback to latest
+            
+            $activePlans[$student->id] = $activePlan;
+        }
+
         // We need all today's plan days for the active plans to check the colors
-        $todaysPlanDays = StudentPlanDay::whereIn('student_plan_id', $allPlans->flatten()->pluck('id'))
+        $todaysPlanDays = StudentPlanDay::whereIn('student_plan_id', collect($activePlans)->pluck('id'))
             ->whereDate('date', $todayStr)
             ->get()
             ->groupBy(function ($day) {
@@ -92,7 +102,7 @@ new class extends Component {
         $studentsWithoutPlans = [];
 
         foreach ($students as $student) {
-            if (isset($allPlans[$student->id])) {
+            if (isset($activePlans[$student->id])) {
                 $color = 'red';
 
                 if (isset($todaysPlanDays[$student->id])) {
@@ -148,28 +158,44 @@ new class extends Component {
             }
         }
 
-        $plans = [];
-        if ($this->studentId) {
-            $plans = StudentPlan::where('student_id', $this->studentId)
-                ->latest()
-                ->get();
+        // Determine the display day for each active plan
+        $defaultDayIds = [];
+        foreach ($activePlans as $studentId => $plan) {
+            if (isset($this->navigatedDays[$studentId])) {
+                $defaultDayIds[] = $this->navigatedDays[$studentId];
+            } else {
+                $oldestIncomplete = StudentPlanDay::where('student_plan_id', $plan->id)
+                    ->where(function ($q) {
+                        $q->whereNull('hifz_achievement')
+                          ->orWhereNull('review_achievement');
+                    })
+                    ->orderBy('date', 'asc')
+                    ->first();
+                if ($oldestIncomplete) {
+                    $defaultDayIds[] = $oldestIncomplete->id;
+                } else {
+                    $lastDay = StudentPlanDay::where('student_plan_id', $plan->id)->orderBy('date', 'desc')->first();
+                    if ($lastDay) {
+                        $defaultDayIds[] = $lastDay->id;
+                    }
+                }
+            }
         }
 
-        $currentDay = null;
-        $hasNext = false;
-        $hasPrev = false;
+        $activeDays = StudentPlanDay::with(['fromAyah.surah', 'toAyah.surah', 'reviewFromAyah.surah', 'reviewToAyah.surah', 'plan'])
+            ->whereIn('id', $defaultDayIds)
+            ->get()
+            ->keyBy(function($day) { return $day->plan->student_id; });
 
-        if ($this->dayId) {
-            $currentDay = StudentPlanDay::with(['fromAyah.surah', 'toAyah.surah', 'reviewFromAyah.surah', 'reviewToAyah.surah', 'plan'])->find($this->dayId);
-
-            if ($currentDay) {
-                $hasNext = StudentPlanDay::where('student_plan_id', $this->planId)
-                    ->whereDate('date', '>', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
-                    ->exists();
-                $hasPrev = StudentPlanDay::where('student_plan_id', $this->planId)
-                    ->whereDate('date', '<', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
-                    ->exists();
-            }
+        $hasNext = [];
+        $hasPrev = [];
+        foreach ($activeDays as $studentId => $day) {
+            $hasNext[$studentId] = StudentPlanDay::where('student_plan_id', $day->student_plan_id)
+                ->whereDate('date', '>', \Carbon\Carbon::parse($day->date)->format('Y-m-d'))
+                ->exists();
+            $hasPrev[$studentId] = StudentPlanDay::where('student_plan_id', $day->student_plan_id)
+                ->whereDate('date', '<', \Carbon\Carbon::parse($day->date)->format('Y-m-d'))
+                ->exists();
         }
 
         $studentsWithPlansPresent = collect($studentsWithPlansPresent)->sortBy('turn_number')->values();
@@ -178,143 +204,71 @@ new class extends Component {
             'studentsWithPlansPresent' => $studentsWithPlansPresent,
             'studentsWithPlansAbsent' => collect($studentsWithPlansAbsent),
             'studentsWithoutPlans' => collect($studentsWithoutPlans),
-            'activeSession' => $activeSession,
-            'plans' => $plans,
-            'currentDay' => $currentDay,
+            'studentPlansList' => $studentPlansList,
+            'activePlans' => $activePlans,
+            'activeDays' => $activeDays,
             'hasNext' => $hasNext,
             'hasPrev' => $hasPrev,
+            'activeSession' => $activeSession,
         ];
     }
 
-    public function updatedStudentId()
+    public function selectPlan($studentId, $planId)
     {
-        $this->planId = null;
-        $this->dayId = null;
-        $this->hifzAchievement = null;
-        $this->reviewAchievement = null;
-
-        if ($this->studentId) {
-            $teacher = Auth::guard('teacher')->user();
-            $firstPlan = StudentPlan::where('student_id', $this->studentId)
-                ->latest()
-                ->first();
-
-            if ($firstPlan) {
-                $this->planId = $firstPlan->id;
-                $this->updatedPlanId();
-            }
-        }
+        $this->selectedPlans[$studentId] = $planId;
+        unset($this->navigatedDays[$studentId]); // Reset to default day for new plan
     }
 
-    public function updatedPlanId()
+    public function previousDay($studentId, $currentDayId)
     {
-        $this->dayId = null;
-
-        if ($this->planId) {
-            $oldestIncomplete = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->where(function ($q) {
-                    $q->whereNull('hifz_achievement')
-                        ->orWhereNull('review_achievement');
-                })
-                ->orderBy('date', 'asc')
-                ->first();
-
-            if ($oldestIncomplete) {
-                $this->loadDay($oldestIncomplete->id);
-            } else {
-                $lastDay = StudentPlanDay::where('student_plan_id', $this->planId)
-                    ->orderBy('date', 'desc')
-                    ->first();
-                if ($lastDay) {
-                    $this->loadDay($lastDay->id);
-                }
-            }
-        }
-    }
-
-    public function loadDay($id)
-    {
-        $this->dayId = $id;
-        $day = StudentPlanDay::find($id);
-        if ($day) {
-            $this->hifzAchievement = $day->hifz_achievement;
-            $this->reviewAchievement = $day->review_achievement;
-        }
-    }
-
-    public function previousDay()
-    {
-        $currentDay = StudentPlanDay::find($this->dayId);
+        $currentDay = StudentPlanDay::find($currentDayId);
         if ($currentDay) {
-            $prev = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->whereDate('date', '<', Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
+            $prev = StudentPlanDay::where('student_plan_id', $currentDay->student_plan_id)
+                ->whereDate('date', '<', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                 ->orderBy('date', 'desc')
                 ->first();
             if ($prev) {
-                $this->loadDay($prev->id);
+                $this->navigatedDays[$studentId] = $prev->id;
             }
         }
     }
 
-    public function nextDay()
+    public function nextDay($studentId, $currentDayId)
     {
-        $currentDay = StudentPlanDay::find($this->dayId);
+        $currentDay = StudentPlanDay::find($currentDayId);
         if ($currentDay) {
-            $next = StudentPlanDay::where('student_plan_id', $this->planId)
-                ->whereDate('date', '>', Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
+            $next = StudentPlanDay::where('student_plan_id', $currentDay->student_plan_id)
+                ->whereDate('date', '>', \Carbon\Carbon::parse($currentDay->date)->format('Y-m-d'))
                 ->orderBy('date', 'asc')
                 ->first();
             if ($next) {
-                $this->loadDay($next->id);
+                $this->navigatedDays[$studentId] = $next->id;
             }
         }
     }
 
-    /**
-     * Alpine calls this in the background — no UI blocking.
-     * $hifzAchievement is already synced via @entangle before this fires.
-     */
-    public function saveHifz($val = null)
+    public function saveAchievement($dayId, $type, $value)
     {
-        $this->hifzAchievement = $val;
-        $this->persist('hifz');
-    }
-
-    /**
-     * Alpine calls this in the background — no UI blocking.
-     */
-    public function saveReview($val = null)
-    {
-        $this->reviewAchievement = $val;
-        $this->persist('review');
-    }
-
-    private function persist($type = null)
-    {
-        if ($this->dayId) {
-            $updateData = [
-                'hifz_achievement' => $this->hifzAchievement,
-                'review_achievement' => $this->reviewAchievement,
-            ];
-            
-            $gradeTime = null;
-            if ($this->gradedAtDate) {
-                if ($this->gradedAtDate === now()->format('Y-m-d')) {
-                    $gradeTime = now();
-                } else {
-                    $gradeTime = \Carbon\Carbon::parse($this->gradedAtDate)->setHour(12)->setMinute(0);
-                }
+        $updateData = [];
+        $gradeTime = null;
+        if ($this->gradedAtDate) {
+            if ($this->gradedAtDate === now()->format('Y-m-d')) {
+                $gradeTime = now();
+            } else {
+                $gradeTime = \Carbon\Carbon::parse($this->gradedAtDate)->setHour(12)->setMinute(0);
             }
-
-            if ($type === 'hifz') {
-                $updateData['hifz_graded_at'] = $this->hifzAchievement !== null ? $gradeTime : null;
-            } elseif ($type === 'review') {
-                $updateData['review_graded_at'] = $this->reviewAchievement !== null ? $gradeTime : null;
-            }
-
-            StudentPlanDay::where('id', $this->dayId)->update($updateData);
-            Flux::toast('تم حفظ التقييم', variant: 'success');
         }
+
+        if ($type === 'hifz') {
+            $updateData['hifz_achievement'] = $value;
+            $updateData['hifz_graded_at'] = $value !== null ? $gradeTime : null;
+        } elseif ($type === 'review') {
+            $updateData['review_achievement'] = $value;
+            $updateData['review_graded_at'] = $value !== null ? $gradeTime : null;
+        }
+
+        StudentPlanDay::where('id', $dayId)->update($updateData);
+        Flux::toast('تم حفظ التقييم', variant: 'success');
     }
 
     public function openSessionModal()
@@ -384,25 +338,11 @@ new class extends Component {
 
 {{--
 Alpine state:
-hifz — entangled with $hifzAchievement (instant button highlight, background save)
-review — entangled with $reviewAchievement (same)
-
-Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
-(data-loading operations that genuinely need the server)
+activeStudentId — tracks which student is being viewed entirely on the client
+hifz/review — local state per day card for instant visual feedback
 --}}
 <div class="space-y-6" x-data="{
-         hifz:   @entangle('hifzAchievement'),
-         review: @entangle('reviewAchievement'),
-
-         setHifz(val) {
-             this.hifz = val;                    /* instant visual */
-             $wire.saveHifz(val);               /* background DB save */
-         },
-
-         setReview(val) {
-             this.review = val;                  /* instant visual */
-             $wire.saveReview(val);             /* background DB save */
-         },
+        activeStudentId: null,
      }">
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -432,8 +372,7 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
         <div x-data="{ 
                 openSection: 1, 
                 selectStudent(id) {
-                    $wire.set('studentId', id);
-                    this.openSection = 0;
+                    this.activeStudentId = id;
                     setTimeout(() => {
                         const el = document.getElementById('grading-area');
                         if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -460,17 +399,20 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                     class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                     @forelse($studentsWithPlansPresent as $student)
                         <button wire:key="present-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" @click="selectStudent({{ $student->id }})"
-                            class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
+                            class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors"
+                            :class="activeStudentId === {{ $student->id }} ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-white dark:bg-zinc-800 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700'">
                             <div class="flex items-center gap-3">
                                 <div
                                     class="size-2.5 rounded-full bg-{{ $student->tasmeeh_color }}-500 shadow-sm shadow-{{ $student->tasmeeh_color }}-500/30 shrink-0">
                                 </div>
                                 <span
-                                    class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300' }} truncate">{{ $student->name }}</span>
+                                    class="font-medium text-sm truncate"
+                                    :class="activeStudentId === {{ $student->id }} ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'">{{ $student->name }}</span>
                             </div>
                             @if($student->turn_number !== 9999)
                                 <span
-                                    class="shrink-0 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-md {{ $studentId == $student->id ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300' }}">
+                                    class="shrink-0 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-md"
+                                    :class="activeStudentId === {{ $student->id }} ? 'bg-indigo-200 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'">
                                     {{ $student->turn_number }}
                                 </span>
                             @endif
@@ -500,13 +442,15 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         class="p-2 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 max-h-[50vh] overflow-y-auto scrollbar-thin">
                         @forelse($studentsWithPlansAbsent as $student)
                             <button wire:key="absent-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" @click="selectStudent({{ $student->id }})"
-                                class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100' }}">
+                                class="w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-colors"
+                                :class="activeStudentId === {{ $student->id }} ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-rose-50 dark:bg-rose-900/10 border-transparent hover:border-rose-200 dark:hover:border-rose-800/50 opacity-75 hover:opacity-100'">
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="size-2.5 rounded-full bg-{{ $student->tasmeeh_color }}-500 shadow-sm shadow-{{ $student->tasmeeh_color }}-500/30 shrink-0">
                                     </div>
                                     <span
-                                        class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-rose-700 dark:text-rose-400' }} truncate">{{ $student->name }}</span>
+                                        class="font-medium text-sm truncate"
+                                        :class="activeStudentId === {{ $student->id }} ? 'text-indigo-700 dark:text-indigo-400' : 'text-rose-700 dark:text-rose-400'">{{ $student->name }}</span>
                                 </div>
                             </button>
                         @empty
@@ -536,9 +480,11 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                         @forelse($studentsWithoutPlans as $student)
                             <div wire:key="noplan-{{ $student->id }}-{{ $refreshToggle ? '1' : '0' }}" class="flex items-center gap-2">
                                 <button @click="selectStudent({{ $student->id }})"
-                                    class="flex-1 flex items-center p-2.5 rounded-xl border text-right {{ $studentId == $student->id ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-zinc-100/50 dark:bg-zinc-800/30 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700' }}">
+                                    class="flex-1 flex items-center p-2.5 rounded-xl border text-right transition-colors"
+                                    :class="activeStudentId === {{ $student->id }} ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800' : 'bg-zinc-100/50 dark:bg-zinc-800/30 border-transparent hover:border-zinc-200 dark:hover:border-zinc-700'">
                                     <span
-                                        class="font-medium text-sm {{ $studentId == $student->id ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400' }} truncate">{{ $student->name }}</span>
+                                        class="font-medium text-sm truncate"
+                                        :class="activeStudentId === {{ $student->id }} ? 'text-indigo-700 dark:text-indigo-400' : 'text-zinc-500 dark:text-zinc-400'">{{ $student->name }}</span>
                                 </button>
                                 <a href="{{ route('teacher.plan-creator', ['studentId' => $student->id]) }}"
                                     class="shrink-0 p-2.5 text-emerald-600 hover:text-white bg-emerald-50 hover:bg-emerald-500 dark:text-emerald-400 dark:bg-emerald-900/20 dark:hover:bg-emerald-600 rounded-xl   s"
@@ -556,14 +502,42 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
 
         <!-- Main Content Area -->
         <div id="grading-area" class="lg:col-span-3 space-y-6 scroll-mt-6">
-            @if($studentId)
-                @if(count($plans) > 0)
-                    <div class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm mb-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                            <flux:select wire:model.live="planId" label="{{ __('الخطة القرآنية') }}"
-                                placeholder="{{ __('اختر الخطة') }}">
-                                @foreach($plans as $plan)
-                                    <flux:select.option value="{{ $plan->id }}">
+            <div x-show="!activeStudentId" class="flex flex-col items-center justify-center p-12 bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center h-full min-h-[400px]">
+                <flux:icon icon="user-group" class="size-16 text-zinc-300 dark:text-zinc-600 mb-4" />
+                <flux:heading size="lg" class="text-zinc-500 dark:text-zinc-400 mb-2">{{ __('اختر طالباً للبدء') }}</flux:heading>
+                <p class="text-zinc-400 dark:text-zinc-500 text-sm max-w-sm">
+                    {{ __('قم باختيار أحد الطلاب من القائمة الجانبية لعرض خطته القرآنية والبدء بتقييم التسميع والمراجعة.') }}
+                </p>
+            </div>
+
+            <!-- Global Grading Date Setting -->
+            <div x-show="activeStudentId" x-cloak class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm mb-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <flux:label>{{ __('تاريخ التقييم (الإنجاز الفعلي)') }}</flux:label>
+                        <flux:description class="text-[11px] mt-0.5">{{ __('سيُستخدم هذا التاريخ لتسجيل إنجاز الطالب في المسابقات والتقارير.') }}</flux:description>
+                    </div>
+                    <div class="w-full md:w-64">
+                        <livewire:teacher.hijri-datepicker wire:model.live="gradedAtDate" />
+                    </div>
+                </div>
+            </div>
+
+            @foreach($studentsWithPlansPresent->merge($studentsWithPlansAbsent)->merge($studentsWithoutPlans) as $student)
+                <div x-show="activeStudentId === {{ $student->id }}" x-cloak>
+                    @php
+                        $sPlans = $studentPlansList[$student->id] ?? collect();
+                        $activePlan = $activePlans[$student->id] ?? null;
+                        $currentDay = $activeDays[$student->id] ?? null;
+                        $sHasNext = $hasNext[$student->id] ?? false;
+                        $sHasPrev = $hasPrev[$student->id] ?? false;
+                    @endphp
+
+                    @if($sPlans->isNotEmpty())
+                        <div class="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm mb-4">
+                            <flux:select wire:change="selectPlan({{ $student->id }}, $event.target.value)" label="{{ __('الخطة القرآنية') }}" placeholder="{{ __('اختر الخطة') }}">
+                                @foreach($sPlans as $plan)
+                                    <flux:select.option value="{{ $plan->id }}" :selected="$activePlan && $activePlan->id === $plan->id">
                                         @if($plan->plan_type === 'hifz')
                                             {{ __('حفظ (تبدأ من ' . $plan->start_date->format('Y/m/d') . ')') }}
                                         @elseif($plan->plan_type === 'review')
@@ -574,287 +548,223 @@ Livewire fires only on: updatedStudentId | updatedPlanId | previousDay | nextDay
                                     </flux:select.option>
                                 @endforeach
                             </flux:select>
-                            
-                            <div>
-                                <div class="mb-2">
-                                    <flux:label>{{ __('تاريخ التقييم (الإنجاز الفعلي)') }}</flux:label>
-                                    <flux:description class="text-[11px] mt-0.5">{{ __('سيُستخدم هذا التاريخ لتسجيل إنجاز الطالب في المسابقات والتقارير.') }}</flux:description>
-                                </div>
-                                <livewire:teacher.hijri-datepicker wire:model.live="gradedAtDate" />
-                            </div>
                         </div>
-                    </div>
 
-                    @if($currentDay)
-                        <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700">
+                        @if($currentDay)
+                            <flux:card wire:key="day-card-{{ $currentDay->id }}" class="mt-2 border-zinc-200 dark:border-zinc-700"
+                                x-data="{ hifz: {{ $currentDay->hifz_achievement ?? 'null' }}, review: {{ $currentDay->review_achievement ?? 'null' }} }">
 
+                                {{-- Day navigation --}}
+                                <div class="flex items-center justify-between mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                    <flux:button wire:click="previousDay({{ $student->id }}, {{ $currentDay->id }})" :disabled="!$sHasPrev" icon="chevron-right" variant="subtle" size="sm">
+                                        {{ __('اليوم السابق') }}
+                                    </flux:button>
 
-                            {{-- Day navigation — Livewire (loads new day data) --}}
-                            <div class="flex items-center justify-between mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                                <flux:button wire:click="previousDay" :disabled="!$hasPrev" icon="chevron-right" variant="subtle"
-                                    size="sm">
-                                    {{ __('اليوم السابق') }}
-                                </flux:button>
+                                    <div class="text-center">
+                                        <div class="font-bold text-lg">{{ $currentDay->day_name }}</div>
+                                        <div class="text-zinc-500 text-sm dir-ltr">{{ $currentDay->date->format('Y/m/d') }}</div>
+                                    </div>
 
-                                <div class="text-center">
-                                    <div class="font-bold text-lg">{{ $currentDay->day_name }}</div>
-                                    <div class="text-zinc-500 text-sm dir-ltr">{{ $currentDay->date->format('Y/m/d') }}</div>
+                                    <flux:button wire:click="nextDay({{ $student->id }}, {{ $currentDay->id }})" :disabled="!$sHasNext" icon-trailing="chevron-left" variant="subtle" size="sm">
+                                        {{ __('اليوم التالي') }}
+                                    </flux:button>
                                 </div>
 
-                                <flux:button wire:click="nextDay" :disabled="!$hasNext" icon-trailing="chevron-left"
-                                    variant="subtle" size="sm">
-                                    {{ __('اليوم التالي') }}
-                                </flux:button>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                                {{-- Hifz Section --}}
-                                @if($currentDay->plan->plan_type === 'hifz' || $currentDay->plan->plan_type === 'hifz_review')
-                                    <div
-                                        class="bg-indigo-50/50 dark:bg-indigo-500/5 rounded-xl border border-indigo-100 dark:border-indigo-500/20 p-5 space-y-5">
-                                        <div>
-                                            <flux:heading size="lg" class="text-indigo-600 dark:text-indigo-400 mb-2">{{ __('الحفظ') }}
-                                            </flux:heading>
-                                            <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
-                                                {{ $currentDay->formatRange('hifz') ?? 'لا يوجد نص محدد' }}
-                                            </p>
-                                            @php
-                                                $hLinks = [];
-                                                $hFrom = $currentDay->fromAyah;
-                                                $hTo   = $currentDay->toAyah;
-                                                if ($hFrom && $hTo) {
-                                                    if ($hFrom->surah_id === $hTo->surah_id) {
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {{-- Hifz Section --}}
+                                    @if($currentDay->plan->plan_type === 'hifz' || $currentDay->plan->plan_type === 'hifz_review')
+                                        <div class="bg-indigo-50/50 dark:bg-indigo-500/5 rounded-xl border border-indigo-100 dark:border-indigo-500/20 p-5 space-y-5">
+                                            <div>
+                                                <flux:heading size="lg" class="text-indigo-600 dark:text-indigo-400 mb-2">{{ __('الحفظ') }}</flux:heading>
+                                                <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
+                                                    {{ $currentDay->formatRange('hifz') ?? 'لا يوجد نص محدد' }}
+                                                </p>
+                                                @php
+                                                    $hLinks = [];
+                                                    $hFrom = $currentDay->fromAyah;
+                                                    $hTo   = $currentDay->toAyah;
+                                                    if ($hFrom && $hTo) {
+                                                        if ($hFrom->surah_id === $hTo->surah_id) {
+                                                            $hLinks[] = [
+                                                                'name' => $hFrom->surah->name_arabic,
+                                                                'url'  => 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number,
+                                                            ];
+                                                        } else {
+                                                            $low  = min($hFrom->surah_id, $hTo->surah_id);
+                                                            $high = max($hFrom->surah_id, $hTo->surah_id);
+                                                            $direction = $hFrom->surah_id <= $hTo->surah_id ? 'asc' : 'desc';
+                                                            $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
+                                                            foreach ($surahs as $s) {
+                                                                $from = $s->id === $hFrom->surah_id ? $hFrom->verse_number : 1;
+                                                                $to   = $s->id === $hTo->surah_id   ? $hTo->verse_number   : $s->verses_count;
+                                                                $hLinks[] = [
+                                                                    'name' => $s->name_arabic,
+                                                                    'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
+                                                                ];
+                                                            }
+                                                        }
+                                                    } elseif ($hFrom) {
                                                         $hLinks[] = [
                                                             'name' => $hFrom->surah->name_arabic,
-                                                            'url'  => 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hTo->verse_number,
+                                                            'url'  => 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hFrom->surah->verses_count,
                                                         ];
-                                                    } else {
-                                                        $low  = min($hFrom->surah_id, $hTo->surah_id);
-                                                        $high = max($hFrom->surah_id, $hTo->surah_id);
-                                                        $direction = $hFrom->surah_id <= $hTo->surah_id ? 'asc' : 'desc';
-                                                        $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
-                                                        foreach ($surahs as $s) {
-                                                            $from = $s->id === $hFrom->surah_id ? $hFrom->verse_number : 1;
-                                                            $to   = $s->id === $hTo->surah_id   ? $hTo->verse_number   : $s->verses_count;
-                                                            $hLinks[] = [
-                                                                'name' => $s->name_arabic,
-                                                                'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
-                                                            ];
-                                                        }
                                                     }
-                                                } elseif ($hFrom) {
-                                                    $hLinks[] = [
-                                                        'name' => $hFrom->surah->name_arabic,
-                                                        'url'  => 'https://quran.com/ar/' . $hFrom->surah->number . '/' . $hFrom->verse_number . '-' . $hFrom->surah->verses_count,
-                                                    ];
-                                                }
-                                            @endphp
-                                            @if(count($hLinks) === 1)
-                                                <a href="{{ $hLinks[0]['url'] }}" target="_blank"
-                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
-                                                    <flux:icon icon="book-open" class="size-3.5" />
-                                                    {{ __('افتح') }} {{ $hLinks[0]['name'] }}
-                                                </a>
-                                            @elseif(count($hLinks) > 1)
-                                                <div x-data="{ open: false }" class="mt-3">
-                                                    <button type="button" @click="open = !open"
-                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
+                                                @endphp
+                                                @if(count($hLinks) === 1)
+                                                    <a href="{{ $hLinks[0]['url'] }}" target="_blank"
+                                                        class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
                                                         <flux:icon icon="book-open" class="size-3.5" />
-                                                        <span>{{ __('افتح الآيات في القرآن') }} ({{ count($hLinks) }})</span>
-                                                        <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
-                                                            x-bind:class="open ? 'rotate-180' : ''" />
-                                                    </button>
-                                                    <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
-                                                        @foreach($hLinks as $link)
-                                                            <a href="{{ $link['url'] }}" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30   s">
-                                                                <flux:icon icon="book-open" class="size-3.5" />
-                                                                {{ $link['name'] }}
-                                                            </a>
-                                                        @endforeach
+                                                        {{ __('افتح') }} {{ $hLinks[0]['name'] }}
+                                                    </a>
+                                                @elseif(count($hLinks) > 1)
+                                                    <div x-data="{ open: false }" class="mt-3">
+                                                        <button type="button" @click="open = !open"
+                                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
+                                                            <flux:icon icon="book-open" class="size-3.5" />
+                                                            <span>{{ __('افتح الآيات في القرآن') }} ({{ count($hLinks) }})</span>
+                                                            <flux:icon icon="chevron-down" class="size-3.5 transition-transform" x-bind:class="open ? 'rotate-180' : ''" />
+                                                        </button>
+                                                        <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
+                                                            @foreach($hLinks as $link)
+                                                                <a href="{{ $link['url'] }}" target="_blank"
+                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 transition-colors">
+                                                                    <flux:icon icon="book-open" class="size-3.5" />
+                                                                    {{ $link['name'] }}
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
                                                     </div>
+                                                @endif
+                                            </div>
+
+                                            <flux:separator />
+
+                                            <div>
+                                                <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                    <button type="button" @click="hifz = 3; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 3)"
+                                                        :class="hifz === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">ممتاز</button>
+
+                                                    <button type="button" @click="hifz = 2; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 2)"
+                                                        :class="hifz === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">جيد</button>
+
+                                                    <button type="button" @click="hifz = 1; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', 1)"
+                                                        :class="hifz === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">مقبول</button>
+
+                                                    <button type="button" @click="hifz = null; $wire.saveAchievement({{ $currentDay->id }}, 'hifz', null)"
+                                                        :class="hifz === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">لم يسمع</button>
                                                 </div>
-                                            @endif
-                                        </div>
-
-                                        <flux:separator />
-
-                                        <div>
-                                            <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
-
-                                            {{-- Alpine controls coloring instantly, saveHifz() saves in background --}}
-                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                <button type="button" @click="setHifz(3)"
-                                                    :class="hifz === 3
-                                                            ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">ممتاز</button>
-
-                                                <button type="button" @click="setHifz(2)"
-                                                    :class="hifz === 2
-                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">جيد</button>
-
-                                                <button type="button" @click="setHifz(1)"
-                                                    :class="hifz === 1
-                                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">مقبول</button>
-
-                                                <button type="button" @click="setHifz(null)"
-                                                    :class="hifz === null
-                                                            ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">لم
-                                                    يسمع</button>
                                             </div>
                                         </div>
-                                    </div>
-                                @endif
+                                    @endif
 
-                                {{-- Review Section --}}
-                                @if($currentDay->plan->plan_type === 'review' || $currentDay->plan->plan_type === 'hifz_review')
-                                    <div
-                                        class="bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20 p-5 space-y-5">
-                                        <div>
-                                            <flux:heading size="lg" class="text-emerald-600 dark:text-emerald-400 mb-2">
-                                                {{ __('المراجعة') }}</flux:heading>
-                                            <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
-                                                {{ $currentDay->formatRange('review') ?? 'لا يوجد نص محدد' }}
-                                            </p>
-                                            @php
-                                                $rLinks = [];
-                                                $rFrom = $currentDay->reviewFromAyah;
-                                                $rTo   = $currentDay->reviewToAyah;
-                                                if ($rFrom && $rTo) {
-                                                    if ($rFrom->surah_id === $rTo->surah_id) {
+                                    {{-- Review Section --}}
+                                    @if($currentDay->plan->plan_type === 'review' || $currentDay->plan->plan_type === 'hifz_review')
+                                        <div class="bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20 p-5 space-y-5">
+                                            <div>
+                                                <flux:heading size="lg" class="text-emerald-600 dark:text-emerald-400 mb-2">{{ __('المراجعة') }}</flux:heading>
+                                                <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg leading-relaxed">
+                                                    {{ $currentDay->formatRange('review') ?? 'لا يوجد نص محدد' }}
+                                                </p>
+                                                @php
+                                                    $rLinks = [];
+                                                    $rFrom = $currentDay->reviewFromAyah;
+                                                    $rTo   = $currentDay->reviewToAyah;
+                                                    if ($rFrom && $rTo) {
+                                                        if ($rFrom->surah_id === $rTo->surah_id) {
+                                                            $rLinks[] = [
+                                                                'name' => $rFrom->surah->name_arabic,
+                                                                'url'  => 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number,
+                                                            ];
+                                                        } else {
+                                                            $low  = min($rFrom->surah_id, $rTo->surah_id);
+                                                            $high = max($rFrom->surah_id, $rTo->surah_id);
+                                                            $direction = $rFrom->surah_id <= $rTo->surah_id ? 'asc' : 'desc';
+                                                            $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
+                                                            foreach ($surahs as $s) {
+                                                                $from = $s->id === $rFrom->surah_id ? $rFrom->verse_number : 1;
+                                                                $to   = $s->id === $rTo->surah_id   ? $rTo->verse_number   : $s->verses_count;
+                                                                $rLinks[] = [
+                                                                    'name' => $s->name_arabic,
+                                                                    'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
+                                                                ];
+                                                            }
+                                                        }
+                                                    } elseif ($rFrom) {
                                                         $rLinks[] = [
                                                             'name' => $rFrom->surah->name_arabic,
-                                                            'url'  => 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rTo->verse_number,
+                                                            'url'  => 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rFrom->surah->verses_count,
                                                         ];
-                                                    } else {
-                                                        $low  = min($rFrom->surah_id, $rTo->surah_id);
-                                                        $high = max($rFrom->surah_id, $rTo->surah_id);
-                                                        $direction = $rFrom->surah_id <= $rTo->surah_id ? 'asc' : 'desc';
-                                                        $surahs = \App\Models\Surah::whereBetween('id', [$low, $high])->orderBy('id', $direction)->get();
-                                                        foreach ($surahs as $s) {
-                                                            $from = $s->id === $rFrom->surah_id ? $rFrom->verse_number : 1;
-                                                            $to   = $s->id === $rTo->surah_id   ? $rTo->verse_number   : $s->verses_count;
-                                                            $rLinks[] = [
-                                                                'name' => $s->name_arabic,
-                                                                'url'  => 'https://quran.com/ar/' . $s->number . '/' . $from . '-' . $to,
-                                                            ];
-                                                        }
                                                     }
-                                                } elseif ($rFrom) {
-                                                    $rLinks[] = [
-                                                        'name' => $rFrom->surah->name_arabic,
-                                                        'url'  => 'https://quran.com/ar/' . $rFrom->surah->number . '/' . $rFrom->verse_number . '-' . $rFrom->surah->verses_count,
-                                                    ];
-                                                }
-                                            @endphp
-                                            @if(count($rLinks) === 1)
-                                                <a href="{{ $rLinks[0]['url'] }}" target="_blank"
-                                                    class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
-                                                    <flux:icon icon="book-open" class="size-3.5" />
-                                                    {{ __('افتح') }} {{ $rLinks[0]['name'] }}
-                                                </a>
-                                            @elseif(count($rLinks) > 1)
-                                                <div x-data="{ open: false }" class="mt-3">
-                                                    <button type="button" @click="open = !open"
-                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
+                                                @endphp
+                                                @if(count($rLinks) === 1)
+                                                    <a href="{{ $rLinks[0]['url'] }}" target="_blank"
+                                                        class="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
                                                         <flux:icon icon="book-open" class="size-3.5" />
-                                                        <span>{{ __('افتح الآيات في القرآن') }} ({{ count($rLinks) }})</span>
-                                                        <flux:icon icon="chevron-down" class="size-3.5 transition-transform"
-                                                            x-bind:class="open ? 'rotate-180' : ''" />
-                                                    </button>
-                                                    <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
-                                                        @foreach($rLinks as $link)
-                                                            <a href="{{ $link['url'] }}" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30   s">
-                                                                <flux:icon icon="book-open" class="size-3.5" />
-                                                                {{ $link['name'] }}
-                                                            </a>
-                                                        @endforeach
+                                                        {{ __('افتح') }} {{ $rLinks[0]['name'] }}
+                                                    </a>
+                                                @elseif(count($rLinks) > 1)
+                                                    <div x-data="{ open: false }" class="mt-3">
+                                                        <button type="button" @click="open = !open"
+                                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
+                                                            <flux:icon icon="book-open" class="size-3.5" />
+                                                            <span>{{ __('افتح الآيات في القرآن') }} ({{ count($rLinks) }})</span>
+                                                            <flux:icon icon="chevron-down" class="size-3.5 transition-transform" x-bind:class="open ? 'rotate-180' : ''" />
+                                                        </button>
+                                                        <div x-show="open" x-collapse class="flex flex-wrap gap-2 mt-2">
+                                                            @foreach($rLinks as $link)
+                                                                <a href="{{ $link['url'] }}" target="_blank"
+                                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors">
+                                                                    <flux:icon icon="book-open" class="size-3.5" />
+                                                                    {{ $link['name'] }}
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
                                                     </div>
+                                                @endif
+                                            </div>
+
+                                            <flux:separator />
+
+                                            <div>
+                                                <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                    <button type="button" @click="review = 3; $wire.saveAchievement({{ $currentDay->id }}, 'review', 3)"
+                                                        :class="review === 3 ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">ممتاز</button>
+
+                                                    <button type="button" @click="review = 2; $wire.saveAchievement({{ $currentDay->id }}, 'review', 2)"
+                                                        :class="review === 2 ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">جيد</button>
+
+                                                    <button type="button" @click="review = 1; $wire.saveAchievement({{ $currentDay->id }}, 'review', 1)"
+                                                        :class="review === 1 ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">مقبول</button>
+
+                                                    <button type="button" @click="review = null; $wire.saveAchievement({{ $currentDay->id }}, 'review', null)"
+                                                        :class="review === null ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300' : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
+                                                        class="p-3 rounded-xl border-2 transition-colors font-bold text-center">لم يسمع</button>
                                                 </div>
-                                            @endif
-                                        </div>
-
-                                        <flux:separator />
-
-                                        <div>
-                                            <flux:label class="mb-3 font-semibold">{{ __('تقييم الإنجاز (التسميع)') }}</flux:label>
-
-                                            {{-- Alpine controls coloring instantly, saveReview() saves in background --}}
-                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                                <button type="button" @click="setReview(3)"
-                                                    :class="review === 3
-                                                            ? 'border-green-500 bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-green-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">ممتاز</button>
-
-                                                <button type="button" @click="setReview(2)"
-                                                    :class="review === 2
-                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-blue-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">جيد</button>
-
-                                                <button type="button" @click="setReview(1)"
-                                                    :class="review === 1
-                                                            ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-amber-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">مقبول</button>
-
-                                                <button type="button" @click="setReview(null)"
-                                                    :class="review === null
-                                                            ? 'border-red-500 bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-300'
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-red-200 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'"
-                                                    class="p-3 rounded-xl border-2   font-bold text-center">لم
-                                                    يسمع</button>
                                             </div>
                                         </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </flux:card>
-
-                    @elseif($planId)
-                        <div
-                            class="mt-8 text-center text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl py-12 border border-zinc-100 dark:border-zinc-800">
-                            <flux:icon icon="document-text" class="mx-auto w-12 h-12 mb-4 text-zinc-400" />
-                            <p>{{ __('لا توجد مهام تسميع متوفرة لهذه الخطة.') }}</p>
+                                    @endif
+                                </div>
+                            </flux:card>
+                        @endif
+                    @else
+                        <div class="flex flex-col items-center justify-center p-12 bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center h-full min-h-[400px]">
+                            <flux:icon icon="document-text" class="size-16 text-zinc-300 dark:text-zinc-600 mb-4" />
+                            <flux:heading size="lg" class="text-zinc-500 dark:text-zinc-400 mb-2">{{ __('لا توجد خطط لهذا الطالب') }}</flux:heading>
+                            <p class="text-zinc-400 dark:text-zinc-500 text-sm max-w-sm mb-6">{{ __('قم بإنشاء خطة قرآنية للطالب للبدء بتقييم التسميع والمراجعة.') }}</p>
+                            <flux:button href="{{ route('teacher.plan-creator', ['studentId' => $student->id]) }}" variant="primary" icon="plus">{{ __('إنشاء خطة جديدة') }}</flux:button>
                         </div>
                     @endif
-
-                @else
-                    <div
-                        class="flex flex-col items-center justify-center p-12 bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center h-full min-h-[400px]">
-                        <flux:icon icon="document-text" class="size-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-                        <flux:heading size="lg" class="text-zinc-500 dark:text-zinc-400 mb-2">
-                            {{ __('لا توجد خطط لهذا الطالب') }}</flux:heading>
-                        <p class="text-zinc-400 dark:text-zinc-500 text-sm max-w-sm mb-6">
-                            {{ __('قم بإنشاء خطة قرآنية للطالب للبدء بتقييم التسميع والمراجعة.') }}</p>
-                        <flux:button href="{{ route('teacher.plan-creator', ['studentId' => $studentId]) }}" variant="primary"
-                            icon="plus">
-                            {{ __('إنشاء خطة جديدة') }}
-                        </flux:button>
-                    </div>
-                @endif
-
-            @else
-                <div
-                    class="flex flex-col items-center justify-center p-12 bg-zinc-50/50 dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-center h-full min-h-[400px]">
-                    <flux:icon icon="user-group" class="size-16 text-zinc-300 dark:text-zinc-600 mb-4" />
-                    <flux:heading size="lg" class="text-zinc-500 dark:text-zinc-400 mb-2">{{ __('اختر طالباً للبدء') }}
-                    </flux:heading>
-                    <p class="text-zinc-400 dark:text-zinc-500 text-sm max-w-sm">
-                        {{ __('قم باختيار أحد الطلاب من القائمة الجانبية لعرض خطته القرآنية والبدء بتقييم التسميع والمراجعة.') }}
-                    </p>
                 </div>
-            @endif
+            @endforeach
         </div>
     </div>
 
