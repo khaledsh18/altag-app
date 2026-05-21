@@ -27,7 +27,8 @@ beforeEach(function () {
             'surah_id' => 1,
             'verse_number' => $i,
             'page_number' => 1,
-            'line_number' => $i,
+            'line_number_start' => $i,
+            'line_number_end' => $i,
             'verse_key' => "1:$i",
             'juz_number' => 1,
             'hizb_number' => 1,
@@ -45,16 +46,16 @@ it('calculates full page end correctly', function () {
 
     $end = $service->getEndAyah($start, 'page');
 
-    expect($end->line_number)->toBe(15);
+    expect($end->line_number_end)->toBe(15);
 });
 
-it('calculates half page end correctly at line 7', function () {
+it('calculates half page end correctly at line 8', function () {
     $service = new QuranPlanService;
     $start = Ayah::find(1);
 
     $end = $service->getEndAyah($start, 'half');
 
-    expect($end->line_number)->toBe(7);
+    expect($end->line_number_end)->toBe(8);
 });
 
 it('calculates third page end correctly at line 5', function () {
@@ -63,7 +64,7 @@ it('calculates third page end correctly at line 5', function () {
 
     $end = $service->getEndAyah($start, 'third');
 
-    expect($end->line_number)->toBe(5);
+    expect($end->line_number_end)->toBe(5);
 });
 
 it('finds next start ayah correctly', function () {

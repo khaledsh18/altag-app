@@ -9,10 +9,19 @@ use App\Models\StudentPlan;
 use App\Models\Supervisor;
 use App\Models\Surah;
 use App\Models\Teacher;
+use App\Models\Circle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', function () {
+    $stats = [
+        'students' => Student::count(),
+        'teachers' => Teacher::count(),
+        'circles' => Circle::count(),
+    ];
+
+    return view('welcome', compact('stats'));
+})->name('home');
 
 Route::get('/pending-approval', fn () => view('pending-approval'))
     ->middleware('auth:manager,supervisor,teacher,student,guardian')
